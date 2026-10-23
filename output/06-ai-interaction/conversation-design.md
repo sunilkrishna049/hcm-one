@@ -74,7 +74,7 @@ These meanings describe the simplified demo and do not establish legal eligibili
 
 No glossary definition assigns a hold, payment date or legal entitlement. Calculation code and verified configuration establish the result for the relevant record. (BR-0.1–BR-0.4; GR-3.2)
 
-## 7. Patterns for A06-03, A06-08, A06-10, A06-11, A06-12
+## 7. Patterns for A06-03, A06-07, A06-08, A06-10, A06-11, A06-12
 
 Purpose, structure and rules below are Proposed. Requirements have High confidence; comprehension is **Assumption, Low, AS-17**. Use the existing certainty model and failures, not self-rated confidence.
 
@@ -84,11 +84,17 @@ Purpose, structure and rules below are Proposed. Requirements have High confiden
 - **Rules:** Missing performance is not zero achievement. Unclear notice policy or service criterion remains unresolved. Do not apply statutory-bonus rules to performance incentives or invent company policy. Only code supplies numeric inputs and outputs for explanation.
 - **Source IDs:** FR-2.2–FR-2.8, FR-2.12–FR-2.13; BR-5.1–BR-5.5; GR-3.1–GR-3.3; UXP-01–UXP-02; PS-06; EVD-49–EVD-51; EG-21.
 
+### A06-07: Salary change explanation lead
+- **Purpose:** State the bottom-line take-home change immediately before presenting causal cards and detailed breakdown, per UXP-03.
+- **Approved wording (C30):** "Your {later month} take-home is {net change amount} {lower or higher} than {earlier month}. The main recorded reasons are below."
+- **Source IDs:** FR-4.1–FR-4.8; UXP-03; Approved DEC-035.
+
 ### A06-08: Salary breakdown, terms, limits and escalation
 - **Purpose:** Give an Employee enough detail to check the recorded pay explanation and question what remains unclear.
 - **Structure:** Offer earnings and deductions for the selected own months after the change summary. Expand arrears by month, explain PF shares separately and define terms. Identify source records. If a bank credit is mentioned, state the payroll-only limit and offer a query draft. Ask whether the explanation answered the issue before preparing a draft.
 - **Rules:** Never claim bank access or another Employee's records. Do not predict next month's pay from a past explanation. An unexplained difference needs a factual limitation and an Employee-confirmed escalation, not an invented cause.
 - **Source IDs:** FR-4.9–FR-4.17, FR-6.2–FR-6.7; GR-2.2–GR-2.4, GR-4.3, GR-6.1–GR-6.2; UXP-02–UXP-03, UXP-06–UXP-07; PS-02–PS-03; EVD-09, EVD-13, EVD-17.
+- **Approved wording for change-lead explanation (C30, A06-07):** "Your {later month} take-home is {net change amount} {lower or higher} than {earlier month}. The main recorded reasons are below."
 
 ### A06-10: TDS advice boundary and uncertainty
 - **Purpose:** Explain recorded tax without turning the answer into personal advice.

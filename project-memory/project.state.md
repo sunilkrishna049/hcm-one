@@ -1,10 +1,10 @@
 # Project State: HCM One Design Orchestrator
 
 ## Current Status
-- Current phase: Code prototype built and verified; ready for user review / testing
-- Current agent: Prototype Agent
+- Current phase: Gate G07 Approved (Chat-first prototype redesign)
+- Current agent: Agent 07 (Prototype) complete; Agent 08 (Testing) not started
 - Blocked by: Nothing
-- Next action: Present prototype walkthrough and verification to Project owner before Agent 08 (Testing)
+- Next action: Testing review (Agent 08) or implementation planning
 
 ## Gate Status
 | Gate | Name | Status | Approved by | Date | Notes |
@@ -15,7 +15,7 @@
 | G04 | Strategy approval | Approved | Project owner | 2026-10-13 | Approved without revision. 6 problem statements, 12 HMWs, 7 UX principles. GAP-09 Option B approved. PBRD-01 to PBRD-04 approved and applied in BRD v1.1. |
 | G05 | Architecture approval | Approved | Project owner | 2026-10-13 | Approved without revision. 6 flows, 4 Mermaid flowcharts, 2 state diagrams, 13 BRD scenarios mapped, 18 additional edge cases. GAP-04, GAP-06 and GAP-07 resolved with Option B. Settlement statement explanation assigned to Agent 06. |
 | G06 | AI interaction approval | Approved | Project owner | 2026-10-13 | Approved after one revision (user-facing wording, statement delivery boundary DEC-019). All handoff points A06-01 to A06-13 answered. 5 certainty labels, no confidence scores. 5 illustrative conversations. AS-16 and AS-17 added for testing. |
-| G07 | Prototype approval | Approved | Project owner | 2026-10-14 | Approved after one revision (engine display export, Agent 06 TDS example, Inter typography). 6 screens, all 13 scenarios mapped, 426 bindings passed. Remaining unavailable values are intended test gaps, runtime selection totals, or the scenario 10 declared month range (carried to the prototype build). |
+| G07 | Prototype approval | Approved | Project owner | 2026-10-23 | Chat-first redesign approved after source rewrite and presentation fixes. |
 | G08 | Testing review | Not started | - | - | - |
 
 Allowed status values: Not started, In progress, Ready for review, Approved, Revise, Rejected
@@ -118,4 +118,7 @@ Allowed status values: Not started, In progress, Ready for review, Approved, Rev
 | 2026-10-14 | DEC-026 and DEC-028 Approved by Project owner. DEC-027 Approved (typography superseded by DEC-031), with Approved by: Project owner. No other decision text changed. Current phase: Code prototype build, not started. Next action: Build the clickable code prototype from output/07-prototype/. Stopped; prototype build and Agent 08 not started. |
 | 2026-10-23 | Built the clickable code prototype of HCM One across all 13 scenarios and 6 screens (SCR-01 to SCR-06). Frontend in app/frontend/ (React 19, TypeScript, Vite, Radix UI, Deep Teal design system) and backend in app/backend/ (FastAPI, Python 3.12, deterministic engine bridge, server-side RBAC, runtime store in data/runtime/). Verified zero LLM calls with exact approved sentences C01–C29 (including C29 DEC-029). Frontend does zero math. Engine display export added for scenario 10 declared month range ('2026-04 to 2026-06') and bonus selected scope calculations: 74/74 engine tests passed. Backend pytest suite verified permissions, lifecycle, guards, and exact numerical figures: 11/11 tests passed. Frontend npm run build succeeded with zero errors. Documented DEC-032 in design-decisions.md and paths in project.config.md. App README created with Windows 3-line run instructions and walkthrough guide. Stopped before Agent 08. |
 | 2026-10-23 | Design review found fabricated UI numbers; fixed and guarded by frontend tests. Removed all hardcoded payroll figures from app/frontend/src, removed New Annual CTC, implemented conversation-first SCR-01, corrected certainty badge styling, added role-based navigation without SCR-XX IDs. Added comprehensive Vitest suite in app/frontend/src/tests/screens_api_match.test.tsx covering scenarios 1, 2, 3, 6, 9, 10, 11, 12, 13 and a strict guard test against unauthorized numbers. 10/10 frontend tests, 11/11 backend tests, and 74/74 engine tests pass. Logged DEC-033. |
+| 2026-10-23 | Re-opened Gate G07 for chat-first redesign by Project owner instruction. Replaced 6 screens with two chat surfaces: CHAT-HR (Desktop 1440 px with 480 px calculation & ledger side panel) and CHAT-EMP (Mobile 390 px with detail bottom sheet). Designed 14 rich card types, full turn-by-turn conversation scripts for all 13 scenarios, 3 payroll FAQ conversations (course dataset format), and fallback/CrewAI agentic handoff architecture. Updated screen-inventory.md, screen-specs.md, visual-spec.md, and figma-ai-prompts.md. Logged Proposed decision DEC-034. Set G07 to Ready for review. Stopped; no code built. |
+| 2026-10-23 | Chat-first specs rewritten from sources after review found invented content. Re-verified all 426 Section 8 data bindings (0 failures), all 30 approved sentences/previews (0 failures), and verified no forbidden badges or invented policies across all artifacts in output/07-prototype/. DEC-034 remains Proposed; G07 remains Ready for review. Stopped. |
+| 2026-10-23 | G07 Approved by Project owner. Chat-first redesign approved after source rewrite and presentation fixes. Added approved sentence C30 (change-first explanation lead, DEC-035), updated visual spec presentation rules (Indian rupee grouping, real minus sign, human-readable rule labels without JSON keys/file paths, plain-language formulas, hidden FAQ links when URL unassigned). Comprehensive reference check passed: 426 Section 8 bindings, 31 approved sentences (C01–C30 + C29 preview), 0 forbidden content failures. DEC-034 and DEC-035 Approved. |
 

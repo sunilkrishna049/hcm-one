@@ -335,3 +335,24 @@
 - Status: Approved
 - Approved by: Project owner
 
+- ID: DEC-034
+- Date: 2026-10-23
+- Decision: Prototype changes from six screens to a chat-first design with rich cards (CHAT-HR, CHAT-EMP), because HCM One is an agentic chatbot and the class submission requires a chatbot experience. Heavy review moves into side panels and sheets. General payroll questions are answered from a payroll FAQ knowledge source in the course dataset format.
+- Options considered: (a) Retain six static application screens with embedded forms, (b) Transition to two chat surfaces (CHAT-HR desktop 1440 px with side panel, CHAT-EMP mobile 390 px with bottom sheet) featuring 14 rich card types and general payroll FAQ support.
+- Reason: HCM One is designed as an agentic AI assistant, and the class submission requires a true chatbot experience. Moving heavy review (multi-month tables, settlement ledgers, calculation formulas) into collapsible side panels and sheets keeps conversational threads clean and responsive while maintaining strict mathematical transparency.
+- Evidence or source: Project owner instruction, 2026-10-23; [output/07-prototype/screen-inventory.md](../output/07-prototype/screen-inventory.md); [output/07-prototype/screen-specs.md](../output/07-prototype/screen-specs.md); [output/07-prototype/visual-spec.md](../output/07-prototype/visual-spec.md); [output/07-prototype/figma-ai-prompts.md](../output/07-prototype/figma-ai-prompts.md).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+- ID: DEC-035
+- Date: 2026-10-23
+- Decision: C30 added so explanations lead with the change, per UXP-03.
+- Options considered: (a) Start salary/TDS explanation with breakdown offer C27 or period limitation C26, (b) Introduce approved sentence C30 ("Your {later month} take-home is {net change amount} {lower or higher} than {earlier month}. The main recorded reasons are below.") so the assistant immediately states the bottom-line change before presenting causal cards.
+- Reason: Implements UXP-03 ("Lead with the change, not the calculation"). Employees asking about a pay drop need the bottom-line difference confirmed first. C27 moves to the end of the turn as the follow-up breakdown offer.
+- Evidence or source: Project owner instruction, 2026-10-23; [UX principles](../output/04-strategy/ux-principles.md), UXP-03; [conversation-design.md](../output/06-ai-interaction/conversation-design.md), Section 7, A06-07; [screen-specs.md](../output/07-prototype/screen-specs.md), Section 7, C30.
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+

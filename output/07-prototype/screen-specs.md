@@ -1,166 +1,439 @@
-# HCM One: Screen Specifications
-
-Revised for G07. The code prototype is the next implementation; Figma is optional later for visual polish and case study images. These documents specify screens and runtime behavior; they have not created an application, payroll approval, sent query or Figma file. Requirements have High confidence. Layout choices remain Proposed where not expressly approved. Existing AS-14, AS-16 and AS-17 remain unvalidated.
-
-Sources: [inventory](screen-inventory.md); [current BRD v1.2](../../input/requirements/Payroll_brd_v1.2.md), Sections 3, 5–9; approved [flows](../05-architecture/user-flows.md), Section 3; [states](../05-architecture/edge-cases-states.md), Sections 2–5; [Agent 06](../06-ai-interaction/); [UX principles](../04-strategy/ux-principles.md); [personas](../03-analysis/personas.md); [decisions](../../project-memory/design-decisions.md), DEC-011–DEC-029 and the new approved prototype and typography decisions.
+# HCM One: Screen Specifications (Chat-First Architecture)
 
 ## Data and content contract
 
-Every visible payroll amount, date, period, day count, percentage and numeric record ID binds to the exact generated file, record and JSON pointer in Section 8. Copy the literal value with its sign and an adjacent INR label; never compact, round, total, count, subtract or back-solve it. Named binding keys are designer references, not labels to display in the product. Missing or null required numbers render exactly **Not available in generated data**. A null applicable due date renders **Not applicable** only when the complete generated date object says no separate due date applies. Known zero remains zero.
-
-Design tokens and the prescribed frame sizes are authoring parameters, not visible payroll facts. Screen IDs, requirement IDs and array indexes are references, not UI counters. No unsupported count badge, progress percentage, approval-version number or response-time estimate is shown.
-
-Names come from [employees.json](../../data/mock/employees.json), matching the generated employee ID. The existing non-numeric query category and description come from [queries.json](../../data/mock/queries.json), QUERY-E05-SEPTEMBER. Do not copy a raw mock amount, day count or date to fill a screen. Every displayed period and numeric ID still uses its generated binding.
-
-The copy catalog in Section 7 preserves Agent 06's exact sentences. Braces are its existing slots; replace only a named slot with an authorized recorded fact. Headings and field labels below are UI labels, not new causal AI sentences. Read the selected amount object's exact formula, inputs, rule_ids, certainty and flags in the proof view. Do not invent an arithmetic substitution line.
-
-Generated proposals are unapproved. Complete calculation certainty is not approval or payment. **PQ-08 and PQ-09: Resolved by design.** Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. Current calculation fixtures may initialize a demo version on explicit request confirmation. That runtime record must identify the user, time, exact source calculation and selected scope before review can become actionable. A success state appears only after the actual action is recorded. A generated fixture is never relabeled Approved or Sent by itself. G07 is a project gate, not payroll approval.
-
-## 1. SCR-01 — Prepare a proposal
-
-**Role and frame:** HR desktop, 1440 px. **Flow:** F1-01–F1-05; later F2-01–F2-03 and F3-01–F3-03. **Purpose:** Capture and confirm the authorized request. **Principles:** UXP-01, UXP-02, UXP-04, UXP-07. Persona basis: The Payroll Admin's input reconciliation.
-
-**Layout, top to bottom:** HCM One header and role; title; proposal type; plain-language composer; authorized employee; one clarifying question; confirmation panel; existing-calculation link. Use a narrow reading column within the desktop grid. No dashboard or unrelated records.
-
-**Exact content:** “Prepare a proposal.” MVP type “Back-dated hike.” Later types “Bonus and incentives” and “Full and final settlement.” Composer label “Your payroll request”; example “Prepare Priya Sharma's pending back-dated hike.” Employee Priya Sharma, E01 from scenario-01 /result/employee_id and matching mock name. Intro C01. C02 appears only in the missing-effective-date variant; the populated default proceeds to explicit request confirmation.
-
-Confirmation labels: “Employee,” “Requested hike,” “Effective date,” “Old salary,” “Proposed salary.” Priya’s percentage is **10** (D01-requested_hike_percentage) percent; effective date **2026-04-01** (D01-effective_date); contractual old total **120000** (D01-old_monthly_salary-total) INR; proposed total **132000** (D01-proposed_monthly_salary-total) INR. Expand the D01 old and proposed component bindings. Arjun and Kavya use matching D02 and D03 records. The separate existing-period HM amounts remain earned values, not contractual request inputs. Later bonus periods use B0-period or B1-period. Later exit inputs use the D06, D07 and D13 resignation, last-working-day, required/served notice and waiver bindings. They are now populated directly from display_inputs.
-
-**Actions:** “Confirm request” is available when required sourced fields are usable and the user confirms the exact request. Confirmation creates the demo lifecycle version record; it does not approve or apply payroll. “Edit request” returns to capture and invalidates prior confirmation. “Review existing calculation” opens SCR-02 for that recorded request and matching generated result. Changes to calculation inputs require a new engine result; never reuse a stale result as a fresh calculation.
-
-**States:** Draft default; clarification; confirmation only with real input; loading C06; missing data C07 and Needs input; rule limitation C08; error C09; permission denied C10, with all private context removed. No calculation certainty is guessed before a result exists.
-
-## 2. SCR-02 — Review a proposal
-
-**Role and frame:** HR desktop, 1440 px. **Flow:** F1-06–F1-12; later F2-04–F2-10 and F3-04–F3-12. **Purpose:** Review proof and decide on a valid version and scope. **Principles:** UXP-01, UXP-02, UXP-04, UXP-05, UXP-07.
-
-**Layout, top to bottom:** Authorized scope and unapproved status; title; blocker before unsupported totals; approved AI scope sentence; hero number; gross and deduction cards; persistent flags; period, employee or component table; calculation drawer; edit panel; approval bar. Numbers dominate; no decorative charts.
-
-### Hike default
-
-“Back-dated hike proposal.” Priya Sharma, E01. Status is scenario-01 /result/proposal_status, “Needs HR approval; not applied.” Certainty is its /result/certainty, “Complete for this scope.” C03 is the assistant message. Periods use the HM bindings.
-
-Hero “Expected net arrears,” H-net_arrears. Cards “Gross arrears,” H-gross_arrears; “Employee PF change,” H-pf; “Estimated TDS impact,” H-tds_impact. Show H-flag in full, beside H-month. Tax detail uses H-recurring_salary_tds_impact and H-arrears_only_tds_impact. Do not add another tax deduction or combine these numbers yourself.
-
-Table columns: “Period,” “Old earned amount,” “Revised earned amount,” “Arrears,” “Employee PF change,” “Incremental estimated arrears TDS,” “Show calculation.” Copy the HM rows. The monthly TDS column is the incremental arrears-only effect. It is not the overall receipt-month estimate repeated per month. Employer EPF and EPS are separate detail fields bound directly to each month's generated pf_change objects; they are not employee deductions.
-
-### Hike alternate states
-
-Arjun Rao, scenario-02: use the H2 gross, TDS and net bindings. The September proof uses H2-old, H2-new, H2-diff, H2-date and H2 segment day counts. Copy historical ceiling values and effective dates from the selected segment's rule_ids; do not use one undated ceiling for the whole month.
-
-Kavya Iyer, scenario-03: lead with Incomplete and Needs input. C07 binds record type to “attendance record” and period to H3-july. H3 gross, TDS and net render **Not available in generated data**. Show only separately scoped H3-aug-diff and H3-sep-diff. Missing July is not zero and blocks full approval.
-
-### Later bonus mode
-
-“Bonus and incentives proposal.” Use the generated type and B0-period or B1-period. Show Eligible, Not eligible and Needs input lists with the matching request’s engine counts. Annual counts and totals use X-001–X-006; Sales uses X-007–X-012. The Annual gross is **213929** (X-004) INR for known eligible employees. Its TDS and net are null and Incomplete. Sales gross is **120000** (X-010) INR, TDS **0** (X-011) INR and net **120000** (X-012) INR. These are request aggregates, not arbitrary selected-scope totals. Never count or sum the lists in the specification.
-
-E08 reason: “On notice at the time of calculation.” E09 reason: “Performance record missing.” E03’s gross is known but its TDS and net remain Incomplete, so the Annual group TDS and net still render **Not available in generated data**. E09’s rating and rate remain null. Selected-scope counts and totals are also **Not available in generated data** until a matching engine scope is returned; do not relabel request aggregates as a custom selection.
-
-E07 proof uses B annual Basic, eligible days, period days and award bindings, plus D04 rating and applied rating rate. E04’s rating is **4** (D04-bonus_requests-0-employees-E04-rating) and applied rate **10** (D04-bonus_requests-0-employees-E04-applied_rating_rate_percent) percent. E08 has a known policy rate but no applied rate: use its recorded Not applied status, not zero or an invented award. Sales raw target and achievement use D04 bonus_requests-1 employee bindings beside the existing percentage, slab, award, TDS and net. All operands are copied; none are solved backwards.
-
-“Approve selected scope” requires a valid stored review scope, dependent values and selected totals. It is disabled when any is missing. E03's unknown net and E09's absent performance cannot be approved. The approved partial-approval template in Agent 06 Section 4 is used only with actual selected records, not invented counts.
-
-### Later settlement mode
-
-“Full and final settlement proposal.” Rahul Verma, E10, is the complete default. Lakshmi Reddy, E11, and Imran Khan, E12, are alternates. Amounts and applicable due dates use S bindings; request fields use D06, D07 and D13. Proof includes encashable_leave_days_used, last_drawn_basic, last_drawn_da and last_drawn_basic_plus_da from the corresponding display_inputs bindings.
-
-Table columns: “Component,” “Classification,” “Amount,” “Applicable due date,” “Preparation,” “Approval,” “Reason,” “Show calculation.” Copy classification, preparation status, flag and unresolved reason from the selected generated component. Its certainty sits beside the amount. “Calculated; needs HR approval” is not Approved. Approval metadata is created and displayed only after recording the user's demo lifecycle action; never pre-fill an approval state.
-
-E10 uses S6 gross payables, total deductions, final net, employee PF and TDS. Show its separate engine recoveries_total and known_recoveries_subtotal bindings; PF and TDS are excluded from both. Each component retains its applicable due date and C20. Non-applicable deduction dates stay Not applicable. Do not relabel total deductions as recoveries-only totals.
-
-E11 gratuity is Not applicable, with its generated zero and “Close to minimum service.” Actual years, months and days use S7 service bindings. The flag is informational, not an eligibility override.
-
-E12 uses scenario-13’s shared settlement result for scenarios 8 and 13. Known salary, leave, notice, advance, PF, TDS and gross payables remain visible. The asset is Unresolved with “Asset clearance pending; final net incomplete.” Asset recovery, recoveries total (X-041) and final net remain **Not available in generated data**. Show known recoveries subtotal **56667** (X-042) INR with the exact flag “Excludes unresolved asset recovery” (X-043). This is a subtotal, not the final recovery or net. Salary held remains false; pending clearance never becomes a whole-settlement hold.
-
-### Review controls and proof drawer
-
-C04 accompanies “Approve selected scope,” “Edit with a reason,” and “Reject.” PQ-08 is resolved by design: Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. Enable approval only after a current version-bound review record exists, the selected calculation scope is valid and dependent values are complete. Store the authorized decision before displaying success. Never prefill a version, approver or timestamp; silence has no transition.
-
-Edit panel labels “Line to edit,” “Proposed amount,” “Reason”; use C05. The static preview supplies no invented edited value. Recalculated and Revised layouts need actual recorded version results. A stale submission uses C25. Conditional success states are populated only after storage, not by a prototype click.
-
-Every number opens “Show calculation.” Copy its exact value, formula, input references, rule IDs, rules_version, verified_on, certainty and flags. Display actual effective dates where present. For an undated rule, show the exact date_note “Applies to all demo periods” rather than a fabricated date. verified_on is verification metadata, not an effective or payment date. Use the selected authorized result’s own rule references; the Section 8 metadata bindings document their exported contract. display_inputs proof reads its copied source and nested calculation where present. Source access remains available from the first card.
-
-**States:** Calculated unapproved default; guarded Ready for review; loading C06; Needs input C07; Rule not verified C08; calculation error C09; denied C10; edit/Revised C05; stale C25; conditional Rejected or Approved and ready for payroll. Later components include Not applicable and unresolved. A Held state needs a recorded verified hold basis; E12 is not an invented known held amount.
-
-## 3. SCR-03 — Review a payroll query
-
-**Role and frame:** HR desktop, 1440 px. **Flow:** F6-09–F6-11, guarded by F6-01. **Purpose:** Review the employee-confirmed issue and record HR reply and resolution. **Principles:** UXP-01, UXP-02, UXP-04, UXP-06, UXP-07.
-
-**Layout:** “Payroll queries”; Q-id; Q-status; own authorized employee and C9-after_month; original description; relevant evidence; “What the payroll calculation shows”; actual reply; reply editor; explicit resolution controls. No query-count badge or response timer.
-
-**Exact content:** Neha Gupta, generated E05. Category “salary.” Description “Please check my September attendance.” These are seed text, not proof of an error. Existing Q-status is In review and numeric previews use C9 and D09. “Your reply” starts as an empty editor. PQ-09 is resolved by design: Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. The prototype records actual demo replies and lifecycle events after authorized actions. The calculation alone does not prove attendance correctness.
-
-**Actions:** “Save reply” persists the actual user-entered demo reply and keeps In review unless HR explicitly records resolution. “Record resolution” requires that reply and a recorded authorized action. “Close query” keeps the approved prior-resolution guard. Show success only after recording the action; failure preserves the last real state. Query resolution does not approve a payroll change.
-
-**States:** Default recorded In review; conditional Sent with “Take into review”; loading C06; missing evidence C07; failed payroll check C09; dependent rule limitation C08 without changing query status; storage/retrieval failure preserves the last actual status and claims no success; denied C10 clears private context; conditional Resolved and Closed require real reply and event records. Do not infer resolution from any reply or from silence.
-
-## 4. SCR-04 — Understand my payroll
-
-**Role and frame:** Employee mobile, 390 px. **Flow:** F4-01–F4-10; F5-01–F5-10; later F3-12 statement output. **Purpose:** Explain an own recorded change before optional detail. **Principles:** UXP-01–UXP-07, particularly UXP-03 and UXP-07. Persona basis: The Pay-Change Employee's explanation and record-checking needs.
-
-**Layout:** HCM One; “Understand my payroll”; own context; “Salary” or “TDS”; period choice; blocker if needed; change hero; recorded reason labels; brief approved AI text; breakdown, calculation and source actions; follow-up; “Draft a query for HR.” The detail sheet stays within this screen. No employee picker or unrelated records.
-
-### Salary default: Neha Gupta
-
-Use C9 periods and E05 scope. Hero is C9-net_change, with generated Complete for this scope. Label the reason list **“Ranked by effect on take-home pay.”** Render /result/reasons in its stored array order, without sorting or recalculating: LOP **-5000** (X-021) INR (X-020); PF ceiling change **-420** (X-024) INR (X-023). Keep each reason’s signed effect, sources and flags. The PF effect retains earned wage after LOP and dated ceiling segments. C27 offers breakdown.
-
-“Unpaid leave days” uses **3** (D09-months-2026-09-lop_days) and “Calendar days” uses **30** (D09-months-2026-09-calendar_days). Earlier and later values use the matching D09 records; Paid days stays bound to C9. The breakdown retains Basic, DA, HRA, Special allowance, earned gross, employee deductions and net. Employer contributions remain separate from take-home deductions.
-
-“Show calculation” gives the selected exact formula, generated value, source IDs, dated rules and flags. The glossary copies Agent 06 Section 6. Missing operands remain missing; no formula is evaluated here.
-
-### Salary alternate: Pooja Das
-
-Use E16 and C11 periods. Keep “No salary earning component change,” its net and PF changes, and the existing breakdown. Add D11 LOP and calendar days to proof. Reasons are **ranked by effect on take-home pay**, copied in engine order: PF ceiling change **-420** (X-038) INR (X-037). Zero earning change does not imply unchanged deductions or net.
-
-### TDS mode: Siddharth Jain
-
-Use E06 and C10 periods. Hero “TDS change,” C10-tds_change; earlier and later monthly TDS use C10 before/after TDS. Reason data heading “Previous-employer income declaration,” supported by the scenario's used declaration reference and MR-01 and current BRD scenario 10. Do not use the old missing-declaration cause.
-
-C29 is the DEC-029 approved main reason; C22 remains its detail message. “Show tax calculation” includes the existing T bindings plus declared previous-employer gross **450000** (D10-previous_employer_declared_gross) INR, previous-employer TDS **15000** (D10-previous_employer_tds) INR, Northwind TDS already deducted **0** (D10-northwind_tds_already_deducted) INR and remaining yearly tax **87180** (D10-remaining_yearly_tax) INR. Keep aggregate tax already deducted separate from these components; never subtract to obtain a display amount.
-
-The regime is the exact generated regime_scope value. Show exported rules_version and verified_on, real effective dates, and date_note for undated rules. C11 still handles personal advice. TDS-mode reasons are **ranked by effect on take-home pay**, copied in engine order: TDS change **-12454** (X-028) INR (X-027); PF ceiling change **-560** (X-031) INR (X-030). The declared month range is not exported in scenario-10 display_inputs; the C29 preview shows **Not available in generated data** in that slot. Do not use comparison months or consult raw mock dates to fill it. Calculation certainty remains scoped to the known TDS result; the missing wording operand stays visible.
-
-### Permission denied
-
-Scenario-12 shows “Payroll access,” generated “Permission denied,” and C10. Remove target name, ID, periods, amounts, source links and cached private data. Do not render the attempted E01 target. Offer “Ask about my payroll.” Do not confirm that another record exists.
-
-### Later statement output within Flow 3
-
-“Settlement statement” reuses the component sheet. DEC-019 limits access to when the Employee still has access; the company's existing exit process handles later delivery. No new channel or post-exit portal.
-
-A real statement needs the runtime approved snapshot, version, scope, actor and time. PQ-08 is resolved by design: Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. Before an actual recorded approval, show only the generated unapproved calculation preview. C18 belongs only to the actual post-approval layout. Statement access and follow-up retain DEC-019’s boundary.
-
-The conditional statement order is approved scope and C18; complete net/direction or C19 with actual unresolved component; known payables and recoveries/PF/TDS; preparation and approval status; reasons; individual due dates with C20; proof; optional Flow 6 follow-up while access remains. E12's unknown asset and final net remain unavailable. Do not fabricate approval or collect a recovery.
-
-**Actions:** “Show breakdown,” “Show calculation,” “Show tax calculation,” “View source,” glossary, topic/period selection, follow-up, and “Draft a query for HR.” A changed comparison scope needs Employee confirmation. Unsupported periods stop comparison. Query entry never sends. C26 handles future-pay questions; C21 and C11 preserve limits.
-
-**States:** Default question; valid salary/TDS; no earning change; loading C06; missing source C07; rule limitation C08; error C09; denied C10; dispute/unexplained C28, with “Cannot explain from available payroll data” only for its actual condition; later conditional complete or incomplete statement. No confidence score.
-
-## 5. SCR-05 — Review my query draft
-
-**Role and frame:** Employee mobile, 390 px. **Flow:** F6-01–F6-09. **Purpose:** Review the draft and control sending. **Principles:** UXP-01, UXP-02, UXP-04, UXP-06, UXP-07.
-
-**Layout:** “Review my query draft”; unsent Draft; category; period; employee's words; removable evidence; what was checked and remains disputed; own candidate; add-or-new choice; confirmation; action. Draft is not a newly persisted query.
-
-**Exact fixture:** Neha Gupta, E05; C9-after_month; category salary; description “Please check my September attendance.” This seed wording is editable demonstration text, not a new submission. Relevant evidence is the seed attendance reference and selected own payroll comparison. Numeric evidence previews use C9-after-gross, C9-after-paid and C9-after-pf-employee. Never expose raw mock financial/day values.
-
-Candidate Q-id and Q-status remain sourced to the existing own seed query. Use C14, “Add to my open query” and “Create a new query.” Use C12 or C13 only for the selected action. PQ-09 is resolved by design: Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. A new ID comes from the recorded send, never from the candidate. An append retains the recorded existing query ID and status.
-
-**Actions:** Edit description, remove evidence, choose add or new, and explicitly confirm actual content and destination. Changes clear confirmation. Cancel or silence leaves Draft. The code prototype persists its demo action before claiming Sent or an append, with generated runtime identity and event metadata. A failed write keeps the draft and C17. Existing-query lookup still opens SCR-06.
-
-**States:** Draft; edit; removed evidence; candidate; confirmation; loading C06; missing evidence C07 without secret replacement; dependent rule limitation C08; delivery failure C17 with Draft retained; denied C10 clears unsafe attachments. Actual successful Sent needs persistence and stable ID; append retains the actual existing ID and status. Evidence sufficiency belongs to GAP-08.
-
-## 6. SCR-06 — Track my payroll query
-
-**Role and frame:** Employee mobile, 390 px. **Flow:** F6-12 and approved query state transitions. **Purpose:** Read the own query status and reply. **Principles:** UXP-02, UXP-04, UXP-06, UXP-07.
-
-**Layout:** “My payroll query”; Q-id; Q-status with icon and text; own employee and C9-after_month; original description; evidence link; “HR reply”; supported actions; return to payroll. No response countdown.
-
-**Exact default:** Q-id and Q-status initialize QUERY-E05-SEPTEMBER and In review from generated data; Neha Gupta, generated period and the original seed description stay unchanged. Use C16. PQ-09 is resolved by design: Created by the code prototype at runtime as demo lifecycle records (version, actor, time, query ID, HR reply) when the user acts. Never pre-filled. No fake HR reply, creation date or timeline is prefilled. Show only recorded runtime events; no timer or progress percentage.
-
-**Actions:** “View evidence,” “Back to payroll,” and own-status lookup. Conditional Resolved permits explicit dispute back to In review and explicit closure acknowledgment; they are unavailable in the current In review fixture. Closed retains history and may lead to a new unsent draft.
-
-**States:** In review default; loading C06; missing own ID C07 with no guessed ID; retrieval failure retains actual status and claims no success; permission denied C10; rule limitation C08 only on a dependent payroll explanation, not a query lifecycle change; conditional Sent C15, Resolved C23 and Closed C24 need actual stored state and reply. Payroll calculation error C09 applies only when that is the actual failed check. A generic new query-storage error sentence is not invented.
+Every displayed number, period, count and identifier is bound to the exact generated data in Section 8. The prototype must not calculate, round, split or infer any payroll value. Monospace font is reserved strictly for technical IDs (Query IDs, record references). Financial amounts use Inter with tabular figures (`tnum`).
+
+Assistant wording uses only the approved sentences C01–C30 in Section 7, used verbatim. Named slots are filled exclusively from authorized actual records. Headings and labels are interface content, not new AI causal sentences.
+
+No internal labels (screen IDs, sentence codes, file paths or JSON pointers) are visible to users. No "Verified" badges are shown. Query statuses are strictly: `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
+
+---
+
+## 1. Surface Architecture: CHAT-HR and CHAT-EMP
+
+### 1.1. CHAT-HR — HR Admin Chat Workspace (Desktop 1440 px)
+- **Viewport:** 1440 px reference width (min 1280 px).
+- **Primary Chat Thread:** Center-left conversational container (max reading width 840 px). Contains user bubbles, assistant bubbles, suggestion chips, rich cards, and sticky bottom composer (height 80 px).
+- **PANEL-HR (Heavy Review Side Panel):** Dedicated right-docked side panel (width 480 px, full viewport height). Opens on demand when the user clicks "Show calculation" or "View full month breakdown". Displays dense multi-month arrears grids, settlement ledgers, bonus eligibility tables, plain-language formulas, and human-readable statutory rule citations with rules version "Northwind demo rules v1". Never shows raw JSON keys, file names or internal rule IDs to users.
+- **Focus & Keyboard Navigation:** When `PANEL-HR` opens, focus shifts to the panel close button (`✕` or `Escape`). Closing `PANEL-HR` restores focus to the triggering control.
+
+### 1.2. CHAT-EMP — Employee Chat Workspace (Mobile 390 px)
+- **Viewport:** 390 px reference width (min 320 px).
+- **Primary Chat Feed:** Single-column mobile feed with 16 px padding. Contains user bubbles, assistant bubbles, suggestion chips, hero cards, ranked reasons, query drafts, and sticky bottom composer (height 64 px).
+- **SHEET-EMP (Detail & Calculation Proof Bottom Sheet):** Modal bottom sheet (width 100%, max-height 85vh) with drag handle. Opens on demand when the employee taps "Show calculation" or "Review evidence". Displays step-by-step plain-language formulas, tax calculation breakdowns, evidence checklists, and glossary explanations.
+
+---
+
+## 2. Turn-by-Turn Conversation Scripts (All 13 BRD v1.2 Scenarios)
+
+### Scenario 1: Back-dated hike with LOP in one of the affected months
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Priya Sharma (`E01`)
+- **Turn 1 (User):** "Prepare Priya Sharma's pending back-dated hike."
+- **Turn 2 (Assistant Bubble):** C03: "This is a proposal for the recorded affected months."
+- **Cards Shown in Thread:**
+  1. *Proposal Summary Card:* Employee: Priya Sharma (`E01`); Requested hike: `10%` (Binding: `D01-requested_hike_percentage`); Effective date: `2026-04-01` (`D01-effective_date`); Old monthly salary total: `₹1,20,000` (`D01-old_monthly_salary-total`); Proposed monthly salary total: `₹1,32,000` (`D01-proposed_monthly_salary-total`); Status: `Needs HR approval; not applied`; Certainty: `Complete for this scope`.
+  2. *Number Cards Cluster (Indian Rupee format with tabular figures):*
+     - Hero Card: Expected net arrears `₹67,476` (Binding: `H-net_arrears`)
+     - Gross arrears: `₹71,200` (`H-gross_arrears`)
+     - Employee PF change: `₹0` (`H-pf`)
+     - Estimated TDS impact: `₹3,724` (`H-tds_impact`)
+     - Sourced payment month: `2026-10` (`H-month`)
+     - Estimate flag: "Estimated TDS if approved and paid in October 2026 payroll" (`H-flag`)
+  3. *Month Table Card:* Summary of 6 affected months (2026-04 to 2026-09), total gross arrears `₹71,200`. Action: "Show calculation" (opens `PANEL-HR`).
+  4. *Approval Card:*
+     - Notice (C04): "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment."
+     - Actions: [Approve proposal for payroll] [Edit with reason] [Reject proposal]
+- **PANEL-HR View (Open State):**
+  - Month-by-Month Breakdown Table (Tabular figures):
+    * 2026-04: Old gross `₹1,20,000` (`HM-0-old`), Revised gross `₹1,32,000` (`HM-0-new`), Arrears `₹12,000` (`HM-0-diff`), PF change `₹0` (`HM-0-pf`), TDS impact `₹312` (`HM-0-tds`), Paid days `30`
+    * 2026-05: Old gross `₹1,20,000` (`HM-1-old`), Revised gross `₹1,32,000` (`HM-1-new`), Arrears `₹12,000` (`HM-1-diff`), PF change `₹0` (`HM-1-pf`), TDS impact `₹312` (`HM-1-tds`), Paid days `31`
+    * 2026-06: Old gross `₹1,12,000` (`HM-2-old`), Revised gross `₹1,23,200` (`HM-2-new`), Arrears `₹11,200` (`HM-2-diff`), PF change `₹0` (`HM-2-pf`), TDS impact `₹292` (`HM-2-tds`), Paid days `28` (2 LOP days)
+    * 2026-07: Old gross `₹1,20,000` (`HM-3-old`), Revised gross `₹1,32,000` (`HM-3-new`), Arrears `₹12,000` (`HM-3-diff`), PF change `₹0` (`HM-3-pf`), TDS impact `₹312` (`HM-3-tds`), Paid days `31`
+    * 2026-08: Old gross `₹1,20,000` (`HM-4-old`), Revised gross `₹1,32,000` (`HM-4-new`), Arrears `₹12,000` (`HM-4-diff`), PF change `₹0` (`HM-4-pf`), TDS impact `₹312` (`HM-4-tds`), Paid days `31`
+    * 2026-09: Old gross `₹1,20,000` (`HM-5-old`), Revised gross `₹1,32,000` (`HM-5-new`), Arrears `₹12,000` (`HM-5-diff`), PF change `₹0` (`HM-5-pf`), TDS impact `₹312` (`HM-5-tds`), Paid days `30`
+    * Totals: Gross Arrears `₹71,200`, Arrears-only TDS impact `₹1,852` (`H-arrears_only_tds_impact`), Recurring salary TDS impact `₹1,872` (`H-recurring_salary_tds_impact`), Net Arrears `₹67,476`
+  - Plain-Language Formulas:
+    * Earned salary formula: "Earned salary = monthly salary × paid days ÷ calendar days"
+    * Arrears formula: "Monthly arrears = revised earned gross − old earned gross"
+    * Net arrears summary: "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
+  - Human-Readable Rule Citations (Relevant to explained numbers only):
+    * "Hike allocation rule: Proportional allocation across basic, HRA and special allowance"
+    * "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)"
+    * "Income tax regime: New tax regime FY 2026-27"
+    * "Standard deduction: ₹75,000"
+    * "Health and education cess: 4%"
+    * "Rules version: Northwind demo rules v1"
+    *(No file names, no JSON keys, no internal rule IDs shown to users)*
+- **Resulting State:** Tapping [Approve proposal for payroll] records authorization for Version 1 and scope (2026-04 to 2026-09) in runtime store; card updates to approved state without claiming payment.
+
+---
+
+### Scenario 2: Back-dated hike crossing 17 September 2026 PF wage ceiling change
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Arjun Rao (`E02`)
+- **Turn 1 (User):** "Review back-dated hike for Arjun Rao."
+- **Turn 2 (Assistant Bubble):** C03: "This is a proposal for the recorded affected months."
+- **Cards Shown in Thread:**
+  1. *Proposal Summary Card:* Employee: Arjun Rao (`E02`); Requested hike: `6%` (`D02-requested_hike_percentage`); Effective date: `2026-09-01` (`D02-effective_date`); Old monthly salary total: `₹20,000` (`D02-old_monthly_salary-total`); Proposed monthly salary total: `₹21,200` (`D02-proposed_monthly_salary-total`); Status: `Needs HR approval; not applied`; Certainty: `Complete for this scope`.
+  2. *Number Cards Cluster:* Expected net arrears `₹7,099` (`H2-net_arrears`), Gross arrears `₹7,200` (`H2-gross_arrears`), Employee PF change `₹101` (`H2-pf`), TDS impact `₹0` (`H2-tds`).
+  3. *Approval Card:* Notice C04 verbatim. Actions: Approve, Edit, Reject.
+- **PANEL-HR View:**
+  - September 2026 Dual-Segment PF Breakdown:
+    * Segment 1 (2026-09-01 to 2026-09-16, 16 calendar days): Wage ceiling ₹15,000 until 16 Sep 2026. Pro-rated ceiling: `₹15,000 × 16 ÷ 30 = ₹8,000`.
+    * Segment 2 (2026-09-17 to 2026-09-30, 14 calendar days): Wage ceiling ₹25,000 from 17 Sep 2026. Pro-rated ceiling: `₹25,000 × 14 ÷ 30 = ₹11,666.67`.
+    * Total PF change across dual segments: `₹101`.
+  - Human Rule Citations:
+    * "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026"
+    * "Employee PF contribution rate: 12% of PF wage"
+    * "Mid-month ceiling change: Pro-rated across dated calendar segments"
+    * "Rules version: Northwind demo rules v1"
+
+---
+
+### Scenario 3: Back-dated hike where one month's attendance is missing
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Kavya Iyer (`E03`)
+- **Turn 1 (User):** "Prepare hike proposal for Kavya Iyer."
+- **Turn 2 (Assistant Bubble):** C07: "The required attendance record for 2026-07 is missing. I cannot explain a complete result for this scope."
+- **Cards Shown in Thread:**
+  1. *Incomplete Proposal Summary Card:* Employee: Kavya Iyer (`E03`); Certainty: `Incomplete`; Proposal status: `Needs HR approval; not applied`.
+  2. *Number Cards Cluster:*
+     - Expected net arrears: `Not available in generated data` (`H3-net_arrears` is null)
+     - Gross arrears: `Not available in generated data` (`H3-gross_arrears` is null)
+     - August arrears diff: `₹4,800` (`H3-diff-08`)
+     - September arrears diff: `₹4,800` (`H3-diff-09`)
+  3. *Approval Card:* Disabled state with notice: "Cannot approve an incomplete proposal while required records are missing."
+- **PANEL-HR View:**
+  - Monthly Arrears Table: 2026-07 row shows "Attendance missing: Not available in generated data"; 2026-08 shows `₹4,800`; 2026-09 shows `₹4,800`.
+  - Human Rule Citations: "Calendar-month divisor: Paid days equal eligible days up to last working day minus LOP", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 4: Bonus for team with mid-year joiner and notice period
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Turn 1 (User):** "Calculate Annual and Sales bonus runs."
+- **Turn 2 (Assistant Bubble):** C03: "This is a proposal for the recorded affected months."
+- **Cards Shown in Thread:**
+  1. *Bonus Summary Card:* Period: `FY 2025-26`; Eligible employee count: `3` (`B-AGG-eligible_count`); Ineligible count: `1` (`B-AGG-ineligible_count`); Needs input count: `1` (`B-AGG-needs_input_count`); Gross eligible total: `₹2,13,929` (`B-AGG-eligible_gross_total`).
+  2. *Approval Card:* Notice C04 verbatim.
+- **PANEL-HR View:**
+  - Employee Eligibility Grid:
+    * Priya Sharma (`E01`): Annual bonus `₹1,08,000` (`B-E01-amount`), TDS `₹27,000`, Net `₹81,000`.
+    * Kavya Iyer (`E03`): Annual bonus `₹36,000` (`B-E03-amount`), TDS `null`, Net `null`.
+    * Rohan Mehta (`E04`): Annual bonus `₹60,000` (`B-E04-amount`), TDS `₹15,000`, Net `₹45,000`.
+    * Sneha Kulkarni (`E07`): Mid-year joiner prorated `₹9,929` (`B-E07-amount`), TDS `₹2,482`, Net `₹7,447` (Prorated: joined 2025-11-01, 151 eligible days / 365).
+    * Vikram Singh (`E08`): Ineligible `₹0` (`B-E08-amount`) (Flag: "On notice at the time of calculation").
+    * Meera Nair (`E09`): Needs input `Not available in generated data` (`B-E09-amount` is null) (Flag: "Performance record missing").
+  - Human Rule Citations: "Annual performance bonus policy: Target percentage based on performance rating", "Notice period exclusion: Employees serving notice at bonus run are ineligible", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 5: Bonus where one employee's performance data is missing
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Meera Nair (`E09`)
+- **Turn 1 (User):** "Check bonus eligibility for Meera Nair (E09)."
+- **Turn 2 (Assistant Bubble):** C07: "The required performance record for FY 2025-26 is missing. I cannot explain a complete result for this scope."
+- **Cards Shown in Thread:**
+  1. *Incomplete Bonus Card:* Employee: Meera Nair (`E09`); Period: `FY 2025-26`; Rating: `null`; Bonus amount: `Not available in generated data`; Certainty: `Incomplete`; Flag: "Performance record missing".
+  2. *Approval Card:* Unavailable.
+- **PANEL-HR View:** Rule citation: "Annual performance bonus policy: Requires completed performance rating for FY 2025-26 (Missing required record)", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 6: Full and final settlement for an employee eligible for gratuity
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Rahul Verma (`E10`)
+- **Turn 1 (User):** "Prepare full and final settlement for Rahul Verma (E10)."
+- **Turn 2 (Assistant Bubble):** C03: "This is a proposal for the recorded affected months."
+- **Cards Shown in Thread:**
+  1. *Settlement Summary Card:* Employee: Rahul Verma (`E10`); Last working day: `2026-10-03` (`S6-lwd`); Joining date: `2019-06-01`; Service: `7 years, 4 months, 3 days`; Certainty: `Complete for this scope`.
+  2. *Component List Card:*
+     - Hero Final Net: `₹3,32,256` (`S6-net_amount`)
+     - Gross Payables: `₹3,35,256` (`S6-gross_payables`)
+     - Total Deductions: `₹1,975` (`S6-total_deductions`)
+     - Earned Salary (October): `₹6,774` (`S6-earned_salary-amount`)
+     - Gratuity: `₹2,01,923` (`S6-gratuity-amount`), Status: "Eligible (> 5 years service)", Applicable due date: `2026-11-03` (`S6-gratuity-date`)
+     - Leave Encashment: `₹1,26,559` (`S6-leave_encashment-amount`), Applicable due date: `2026-10-10` (`S6-leave_encashment-date`)
+     - Notice Shortfall Recovery: `₹0` (`S6-notice_shortfall_recovery-amount`), Applicable due date: `null`
+  3. *Approval Card:* Notice C04 verbatim. Actions: Approve, Edit, Reject.
+- **PANEL-HR View:**
+  - Gratuity Plain-Language Formula: "Gratuity = 15 × last drawn basic salary × completed years of service ÷ 26 = 15 × ₹50,000 × 7 ÷ 26 = ₹2,01,923"
+  - Human Rule Citations: "Payment of Gratuity: 15/26 days basic salary per year of service for tenure ≥ 5 years", "Leave encashment: Earned leave balance paid at daily basic rate", "Settlement due dates: Gratuity within 30 days of exit, final payables on normal payroll run", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 7: Full and final settlement for employee just below gratuity eligibility
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Lakshmi Reddy (`E11`)
+- **Turn 1 (User):** "Review settlement for Lakshmi Reddy (E11)."
+- **Turn 2 (Assistant Bubble):** C03: "This is a proposal for the recorded affected months."
+- **Cards Shown in Thread:**
+  1. *Settlement Summary Card:* Employee: Lakshmi Reddy (`E11`); Last working day: `2026-10-15` (`S7-lwd`); Joining date: `2021-11-20`; Service: `4 years, 10 months, 26 days`; Certainty: `Complete for this scope`.
+  2. *Component List Card:*
+     - Final Net: `₹1,47,040` (`S7-net_amount`)
+     - Gross Payables: `₹150,186` (`S7-gross_payables`)
+     - Total Deductions: `₹3,146` (`S7-total_deductions`)
+     - Earned Salary (October): `₹24,194` (`S7-earned_salary-amount`)
+     - Gratuity: `₹0` (`S7-gratuity-amount`), Status: "Ineligible (Under 5 years service)", Flag: "Close to minimum service: 4 years, 8 months, 24 days" (`S7-gratuity-flag`), Applicable due date: `null` (`S7-gratuity-date`)
+     - Leave Encashment: `₹1,25,992` (`S7-leave_encashment-amount`), Applicable due date: `2026-10-10` (`S7-leave_encashment-date`)
+  3. *Approval Card:* Notice C04 verbatim.
+- **PANEL-HR View:** Human Rule citation: "Gratuity eligibility: Minimum 5 years of continuous service required. Recorded tenure of 4 years, 10 months is ineligible", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 8: Full and final settlement with pending asset clearance and notice shortfall
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Imran Khan (`E12`)
+- **Turn 1 (User):** "Review exit recovery for Imran Khan (E12)."
+- **Turn 2 (Assistant Bubble):** C19: "The final net is incomplete because unreturned company laptop is not yet known."
+- **Cards Shown in Thread:**
+  1. *Incomplete Settlement Card:* Employee: Imran Khan (`E12`); Last working day: `2026-10-05` (`S8-lwd`); Certainty: `Incomplete`.
+  2. *Component List Card:*
+     - Final Net: `Not available in generated data` (`S8-net_amount` is null)
+     - Earned Salary: `₹8,065` (`S8-earned_salary-amount`)
+     - Leave Encashment: `₹48,387` (`S8-leave_encashment-amount`)
+     - Notice Shortfall Recovery: `₹56,667` (`S8-notice_shortfall_recovery-amount`) (Shortfall: 35 days, waiver: false)
+     - Asset Recovery: `Unresolved` (Laptop not returned, cost pending assessment)
+  3. *Approval Card:* Disabled for final net; partial approval allowed only for verified earnings per DEC-014.
+- **PANEL-HR View:** Asset clearance pending notice ("Company laptop clearance unconfirmed"). Human Rule Citations: "Notice shortfall recovery: Daily basic rate × shortfall days", "Asset recovery: Pending clearance verification", "Rules version: Northwind demo rules v1".
+
+---
+
+### Scenario 9: Employee whose salary dropped because of LOP
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Role:** Employee (Neha Gupta, `E05`)
+- **Turn 1 (User):** "Why is my take-home pay lower in September?"
+- **Turn 2 (Assistant Bubble — C30 verbatim):** "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."
+- **Cards Shown in Thread:**
+  1. *Hero Number Card (Indian Rupee format with real minus sign):*
+     - September Take-Home Pay: `₹42,780` (Binding: `C9-after-net`)
+     - Take-Home Net Change: `−₹5,420` (`C9-net_change`)
+     - August Take-Home Pay: `₹48,200` (`C9-before-net`)
+     - Certainty: `Complete for this scope`
+  2. *Reason List Card (Ranked by effect on take-home pay):*
+     - Reason 1: Loss of Pay (LOP) 3 unpaid days, effect: `−₹5,000` (Binding: `X-021`)
+     - Reason 2: PF ceiling change, effect: `−₹420` (Binding: `X-024`)
+     - Note: Sourced TDS change: `₹0` (`C9-tds_change`)
+  3. *Action Control:* [Show calculation] (Opens `SHEET-EMP`).
+- **Turn 2 Follow-up Offer (Assistant Bubble — C27 verbatim):** "Would you like the earnings and deductions breakdown?"
+- **Suggestion Chips:** [Draft a query for HR] [What is LOP?] [What is PF?]
+- **SHEET-EMP View (Open State):**
+  - Pay Comparison Breakdown:
+    * August 2026: Gross `₹50,000` (`C9-before-gross`), Deductions `₹1,800` (PF `₹1,800`, TDS `₹0`), Net `₹48,200` (`C9-before-net`), Paid days `31`
+    * September 2026: Gross `₹45,000` (`C9-after-gross`), Deductions `₹2,220` (PF `₹2,220`, TDS `₹0`), Net `₹42,780` (`C9-after-net`), Paid days `27` (`C9-after-paid`), Calendar days `30` (`D09-months-2026-09-calendar_days`), Unpaid LOP days `3` (`D09-months-2026-09-lop_days`)
+  - Plain-Language Formulas:
+    * Earned salary: "Earned salary = monthly salary × paid days ÷ calendar days"
+    * LOP deduction effect: "Earned gross decreased from ₹50,000 to ₹45,000 (−₹5,000), reducing take-home pay by ₹5,000"
+    * PF statutory ceiling change: "PF deduction increased from ₹1,800 to ₹2,220 (+₹420), reducing take-home pay by ₹420"
+    * Take-home net change: "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)"
+  - Human-Readable Rule Citations (Relevant to explained numbers only):
+    * "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026"
+    * "Employee PF contribution rate: 12% of PF wage"
+    * "Calendar-month divisor: Paid days equal calendar days minus LOP days"
+    * "Rules version: Northwind demo rules v1"
+    *(No file names, no JSON keys, no internal rule IDs shown to users)*
+
+---
+
+### Scenario 10: Employee whose TDS increased due to previous-employer income declaration
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Role:** Employee (Siddharth Jain, `E06`)
+- **Turn 1 (User):** "Why did my TDS deduction increase in September?"
+- **Turn 2 (Assistant Bubble — C30 verbatim):** "Your September take-home is ₹13,014 lower than August. The main recorded reasons are below."
+- **Cards Shown in Thread:**
+  1. *Hero Number Card (Indian Rupee format with real minus sign):*
+     - September Take-Home Pay: `₹1,05,186` (Binding: `C10-after-net_pay`)
+     - Take-Home Net Change: `−₹13,014` (`C10-net_change`)
+     - August Take-Home Pay: `₹1,18,200` (`C10-before-net_pay`)
+     - September TDS: `₹12,454` (`C10-after-tds`)
+     - August TDS: `₹0` (`C10-before-tds`)
+     - TDS Increase: `₹12,454` (`C10-tds_change`)
+     - Certainty: `Complete for this scope`
+  2. *Reason List Card (Ranked by effect on take-home pay):*
+     - Reason 1: TDS change (Previous-employer income declaration), effect: `−₹12,454` (Binding: `X-028`)
+     - Reason 2: PF ceiling change, effect: `−₹560` (Binding: `X-031`)
+  3. *Action Control:* [Show tax calculation] (Opens `SHEET-EMP`).
+- **Turn 2 Cause Explanation (Assistant Bubble — C29 preview):** "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."
+- **Turn 2 Follow-up Offer (Assistant Bubble — C27 verbatim):** "Would you like the earnings and deductions breakdown?"
+- **Suggestion Chips:** [Draft a query for HR] [What is TDS?] [What is PF?]
+- **SHEET-EMP View (Open State):**
+  - Tax Calculation Detail:
+    * Declared previous-employer gross: `₹4,50,000` (`D10-previous_employer_declared_gross`)
+    * Declared previous-employer TDS: `₹15,000` (`D10-previous_employer_tds`)
+    * Northwind TDS already deducted: `₹0` (`D10-northwind_tds_already_deducted`)
+    * Remaining yearly tax: `₹87,180` (`D10-remaining_yearly_tax`) spread over remaining 7 months
+    * Regime: `New tax regime FY 2026-27` (`T-regime`)
+  - Assistant Sentence C22 verbatim: "The payroll calculation detail includes projected yearly income, applied deductions and exemptions, yearly tax, tax already deducted and remaining months. It identifies your recorded tax regime and applicable rule version."
+  - Plain-Language Formulas:
+    * Monthly TDS: "Monthly TDS = remaining yearly tax ÷ remaining months in financial year = ₹87,180 ÷ 7 = ₹12,454"
+  - Human Rule Citations (Relevant to explained numbers only):
+    * "Previous-employer income inclusion: Declared gross added to taxable income, declared TDS credited against tax payable"
+    * "Tax regime: New tax regime FY 2026-27"
+    * "Standard deduction: ₹75,000"
+    * "Health and education cess: 4%"
+    * "Rules version: Northwind demo rules v1"
+
+---
+
+### Scenario 11: Employee with no salary earning change between two months
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Role:** Employee (Pooja Das, `E16`)
+- **Turn 1 (User):** "Did my basic pay or allowance change in September?"
+- **Turn 2 (Assistant Bubble — C30 verbatim):** "Your September take-home is ₹420 lower than August. The main recorded reasons are below."
+- **Cards Shown in Thread:**
+  1. *Hero Number Card:*
+     - September Take-Home Pay: `₹37,780` (Binding: `C11-after-net`)
+     - Take-Home Net Change: `−₹420` (`C11-net_change`)
+     - August Take-Home Pay: `₹38,200` (`C11-before-net`)
+     - Certainty: `Complete for this scope`
+  2. *Informational Card:* "No salary earning component change. Gross earnings unchanged at ₹40,000."
+  3. *Reason List Card:* PF ceiling change, effect: `−₹420` (Binding: `X-038`)
+  4. *Action Control:* [Show calculation] (Opens `SHEET-EMP`).
+- **Turn 2 Follow-up Offer (Assistant Bubble — C27 verbatim):** "Would you like the earnings and deductions breakdown?"
+- **Turn 2 Boundary (Assistant Bubble — C26 verbatim):** "This explains the recorded months. I cannot promise next month's pay. It depends on that month's recorded inputs and applicable rules."
+- **Suggestion Chips:** [Draft a query for HR] [What is PF?]
+- **SHEET-EMP View:**
+  - Proof showing basic unchanged at `₹20,000`, special allowance unchanged at `₹20,000`, gross earnings unchanged at `₹40,000`; PF deduction increased from `₹1,800` to `₹2,220` (+₹420) due to statutory ceiling revision on 17 September.
+  - Plain-Language Formulas:
+    * "Take-home pay = earned gross − total employee deductions = ₹40,000 − ₹2,220 = ₹37,780 (change: −₹420)"
+  - Human Rule Citations (Relevant to explained numbers only):
+    * "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026"
+    * "Employee PF contribution rate: 12% of PF wage"
+    * "Rules version: Northwind demo rules v1"
+
+---
+
+### Scenario 12: Employee trying to see another employee's salary
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Role:** Employee (`USER-E05` / Neha Gupta)
+- **Turn 1 (User):** "What is Priya Sharma's monthly salary?"
+- **Turn 2 (Assistant Bubble):** C10: "I cannot provide that information. I can help with payroll records you are authorized to access."
+- **Cards Shown in Thread:**
+  1. *Refusal Card:* Displays C10 verbatim, red warning border, zero target details (no employee name, no ID, no salary figures rendered).
+  2. *Suggestion Chips:* [Ask about my payroll] [What is LOP?] [What is PF?]
+- **Resulting State:** Target employee context is wiped; access boundary enforced.
+
+---
+
+### Scenario 13: Unresolved settlement component alongside confirmed component
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Role:** HR Admin (`HR01`)
+- **Employee Context:** Imran Khan (`E12`)
+- **Turn 1 (User):** "Review settlement breakdown for Imran Khan (E12)."
+- **Turn 2 (Assistant Bubble):** C19: "The final net is incomplete because unreturned company laptop is not yet known."
+- **Cards Shown in Thread:**
+  1. *Incomplete Settlement Summary Card:* Employee: Imran Khan (`E12`); Certainty: `Incomplete`.
+  2. *Component List Card:*
+     - Final Net: `Not available in generated data` (`S13-net_amount` is null)
+     - Known Recoveries Subtotal: `₹56,667` (`S13-recoveries_subtotal`)
+     - Notice Shortfall Recovery: `₹56,667` (`S13-notice_shortfall_recovery-amount`), Status: "Verified"
+     - Asset Recovery: `Unresolved` (Laptop clearance pending)
+  3. *Partial Approval Card:* Notice (DEC-014): "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout."
+
+---
+
+## 3. General Payroll FAQ Conversations (Course Dataset Format)
+
+FAQ responses use the course dataset format (`id`, `category`, `question`, `answer`, `link_text`, `url`). Answers are taken verbatim from the approved payroll glossary in `output/06-ai-interaction/conversation-design.md`, Section 6. Citation links are hidden in UI when url is "To be defined in the payroll FAQ file".
+
+### FAQ Conversation 1: Loss of Pay (LOP)
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Turn 1 (User):** "What is LOP?"
+- **Turn 2 (Assistant):**
+  - Bubble: "Here is the recorded meaning from the payroll glossary:"
+  - *FAQ Answer Card:*
+    * `id`: `FAQ-PAY-01`
+    * `category`: `Glossary`
+    * `question`: "What is LOP?"
+    * `answer`: "Unpaid leave days used to work out paid days for salary."
+    * `link_text`: "To be defined in the payroll FAQ file"
+    * `url`: "To be defined in the payroll FAQ file"
+    * Note: Citation link is hidden when url is "To be defined in the payroll FAQ file".
+  - Suggestion Chips: [Why is my take-home pay lower in September?] [What is PF?]
+
+### FAQ Conversation 2: Provident Fund (PF)
+- **Surface:** `CHAT-EMP` (Mobile 390 px)
+- **Turn 1 (User):** "What is PF?"
+- **Turn 2 (Assistant):**
+  - Bubble: "Here is the recorded meaning from the payroll glossary:"
+  - *FAQ Answer Card:*
+    * `id`: `FAQ-PAY-02`
+    * `category`: `Glossary`
+    * `question`: "What is PF?"
+    * `answer`: "Provident Fund contribution recorded in payroll, based on the applicable PF wage and rule."
+    * `link_text`: "To be defined in the payroll FAQ file"
+    * `url`: "To be defined in the payroll FAQ file"
+    * Note: Citation link is hidden when url is "To be defined in the payroll FAQ file".
+  - Suggestion Chips: [Why did my PF change in September?] [What is LOP?]
+
+### FAQ Conversation 3: Gratuity
+- **Surface:** `CHAT-HR` (Desktop 1440 px)
+- **Turn 1 (User):** "What is Gratuity?"
+- **Turn 2 (Assistant):**
+  - Bubble: "Here is the recorded meaning from the payroll glossary:"
+  - *FAQ Answer Card:*
+    * `id`: `FAQ-PAY-03`
+    * `category`: `Glossary`
+    * `question`: "What is Gratuity?"
+    * `answer`: "A settlement payment that applies only when the employee meets the configured eligibility rule."
+    * `link_text`: "To be defined in the payroll FAQ file"
+    * `url`: "To be defined in the payroll FAQ file"
+    * Note: Citation link is hidden when url is "To be defined in the payroll FAQ file".
+  - Suggestion Chips: [Prepare full and final settlement for Rahul Verma (E10)] [Review settlement for Lakshmi Reddy (E11)]
+
+---
+
+## 4. Fallback Handling and Agentic CrewAI Architecture
+
+### 4.1. Prototype Intent Matching Fallback
+Until real AI models are connected, typed input in the composer is matched against supported demo keywords (e.g. employee names, "hike", "bonus", "settlement", "LOP", "TDS", "query").
+If the input cannot be mapped, the assistant displays:
+> "I cannot answer that question in this demo. You can ask about recorded salary and tax changes, full and final settlements, bonus eligibility, or choose a topic below:"
+followed by relevant suggestion chips. The prototype never hallucinates, estimates, or makes invented promises.
+
+### 4.2. CrewAI Multi-Agent Handoff Architecture
+The prototype is structured so a future CrewAI agentic crew can replace demo pattern matching without changing cards or UI bindings:
+1. **Classifier Agent:** Parses natural language query, detects user role (`HR Admin` vs `Employee`), extracts intent, and performs initial RBAC routing.
+2. **Retrieval Agent:** Queries the Payroll FAQ Knowledge Source (`data/faq/`) and deterministic calculation engine (`engine/payroll/`) for verified numbers, formulas, and rule IDs.
+3. **Response Drafting Agent:** Selects the required approved sentence (C01–C30) and populates rich card schemas with deterministic values.
+4. **Governance / Guard Agent:** Verifies epistemic certainty labels, ensures zero frontend math, blocks cross-employee data leaks, and confirms that approval never resembles payment.
+
+---
+
+## 5. Query Lifecycle State Machine
+
+Employee payroll queries follow an explicit, state-machine driven lifecycle:
+- **`Draft`:** Stored locally in conversation context. Not sent to HR. Can be edited or canceled. Sentence C17 applies if unsent.
+- **`Sent`:** Persisted to runtime store upon user confirmation (C12/C13). Available for HR review. Sentence C15 applies.
+- **`In review`:** HR administrator has taken the query into active review. Sentence C16 applies.
+- **`Resolved`:** HR administrator has recorded an explicit resolution reply. Sentence C23 applies. Employee can accept or dispute.
+- **`Closed`:** Explicitly acknowledged and closed. History retained. Sentence C24 applies.
+
+---
+
+## 6. Information Security and Epistemic Governance
+
+1. **No "Verified" Badges:** The assistant uses standard sender labels without celebratory or unearned trust marks.
+2. **No Technical Leaks:** No screen IDs (`SCR-01`), file paths (`data/generated/...`), sentence codes (`C01`), or rule pointers are shown to users. These exist solely in designer bindings and audit metadata.
+3. **Strict Epistemic Certainty:** Every card carries one of the five approved certainty labels:
+   - `Complete for this scope`
+   - `Incomplete`
+   - `Rule not verified`
+   - `Needs HR decision`
+   - `Cannot explain from available payroll data`
+4. **Approval vs Payment Decoupling:** Proposal approval authorizes records as ready for payroll. It never triggers or implies banking disbursement.
+
+---
 
 ## 7. Exact approved AI copy
 
@@ -345,6 +618,12 @@ Source: [conversation-design.md](../06-ai-interaction/conversation-design.md), S
 > Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice.
 
 The slot requires the accepted declaration’s declared month range. Neither /display_inputs/months comparison periods nor the declaration ID supplies that range. It stays unavailable until the engine exports it. Other words are unchanged from approved C29.
+
+### C30
+
+> Your {later month} take-home is {net change amount} {lower or higher} than {earlier month}. The main recorded reasons are below.
+
+Source: [conversation-design.md](../06-ai-interaction/conversation-design.md), Section 7, A06-07; Example B; Approved DEC-035.
 
 ## 8. Exact generated data bindings
 

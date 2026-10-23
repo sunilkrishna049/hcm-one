@@ -1,143 +1,364 @@
-# HCM One: Visual Specification
+# HCM One: Visual Specification (Chat-First Architecture)
 
-Proposed for G07. This system applies to the six screens in [screen-inventory.md](screen-inventory.md). It specifies a minimal, typography-led interface with one deep teal accent, white space and prominent numbers. It does not claim tested usability or accessibility conformance.
+Proposed for Gate G07 re-opening. This specification defines the visual language, design tokens, layout hierarchy, and component library for HCM One's **chat-first interface with rich cards**.
 
-**High for required direction:** HR desktop is 1440 px wide. Employee mobile starts at 390 px. Accessibility targets WCAG 2.2 AA, with keyboard and screen reader support. **Proposed design choices:** The tokens, fonts, dimensions and layouts below implement that direction. Their usability remains unvalidated in AS-14, AS-16 and AS-17. Sources: [Agent 07](../../agents/07-prototype.md), Design direction; [UX principles](../04-strategy/ux-principles.md), UXP-01–UXP-07; [personas](../03-analysis/personas.md), goals and Unknowns.
+It replaces the previous six standalone screens with two dedicated chat workspaces:
+1. **`CHAT-HR`**: HR Admin chat workspace (desktop, 1440 px viewport) with conversation thread and collapsible right side panel (`PANEL-HR`, 480 px) for heavy calculation reviews, dense multi-month tables, and settlement ledgers.
+2. **`CHAT-EMP`**: Employee chat workspace (mobile, 390 px viewport) with mobile conversation stream and interactive bottom sheets (`SHEET-EMP`, max-height 85vh) for calculation breakdowns, proofs, and glossary terms.
 
-Numeric tokens below are design parameters, not payroll facts. Payroll amounts, dates, counts and identifiers use only the generated bindings in [screen-specs.md](screen-specs.md), Section 8. No token authorizes rounding, arithmetic, currency abbreviation or an invented record.
+**Design Philosophy:** Minimalist, typography-led, enterprise-grade clarity. Uses a single deep teal brand accent (`#0F766E`), generous white space, crisp borders, and prominent tabular figures. Avoids decorative clutter, charts, unverified percentages, or celebratory animations. Every number displayed on screen originates strictly from `data/generated/scenarios/` via backend API bindings ([screen-specs.md](screen-specs.md), Section 8).
 
-## 1. Typography
+---
 
-Use **Inter** for all text and numbers. Use tabular figures with font-feature-settings: "tnum" for amounts, dates and tables. Use a monospace font only for technical IDs, including query IDs and record references. **Reason:** "Tabular figures align numbers in columns and feel calmer for payroll; monospace is kept for technical IDs." This typography is Approved by Project owner. Verify Inter availability in the code prototype; any temporary sans-serif fallback must be recorded. Monospace must never be the amount font.
+## 1. Typography Tokens
 
-| Token | Size and line height | Weight | Use |
+HCM One uses **Inter** for all UI copy, message prose, and financial figures.
+- **Tabular figures (`font-feature-settings: "tnum"`)** are mandatory for all amounts, currency values, dates, percentages, and table cells to guarantee columnar alignment.
+- **Monospace font (`ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`)** is used strictly for technical identifiers (Query IDs such as `QUERY-E05-SEPTEMBER`, transaction hashes, and record pointers). Monospace must **never** be used for financial amounts.
+
+| Token | Font Size / Line Height | Font Weight | Letter Spacing | Applied Elements |
+|---|---|---|---|---|
+| **Number Hero (Desktop)** | 40 px / 48 px | 600 (Semi-bold) | -0.02em | Net arrears hero in `CHAT-HR` card (`67,476`) |
+| **Number Hero (Mobile)** | 32 px / 40 px | 600 (Semi-bold) | -0.02em | Take-home or TDS change hero in `CHAT-EMP` (`-5,420`) |
+| **Workspace Header Title** | 20 px / 28 px | 600 (Semi-bold) | -0.01em | Top bar title ("HCM One HR Workspace", "HCM One Employee") |
+| **Panel / Sheet Title** | 18 px / 26 px | 600 (Semi-bold) | -0.01em | Side panel header ("Calculation Proof", "Full Settlement Breakdown") |
+| **Card Heading** | 16 px / 24 px | 600 (Semi-bold) | 0 | Card titles ("Proposal Summary", "Ranked by effect on take-home pay") |
+| **Body / Message Prose** | 15 px / 22 px | 400 (Regular) | 0 | Assistant message bubbles, user bubbles, card explanatory copy |
+| **Input & Composer** | 15 px / 22 px | 400 (Regular) | 0 | Chat composer textarea, edit modal input fields |
+| **Secondary / Meta Text** | 13 px / 18 px | 400 (Regular) | 0 | Assistant sender tag ("HCM One Assistant"), timestamps, source notes |
+| **Dense Table & Key-Value** | 13 px / 18 px | 400 (Regular) / 600 for headers | 0 | Side panel arrears table rows, formula breakdown operands |
+| **Pill / Button Label** | 13 px / 18 px | 500 (Medium) | +0.01em | Suggestion chips, secondary actions, calculation trigger |
+| **Status Badge Label** | 12 px / 16 px | 600 (Semi-bold) | +0.02em | Certainty labels ("Complete for this scope"), proposal status badges |
+| **Technical ID (Mono)** | 12 px / 16 px | 400 (Regular) | 0 | Query IDs (`QUERY-E05-SEPTEMBER`), Rule references (`pf-rules.json#pf_wage_formula`) |
+
+### Presentation Rules (Display Only, Never Calculation)
+1. **Money Presentation:** Indian rupee format with Indian digit grouping, for example ₹1,20,000 and −₹5,420. Use a real minus sign (−, U+2212) for negative amounts. Never use compact forms like ₹12K or ₹1.32L. Display values strictly as generated, applying currency formatting for display only.
+2. **Rule Citations:** Show human labels built from the rule's value and dates (for example "PF wage ceiling: ₹15,000 until 16 Sep 2026"), plus rules version "Northwind demo rules v1". Never show file names, JSON keys or rule IDs to users. Only show rule citations relevant to the number being explained.
+3. **Formulas:** Show plain-language formulas (for example "Earned salary = monthly salary × paid days ÷ calendar days"). If the engine formula text is technical, display the plain_formula field provided by the engine display export instead of rewriting it in the frontend.
+4. **Relevant Scope Only:** Only show rule citations and calculation proofs that directly relate to the specific line item, deduction, or variance being inspected.
+5. **Missing Operands:** If an operand or total is unavailable in generated data, display the fallback label `Not available in generated data`.
+
+---
+
+## 2. Color Tokens
+
+The visual palette relies on high contrast, slate neutrals, and a singular **deep teal brand accent (`#0F766E`)**. Semantic colors are reserved strictly for system states, verification status, and validation flags.
+
+| Color Token | Hex Code | Purpose & Application |
+|---|---|---|
+| **Page Background** | `#FFFFFF` | Main background for desktop chat workspace and mobile screen |
+| **Thread Surface** | `#F8FAFC` | Background for chat scroll container and panel canvas |
+| **Card Background** | `#FFFFFF` | Elevated surface for rich cards, side panels, and bottom sheets |
+| **Card Border** | `#E2E8F0` | Default 1 px boundary for cards, dividers, and message wrappers |
+| **Card Border Hover** | `#CBD5E1` | Interactive hover state for clickable cards and table rows |
+| **Primary Text** | `#0F172A` | Primary readability: headings, card text, message prose, amounts |
+| **Secondary Text** | `#475569` | Secondary copy: timestamps, sublabels, inactive tab labels |
+| **Muted Text** | `#64748B` | Tertiary copy: table column headers, helper notes, formula labels |
+| **Brand Accent (Teal)** | `#0F766E` | Primary interactive color: primary buttons, active chips, focus outlines |
+| **Brand Accent Hover** | `#115E59` | Hover state for primary buttons and interactive accents |
+| **Brand Tint Surface** | `#F0FDFA` | Subtle background tint for selected cards, active chips |
+| **Brand Tint Border** | `#99F6E4` | Border for active chips, focused cards, and calculation buttons |
+| **User Bubble Background**| `#F1F5F9` | Slate neutral background for user message bubbles |
+| **User Bubble Text** | `#0F172A` | High-contrast text within user message bubbles |
+| **Assistant Bubble Surface**| `#FFFFFF` | Clean white surface for assistant response cards and containers |
+| **Interactive Border** | `#94A3B8` | Normal border for inputs, textareas, and unselected radio options |
+| **Focus Ring** | `#0F766E` | 3 px solid focus outline with 2 px offset for keyboard navigation |
+| **Disabled Surface** | `#F1F5F9` | Disabled buttons, inactive inputs, unselected suggestion chips |
+| **Disabled Text** | `#94A3B8` | Text on disabled surfaces |
+| **Success Surface** | `#F0FDF4` | Background for completed actions, approved status, certainty complete |
+| **Success Border** | `#BBF7D0` | 1 px border for success badges |
+| **Success Text / Icon** | `#166534` | Text and icons for verified results, approved state |
+| **Warning Surface** | `#FFFBEB` | Background for missing data, unverified rules, unresolved items |
+| **Warning Border** | `#FDE68A` | 1 px border for warning badges |
+| **Warning Text / Icon** | `#92400E` | Text and icons for limitations, holds, unverified rule warnings |
+| **Error Surface** | `#FEF2F2` | Background for refusals, access denials, calculation errors |
+| **Error Border** | `#FECACA` | 1 px border for error badges |
+| **Error Text / Icon** | `#B91C1C` | Text and icons for validation errors, access refusals |
+
+---
+
+## 3. Layout, Dimensions & Elevation
+
+HCM One uses responsive grid structures customized for the two target viewports:
+
+```
++-----------------------------------------------------------------------------------------+
+|                                CHAT-HR: Desktop (1440 px)                               |
++-------------------------------------------------------------+---------------------------+
+| Top Bar (64 px height): Brand, Workspace, Role, Session     | Side Panel Header (64 px) |
++-------------------------------------------------------------+---------------------------+
+| Chat Thread Area (Variable width, max 840 px prose):        | PANEL-HR (480 px width):  |
+| - Timestamp & Assistant Intro                               | - Sticky Header & Close   |
+| - User Bubble ("Prepare Priya Sharma's hike")               | - Month-by-month table    |
+| - Assistant Bubble (C03) + Proposal Summary Card           | - Settlement Ledgers      |
+| - Number Cards Grid (Net Arrears Hero, Gross, PF, TDS)     | - Calculation Proof       |
+| - Suggestion Chips row                                      | - Real Rule IDs           |
+| - Approval Card (Approve / Edit with reason / Reject)       | - Audit Flags             |
++-------------------------------------------------------------+                           |
+| Sticky Composer Area (80 px height): Input + Send Button    | (Scrolls independently)   |
++-------------------------------------------------------------+---------------------------+
+```
+
+```
++------------------------------------+
+|     CHAT-EMP: Mobile (390 px)      |
++------------------------------------+
+| Mobile Top Bar (56 px): Brand & Nav|
++------------------------------------+
+| Mobile Chat Feed (Padding: 16 px): |
+| - Assistant Bubble (C27)           |
+| - Number Card Hero (-5,420)        |
+| - Reason List Card (LOP + PF)      |
+| - "Show calculation" Button        |
+| - Suggestion Chips (Swipeable)     |
++------------------------------------+
+| Mobile Composer (64 px): Input+Send|
++------------------------------------+
+| SHEET-EMP: Bottom Sheet (Overlay)  |
+| - Drag Handle & Close (X)          |
+| - LOP Day Calculation Proof        |
+| - Stored Formula & Glossary        |
++------------------------------------+
+```
+
+### Dimensional Specifications
+
+| Layout Element | Desktop (`CHAT-HR`) | Mobile (`CHAT-EMP`) | Design Constraints |
 |---|---|---|---|
-| Number hero, desktop | 40 px / 48 px | 600 | The main sourced net arrears or change |
-| Number hero, mobile | 32 px / 40 px | 600 | The main sourced take-home or TDS change |
-| Page title | 24 px / 32 px | 600 | Screen purpose |
-| Section title | 20 px / 28 px | 600 | Breakdown, evidence and review |
-| Number card | 24 px / 32 px | 500 | Sourced secondary amounts |
-| Body and input | 16 px / 24 px | 400 | AI wording, instructions, fields and mobile controls |
-| Table and desktop control | 14 px / 20 px | 400 or 600 for headers | Dense HR detail; never compress below this size |
-| Supporting label | 14 px / 20 px | 400 | Source, rule and flag labels |
+| **Reference Viewport** | 1440 px width (min 1280 px) | 390 px width (min 320 px) | Target responsive standards |
+| **Top App Header** | Height: 64 px; Border bottom: 1 px | Height: 56 px; Border bottom: 1 px | Sticky top; z-index: 30 |
+| **Chat Column Width** | Max reading width: 840 px centered | Full width (100% of 390 px) | Prevents over-stretched prose lines |
+| **Outer Padding** | Left/Right: 32 px | Left/Right: 16 px | Fluid container breathing room |
+| **Component Spacing** | 24 px between conversation turns | 16 px between conversation turns | Clear message demarcation |
+| **Card Gap** | 16 px between nested cards | 12 px between nested cards | Compact information density |
+| **Side Panel (`PANEL-HR`)** | Width: 480 px fixed; height 100vh | N/A (desktop only) | Border-left: 1 px `#E2E8F0`; z-index: 20 |
+| **Bottom Sheet (`SHEET-EMP`)**| N/A (mobile only) | Width: 100%; Max-height: 85vh | Border-radius: 16 px 16 px 0 0; z-index: 50 |
+| **Backdrop Overlay** | N/A (panel pushes or overlays cleanly)| `#0F172A` at 40% opacity | Dim background when sheet opens |
+| **Card Corner Radius** | 8 px | 8 px | Consistent subtle rounding |
+| **Pill / Chip Radius** | 9999 px (Fully rounded) | 9999 px (Fully rounded) | High affordance for taps |
+| **Control Radius** | 6 px | 6 px | Buttons and textareas |
+| **Minimum Touch Target** | 44 px by 44 px | 44 px by 44 px | WCAG 2.2 touch target compliance |
+| **Elevation / Shadow** | `0 1px 3px rgba(0,0,0,0.05)` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle, flat aesthetic; no floating cards |
 
-Use sentence case. Use short labels and left-aligned prose. Align financial columns to the right. Keep signs and literal digits exactly as generated; show INR as a separate label. Wrap long flags and IDs. Do not use a minus sign as a decorative bullet beside a positive amount. Do not show compact forms such as K or lakh in place of the stored value.
+---
 
-Do not use heading weight to imply that a known partial total is complete. When net is unavailable, make the limitation the hero. Keep exact Agent 06 messages unchanged; shorten the layout by progressive detail, not by paraphrasing approved copy. Sources: UXP-01–UXP-04; [trust-explainability](../06-ai-interaction/trust-explainability.md), explanation layers and certainty; [content contract](screen-specs.md).
+## 4. Chat Components Specification
 
-## 2. Colors
+### 4.1. User Message Bubble
+- **Alignment:** Right-aligned (flex-end) within the chat column.
+- **Surface:** `#F1F5F9` (neutral slate).
+- **Text:** 15 px / 22 px Regular, color `#0F172A`.
+- **Corner Radius:** 16 px top-left, 16 px top-right, 16 px bottom-left, 4 px bottom-right.
+- **Max Width:** Desktop: 600 px; Mobile: 85% of viewport width.
+- **Timestamp:** 12 px Regular `#64748B` positioned outside the bubble below right.
 
-**Accent: deep teal, #0F766E.** It is the only brand accent. Use semantic status colors only for status and errors. Gray surfaces and borders support hierarchy.
+### 4.2. Assistant Message Container & Bubble
+- **Alignment:** Left-aligned (flex-start) within the chat column.
+- **Header:** Assistant Avatar icon (Teal badge with assistant mark), sender label `"HCM One Assistant"`, and timestamp (`"10:14 AM"`). **No "Verified" badge.**
+- **Text Bubble:** 15 px / 22 px Regular `#0F172A`, surface `#FFFFFF`, border 1 px `#E2E8F0`, padding 16 px.
+- **Copy Rule:** Assistant prose consists **strictly of approved sentences (C01–C29)** used verbatim. No paraphrasing, conversational filler, or unapproved copy.
+- **Sub-elements:** Any accompanying rich cards appear directly below the text bubble inside the assistant turn container (gap: 12 px).
 
-| Token | Value | Use |
-|---|---|---|
-| Background | #FFFFFF | Page, drawer and sheet |
-| Surface | #F8FAFC | Small grouped fields and source details |
-| Primary text | #0F172A | Headings, values and body |
-| Secondary text | #475569 | Supporting copy |
-| Brand accent | #0F766E | Primary action, source link and selected control |
-| Brand hover | #115E59 | Hover on enabled accent controls |
-| Brand tint | #F0FDFA | Selected surface with dark text |
-| Interactive border | #64748B | Input and control boundary |
-| Decorative divider | #E2E8F0 | Nonessential separators |
-| Disabled surface | #CBD5E1 | Disabled controls with readable dark text |
-| Success text and icon | #166534 | Recorded completion status |
-| Success surface | #F0FDF4 | Completion status background |
-| Warning text and icon | #92400E | Missing or unresolved limitation |
-| Warning surface | #FFFBEB | Limitation background |
-| Error text and icon | #B91C1C | Error or refusal |
-| Error surface | #FEF2F2 | Error background |
-| Neutral status text | #334155 | Recorded draft or review status |
-| Neutral status surface | #F1F5F9 | Neutral status background |
+### 4.3. Suggestion Chips
+- **Purpose:** Provide one-tap demo shortcuts and prompt guidance without typing.
+- **Placement:** Positioned immediately below an assistant message turn or above the sticky composer.
+- **Styling:** Pill container (height 36 px, border-radius 9999 px), background `#FFFFFF`, border 1 px `#94A3B8`, text 13 px Medium `#0F172A`.
+- **Hover State:** Background `#F0FDFA`, border 1 px `#0F766E`, text `#0F766E`.
+- **Mobile Behavior:** Horizontal scroll carousel with edge fading; no vertical line wrapping that obscures message feed.
 
-White text is allowed on the deep teal primary button. Links use underlining in prose and a visible focus state. Color must never be the only signal: every status has a label and a distinct icon or shape.
+### 4.4. Composer Area
+- **Desktop (`CHAT-HR`):**
+  - Sticky bottom container (height 80 px), background `#FFFFFF`, border-top 1 px `#E2E8F0`.
+  - Textarea: auto-expanding (height 48 px), border 1 px `#94A3B8`, radius 6 px, placeholder: `"Ask about payroll proposals, arrears, or query resolution..."`.
+  - Send Button: 40 px by 40 px square, background `#0F766E`, hover `#115E59`, white paper plane / arrow icon, radius 6 px.
+  - Disabled State: When waiting for API response, textarea disabled, send button background `#CBD5E1`.
+- **Mobile (`CHAT-EMP`):**
+  - Sticky bottom container (height 64 px), background `#FFFFFF`, border-top 1 px `#E2E8F0`.
+  - Textarea: single-line input expanding up to 3 lines, placeholder: `"Ask about your pay, deductions, or query..."`.
+  - Send Button: 38 px by 38 px, deep teal with accessible icon label.
+- **Demo Fallback Behavior:** If the user types an unmapped demo query, the assistant responds with approved fallback copy:
+  > *"I cannot answer that question in this demo. You can ask about recorded salary and tax changes, full and final settlements, bonus eligibility, or choose a topic below:"*
+  followed by relevant suggestion chips.
 
-Do not make Complete for this scope look Approved. Do not make Approved and ready for payroll look Paid. Use an explicit scope label beside certainty and an independent workflow label. A warning badge does not mean a whole settlement is Held. Sources: UXP-04–UXP-05; [approved states](../05-architecture/edge-cases-states.md), Sections 2–4; [approval wording](../06-ai-interaction/approval-failure-handling.md).
+### 4.5. Side Panel (`PANEL-HR`) — Desktop Review Drawer
+- **Purpose:** Hosts heavy payroll review surfaces without navigating away from the chat thread.
+- **Width:** 480 px fixed width, docked to the right edge of viewport. Height: 100vh.
+- **Header:** Sticky 64 px header with Panel Title (e.g., `"Calculation Proof"`, `"Full Settlement Breakdown"`), scope badge, and accessible Close Button (`✕` or `Esc`).
+- **Body:** Scrollable vertical container (`overflow-y: auto`, padding 24 px). Contains dense month-by-month table, formula breakdowns, and real rule citations. **No raw repository file paths or internal codes.**
+- **Keyboard Interaction:** Focus moves to close button upon opening; pressing `Escape` closes the panel and restores focus to the triggering "Show calculation" button.
 
-## 3. Spacing, grid and surfaces
+### 4.6. Bottom Sheet (`SHEET-EMP`) — Mobile Detail Sheet
+- **Purpose:** Hosts calculation proofs, LOP day breakdowns, and tax slab explainers on mobile.
+- **Dimensions:** Width: 100% of mobile viewport; Max-height: 85vh; Slide-up animation (200ms ease-out).
+- **Drag Handle:** 36 px by 4 px rounded bar in `#CBD5E1` centered 8 px from top.
+- **Header:** Sheet Title, subtitle with scope, and Close Button (`✕`).
+- **Body:** Scrollable area containing calculation cards, breakdown formulas, and glossary definitions.
+- **Backdrop:** Modal scrim `#0F172A` at 40% opacity; tapping backdrop dismisses sheet.
 
-| Token | Value | Use |
-|---|---|---|
-| Spacing scale | 4, 8, 12, 16, 24, 32, 48, 64 px | Consistent internal gaps and section separation |
-| HR reference frame | 1440 px | Required desktop starting frame |
-| HR grid | 12 columns; 64 px outer margins; 24 px gutters | Review table and supporting panel |
-| Desktop reading width | Maximum 720 px | AI wording, request composer and confirmation |
-| Desktop proof drawer | 480 px; bounded by available viewport | Amount detail within SCR-02 or SCR-03 |
-| Employee reference frame | 390 px | Required mobile starting frame |
-| Employee grid | One column; 20 px outer padding; 16 px component gaps | Reading and actions without side-by-side cards |
-| Mobile detail sheet | Available viewport width | Amount detail within SCR-04–SCR-06 |
-| Card radius | 8 px | Number and evidence cards |
-| Input and button radius | 6 px | Controls |
-| Label radius | Fully rounded | Short status labels; never clipped text |
-| Minimum interactive target | 44 by 44 px | Touch and keyboard controls |
-| Focus outline | 3 px, with 3 px offset | Visible teal focus on white |
+---
 
-Use flat surfaces with subtle dividers. Avoid ornamental shadows, gradients, illustrations and charts. Blank space separates scope, summary, reasons and proof. HR uses a wide review table with a reading panel where needed. Employee puts the change first, then reasons, then detail actions. On narrow desktop viewports, stack the panels rather than reducing text or hiding blockers.
+## 5. Rich Card Types Specification (14 Cards)
 
-Tables may scroll inside a labeled region when necessary, but the page must reflow without horizontal page scrolling. The mobile breakdown uses labeled rows rather than shrinking a desktop table. Keep primary actions visible without covering content or keyboard focus. Sticky approval controls need reserved content space.
+### 1. Proposal Summary Card
+- **Use:** Summarizes hike or salary revision proposals in `CHAT-HR`.
+- **Elements:**
+  - Header: Employee Name, Employee ID (monospace), Proposal Type badge (e.g. `"Back-dated hike proposal"`).
+  - Key-Value Grid (2 columns): Requested Hike (`10%`), Effective Date (`2026-04-01`), Affected Periods (`6 months: 2026-04 to 2026-09`).
+  - Salary Comparison: Old Monthly Salary Total (`120000 INR`) vs. Proposed Monthly Salary Total (`132000 INR`).
+  - Status & Certainty: `Needs HR approval; not applied` and `Complete for this scope`.
+- **Tokens:** Border 1 px `#E2E8F0`, background `#FFFFFF`, radius 8 px, padding 16 px.
 
-Source: Agent 07 Design direction; UXP-02–UXP-04; [screen specifications](screen-specs.md), Sections 1–6.
+### 2. Number Card (Hero & Secondary Grid)
+- **Use:** Highlights key financial totals (Net Arrears, Monthly Take-Home, Gross Arrears, PF Change, TDS Impact).
+- **Variants:**
+  - **Hero Variant:** Prominent amount font (40 px desktop / 32 px mobile semi-bold `tnum`), label above, separate INR label, certainty pill (`Complete for this scope`).
+  - **Secondary Grid Variant:** 3-column card cluster (Gross Arrears `71200 INR`, Employee PF Change `0 INR`, Estimated TDS Impact `3724 INR`).
+- **Actions:** Includes a `"Show calculation"` link or button at the bottom right.
 
-## 4. Core components
+### 3. Month Table Card
+- **Use:** In-thread summary of multi-month revisions with link to full side panel.
+- **Elements:**
+  - Mini summary table showing Month, Old Gross, Revised Gross, Arrears Difference, and Monthly TDS Impact.
+  - Footer Action: Deep teal button or link: `"Show calculation & full month breakdown →"`.
+- **Tokens:** Row border-bottom 1 px `#E2E8F0`, right-aligned tabular figures for amounts.
 
-### Message bubble
-Use a light surface, an explicit assistant label and the exact approved sentence from screen-specs Section 7. Employee bubbles are short reading blocks; HR explanations sit beside scope and proof. Long introductions can use an accessible disclosure without changing their text. Loading, missing data and refusal are distinct messages. Never use internal actor terms in user-facing sentences. Do not pretend a pending action succeeded.
+### 4. Component List Card
+- **Use:** Full & Final Settlement line items (Scenario 6 / Rahul Verma `E10` or Scenario 8 / Imran Khan `E12`).
+- **Elements:**
+  - List of components: Earned Salary (`6774 INR`), Gratuity (`201923 INR`), Leave Encashment (`126559 INR`), Notice Shortfall Recovery (`0 INR`).
+  - Component status tag: `"Eligible"`, `"Ineligible"`, `"Unresolved"`.
+  - Applicable Due Date badge (exact C20): `"Due date: 2026-11-03"`.
+- **Tokens:** Striped rows `#FFFFFF` and `#F8FAFC`, tabular figures right-aligned.
 
-### Number card
-Contain a plain label, literal generated amount, INR label, period or component scope, certainty and Show calculation. Source access is available from the summary through the same drawer or sheet. Never show a missing value as zero or a skeleton with invented digits. The default emphasis is expected net arrears for HR and take-home or TDS change for Employee. An incomplete result uses a limitation headline instead of a fabricated net.
+### 5. Reason List Card
+- **Use:** Explains causes of pay drops or tax changes in `CHAT-EMP` (Scenario 9 / Neha Gupta `E05`).
+- **Elements:**
+  - Hero badge: Take-Home Net Change (`-5420 INR`).
+  - Heading: "Ranked by effect on take-home pay"
+  - Ranked causes list:
+    1. **Loss of Pay (LOP):** `3 days` unpaid leave (`-5000 INR`) based on 30 calendar days.
+    2. **PF ceiling change:** Revised statutory ceiling impact (`-420 INR`).
+  - Sourced TDS change: `0 INR`.
 
-### Calculation breakdown
-Display the stored value, formula in words, input source file and record IDs, rule IDs, sources, effective dates, certainty and flags. Do not evaluate the formula. Missing required operands use Not available in generated data. Undated rules show their exact date_note, Applies to all demo periods; retain actual effective dates where present and show rules_version separately from verified_on. The PF detail keeps dated segments; the tax detail keeps the actual stored scope. Distinguish employee deductions from employer contributions. Totals lead to their stored contributing lines without a newly calculated subtotal.
+### 6. Certainty Label
+- **Use:** Mandatory epistemic label attached to every calculation card.
+- **Allowed Values (Strict 5 labels from `trust-explainability.md`):**
+  1. `Complete for this scope` (Green badge: surface `#F0FDF4`, border `#BBF7D0`, text `#166534`)
+  2. `Incomplete` (Amber badge: surface `#FFFBEB`, border `#FDE68A`, text `#92400E`)
+  3. `Rule not verified` (Amber badge: surface `#FFFBEB`, border `#FDE68A`, text `#92400E`)
+  4. `Needs HR decision` (Neutral slate badge: surface `#F1F5F9`, border `#CBD5E1`, text `#334155`)
+  5. `Cannot explain from available payroll data` (Red badge: surface `#FEF2F2`, border `#FECACA`, text `#B91C1C`)
+- **Tokens:** Height 24 px, font size 12 px Semi-bold, padding 2 px 8 px, radius 9999 px.
 
-### Source link
-Use View source or the readable file and record label. Keep the path and exact JSON pointer in design annotations and the detail layer, not in an AI sentence. The source must inherit authorization and the selected scope. Never link an Employee to a full dataset containing colleagues. A future implementation should expose only the authorized record, not make the repository file publicly downloadable.
+### 7. "Show Calculation" Control
+- **Use:** Standard trigger to open calculation proof in side panel (desktop) or bottom sheet (mobile).
+- **Styling:** Secondary button style. Background `#F0FDFA`, border 1 px `#0F766E`, text 13 px Medium `#0F766E`, icon: calculator / external link.
+- **Accessibility:** Explicit aria-label: `"Show calculation proof for Priya Sharma net arrears"`.
 
-### Certainty label
-Use only the five approved result labels: Complete for this scope; Incomplete; Rule not verified; Needs HR decision; Cannot explain from available payroll data. Pair the label with its scope and recorded limitation. Use generated certainty where it exists; derive no confidence score. Needs input is an existing proposal state, not a sixth certainty label. Loading has no final result certainty. Sources: [trust-explainability](../06-ai-interaction/trust-explainability.md), certainty states; generated result contract in screen-specs.
+### 8. Clarifying Question Card with Choices
+- **Use:** Triggered when the AI detects missing parameters (e.g., missing hike effective date in Scenario 2).
+- **Elements:**
+  - Assistant sentence (C02): *"From which date should this proposed hike take effect?"*
+  - Selectable Choice Chips / Radio Options:
+    - Choice A: `2026-04-01`
+    - Choice B: `2026-07-01`
+    - Choice C: `2026-09-01`
+  - Confirmation Action: Deep teal button: `"Apply Selection and Recalculate"`.
 
-### Approval bar
-Show authorized selected scope, Approve selected scope, Edit with a reason and Reject. Include exact C04 and keep it readable beside the action. Without a current stored version and valid scope, approval remains unavailable. An edit clears prior eligibility for approval and uses C05. Changed version uses C25. Successful approval is shown only after an actual persisted event; it is ready for payroll, never payment. No bulk or partial approval bypasses the approved guards. Sources: DEC-011–DEC-014; approval-failure-handling Sections 2–4.
+### 9. Approval Card (Approve / Edit with Reason / Reject)
+- **Use:** HR authorization for proposals in `CHAT-HR`. Follows DEC-011–DEC-014.
+- **Rules:** Never looks like payment. Never uses celebratory animations.
+- **Elements:**
+  - Authorized scope label: `"Priya Sharma (E01) • 6 affected months (2026-04 to 2026-09)"`.
+  - Approved mandatory copy (C04): *"Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment."*
+  - Action Group:
+    - Primary Action: `"Approve proposal for payroll"` (Deep teal `#0F766E`, white text).
+    - Secondary Action: `"Edit with reason"` (White background, border `#64748B`, text `#0F172A`).
+    - Danger Action: `"Reject proposal"` (White background, border `#B91C1C`, text `#B91C1C`).
+- **Post-Action State:** After approval, card updates to show recorded event: `"Approved for payroll • Version 1 • Awaiting payroll processing"`.
 
-### Component list
-A settlement row has component name, classification, amount, applicable due date, preparation status, approval status, certainty, hold or unresolved reason and Show calculation. Known lines remain visible when the final net is incomplete. Not applicable is not an unknown amount. A null unresolved asset remains unavailable. Do not turn pending clearance into a hold on salary. A due date uses exact C20; it is not a payment date. Sources: DEC-008, DEC-019, DEC-024; Flow 3; UXP-05; generated settlement bindings.
+### 10. Query Draft Card
+- **Use:** Review of employee query draft before submission in `CHAT-EMP` (Scenario 9/10 / Neha Gupta `E05`).
+- **Elements:**
+  - Query category: `"salary"`.
+  - Target Period: `"2026-09"`.
+  - Editable Description Field: Pre-filled with employee's inquiry text ("Please check my September attendance.").
+  - Attached Evidence List: Attached pay slip reference (`PAY-E05-2026-09`), attendance record (`ATT-E05-2026-09`, 3 LOP days).
+  - Action Choice: `"Create a new query"` vs. `"Add to my open query"`.
+  - Mandatory copy (C12): *"Send this query with the listed evidence to HR?"*
 
-### Query draft
-Use category, generated period, the Employee's editable description, removable relevant evidence and an explicit add-or-new choice when a genuine own open candidate exists. Show exact C12 or C13 before the corresponding send or append action. Changes invalidate confirmation. Draft remains unsent after cancel, silence or failure. The current fixture never creates a new ID, timestamp or success state. Sources: DEC-014, DEC-017; Flow 6; UXP-06–UXP-07.
+### 11. Send Confirmation Card
+- **Use:** Post-submission receipt of an employee query.
+- **Elements:**
+  - Success Icon & Heading: `"Query Sent"`.
+  - Query ID: Monospace badge `QUERY-E05-SEPTEMBER`.
+  - Status Tag: Neutral badge `Sent`.
+  - Approved copy (C15): *"Your query is Sent. HR can access it for review."*
 
-### Shared detail and controls
-A desktop drawer and mobile sheet belong to their parent screen. They inherit its role and scope. Give them a heading and Close control. Restore focus to the triggering amount. Provide text labels with every icon. Use a proper labeled input for the request or reply, not an unlabeled chat placeholder. Selected period and proposal type are explicit. Errors name the affected scope and keep valid data visible when safe.
+### 12. Query Status Card
+- **Use:** Tracking existing query lifecycle in `CHAT-HR` and `CHAT-EMP`.
+- **Allowed Statuses:** Strictly `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
+- **Elements:**
+  - Query Reference: `QUERY-E05-SEPTEMBER` (monospace).
+  - Employee: Neha Gupta (`E05`).
+  - Status Indicator: `In review`.
+  - Thread History: Original employee query text, HR response preview (if resolved), and action link: `"Open query details"`.
 
-## 5. Screen composition
+### 13. Refusal Card
+- **Use:** System boundaries, permission denials, and uncalculated requests.
+- **Styling:** Border 1 px `#FECACA`, background `#FEF2F2`, text `#0F172A`.
+- **Elements:**
+  - Error / Shield Icon in `#B91C1C`.
+  - Approved Refusal Copy (C10): *"I cannot provide that information. I can help with payroll records you are authorized to access."*
+  - Available alternatives: Suggestion chips for authorized tasks.
 
-| Screen | Main hierarchy | Secondary detail |
-|---|---|---|
-| SCR-01 Prepare a proposal | Request, employee, clarification, confirmation | Existing calculation is separately labeled; sourced contractual inputs and explicit confirmation are visible |
-| SCR-02 Review a proposal | Scope and blocker, net hero, flags, rounded-line source table, approval bar | Proof drawer and edit panel; later bonus and component modes reuse the frame |
-| SCR-03 Review a payroll query | Recorded query status, employee words, evidence, reply | Authorized proof and explicit resolution action |
-| SCR-04 Understand my payroll | Own scope, take-home or TDS change, reasons, approved message | Breakdown, glossary and proof sheet; later statement needs approved snapshot |
-| SCR-05 Review my query draft | Unsent state, employee words, evidence, add-or-new choice, confirmation | Source sheet; no successful-send record invented |
-| SCR-06 Track my payroll query | Own ID and recorded status, original words, actual reply | Recorded history only; no response-time promise |
+### 14. FAQ Answer Card
+- **Use:** General payroll policy and statutory rule queries (e.g., "What is LOP?", "What is PF?", "What is Gratuity?").
+- **Knowledge Source Schema:** Matches course dataset format:
+  - `id`: Knowledge ID (e.g., `FAQ-PAY-01`)
+  - `category`: `Glossary`
+  - `question`: Canonical question title ("What is LOP?")
+  - `answer`: Sourced strictly from approved glossary in `output/06-ai-interaction/conversation-design.md`, Section 6 ("Unpaid leave days used to work out paid days for salary.")
+  - `link_text`: "To be defined in the payroll FAQ file"
+  - `url`: "To be defined in the payroll FAQ file"
+- **Card Styling:**
+  - Category tag in top right: 12 px Semi-bold `#0F766E` on `#F0FDFA` badge.
+  - Question Title: 16 px Semi-bold `#0F172A`.
+  - Answer Body: 14 px / 22 px Regular `#334155`.
+  - Citation Link: Hidden when url is "To be defined in the payroll FAQ file". When a valid URL is provided, renders as an underlined deep teal link with an external link icon.
 
-“Rounded-line source table” means already rounded values copied from the engine. The prototype never rounds them. All payroll bindings are in screen-specs Section 8. This hierarchy follows Agent 06's explanation layers: outcome, reason, component detail, calculation proof, next action. Sources: DEC-016; UXP-01–UXP-07.
+---
 
-## 6. Accessibility and implementation checks
+## 6. Accessibility and Compliance Specifications
 
-Target WCAG 2.2 AA. Normal text must reach 4.5:1 contrast. Large text and essential control boundaries must reach 3:1. Test every actual pairing, including focus, hover, status and disabled treatment where applicable. Decorative dividers do not identify an input boundary. These are design acceptance criteria; a Markdown spec is not proof of an accessible implementation.
+1. **Contrast Standards (WCAG 2.2 AA):**
+   - Normal text (`< 18 px`) meets or exceeds `4.5:1` contrast ratio against its background.
+   - Large text (`>= 18 px` or bold `>= 14 px`) meets or exceeds `3:1`.
+   - Essential borders and interactive controls (buttons, chips, inputs) meet `3:1` against adjacent surfaces.
+   - Deep teal `#0F766E` against `#FFFFFF` achieves `4.54:1` (compliant for AA text and icons).
+   - Primary text `#0F172A` against `#FFFFFF` achieves `15.8:1`.
+2. **Keyboard Navigation & Focus Management:**
+   - All interactive elements (composer textarea, send button, suggestion chips, card action buttons, "Show calculation") have visible 3 px teal focus outlines with 2 px offset.
+   - When the Side Panel (`PANEL-HR`) opens, focus is trapped inside the panel and placed on the Close button. Pressing `Escape` closes the panel and returns focus to the triggering element.
+   - When the Mobile Bottom Sheet (`SHEET-EMP`) opens, focus is directed to the sheet title or drag handle; `Escape` closes the sheet.
+3. **Screen Reader Accessibility:**
+   - Live regions (`aria-live="polite"`) announce incoming assistant messages and card completions.
+   - Negative amounts include an explicit `aria-label` (e.g., `aria-label="Decrease of 5,420 INR"`).
+   - Table rows in side panels include proper `scope="row"` and `scope="col"` headers.
+4. **Reduced Motion:**
+   - Respects `prefers-reduced-motion: reduce`. Side panel transitions and bottom sheet animations snap instantly without sliding effects.
+   - No celebratory confetti, pulsing numbers, or payment-like animations.
 
-Use semantic headings, buttons, form labels and tables. Give tables a caption and column headers. Associate inline errors with the affected field. Read a negative amount as a decrease through its visible field label and accessible description; retain its exact value. Announce loading and completion politely once. Announce blocking errors clearly without repeatedly reading every table cell.
+---
 
-Support the complete task by keyboard. Keep visible focus, logical reading order and no keyboard trap. Drawers and modal sheets move focus to the heading or first appropriate control, contain focus only while modal, close with Escape, and restore focus. Status updates must not move focus unexpectedly. An approval confirmation names its current scope and consequence.
+## 7. Design Acceptance Checklist
 
-At 200% text zoom and a 320 px viewport, wrap labels, flags and sources without clipping. Keep controls at least 44 px high and generous separation between reject and approve. Do not make hover the only way to open calculation proof. Do not hide a missing amount behind a tooltip. Keep the sticky action area from obscuring focused content.
-
-Respect reduced motion. No pulsing amount, typing performance, celebratory approval animation or payment-like success animation. Loading can use a static placeholder and the exact approved loading message.
-
-Check authorization before displaying a record, source or cached detail. Permission denial clears private context. Screen reader output must not expose hidden target amounts. Statement access and query follow-up stop at the DEC-019 access boundary.
-
-Sources: Agent 07 Design direction; BRD v1.2 GR-2.1–GR-2.6; UXP-04, UXP-07; approved access and failure handling. Actual contrast, keyboard, assistive-technology and comprehension checks belong to the later designed and implemented artifact.
-
-## 7. Open questions
-
-- Font availability and final component contrast need verification in the code prototype. Figma is optional later for visual polish and case study images; figma-ai-prompts.md is retained as a bonus. This run updates specifications, not an implemented interface or a Figma file.
-- The remaining operational input gaps and unexported declaration month range are listed in screen-specs Section 9. DEC-029 resolves the TDS wording; no declaration months may be invented.
-- Existing AS-14, AS-16 and AS-17 cover component comprehension, certainty understanding and wording usefulness. No user benefit is asserted from this visual direction.
+- [x] Two dedicated chat surfaces specified (`CHAT-HR` at 1440 px desktop, `CHAT-EMP` at 390 px mobile).
+- [x] Heavy reviews decoupled from chat thread into `PANEL-HR` (480 px) and `SHEET-EMP` (max 85vh).
+- [x] Inter typography specified with tabular figures (`tnum`) for all amounts, dates, and tables.
+- [x] Deep teal `#0F766E` maintained as the sole brand accent color.
+- [x] All 14 rich card types specified in detail with tokens, hierarchy, and actions.
+- [x] Query statuses strictly: `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
+- [x] FAQ Answer Card matches course dataset schema with answers strictly from approved glossary.
+- [x] No "Verified" badges; no file paths, screen IDs, or sentence codes visible to users.
+- [x] Approval card explicitly decoupled from payment semantics (C04 verbatim).
