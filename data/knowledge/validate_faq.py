@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 
 ALLOWED_AUDIENCES = {"employee", "hr", "both"}
@@ -11,6 +12,21 @@ ALLOWED_URLS = {
     ""
 }
 REQUIRED_FIELDS = ["id", "category", "question", "answer", "link_text", "url", "audience", "source"]
+
+BANNED_ANSWER_PATTERNS = [
+    r"\bcode\b",
+    r"\bcalculation code\b",
+    r"\bsystem\b",
+    r"\bconfiguration\b",
+    r"\bconfigured\b",
+    r"\bdependency\b",
+    r"\bdependencies\b",
+    r"\bdependent total\b",
+    r"\bscope\b",
+    r"\bpersisted\b",
+    r"\bthe user\b",
+    r"\bmathematical readiness\b",
+]
 
 def validate_faq():
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -76,6 +92,12 @@ def validate_faq():
         digits_found = [c for c in answer if c.isdigit()]
         if digits_found:
             errors.append(f"[{qid}] Answer contains digit(s) {digits_found}: '{answer}'")
+
+        # Check no banned technical or internal terms in answer
+        for pattern in BANNED_ANSWER_PATTERNS:
+            match = re.search(pattern, answer, re.IGNORECASE)
+            if match:
+                errors.append(f"[{qid}] Answer contains banned term '{match.group(0)}': '{answer}'")
 
         # Check source points to existing file
         src = q.get("source", "")
