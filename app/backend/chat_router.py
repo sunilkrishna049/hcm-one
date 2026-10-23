@@ -280,6 +280,11 @@ class ChatRouter:
         sc = bridge.get_scenario(1)
         r = sc["result"]
         t = r["totals"]
+        disp = sc.get("display_inputs", {})
+        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value", 120000)
+        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 132000)
+        hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
+        eff_date = disp.get("effective_date", {}).get("value", "2026-04-01")
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -294,11 +299,11 @@ class ChatRouter:
                         "employee_name": "Priya Sharma",
                         "employee_id": "E01",
                         "proposal_type": "Back-dated hike proposal",
-                        "requested_hike": "10%",
-                        "effective_date": "2026-04-01",
-                        "affected_periods": "6 months (2026-04 to 2026-09)",
-                        "old_monthly_salary_total": 120000,
-                        "proposed_monthly_salary_total": 132000,
+                        "requested_hike": f"{hike_pct}%",
+                        "effective_date": eff_date,
+                        "affected_periods": f"{len(r.get('months', []))} months ({r.get('months', [{}])[0].get('month')} to {r.get('months', [{}])[-1].get('month')})",
+                        "old_monthly_salary_total": old_sal,
+                        "proposed_monthly_salary_total": prop_sal,
                         "status": r.get("proposal_status", "Needs HR approval; not applied")
                     }
                 },
@@ -385,6 +390,11 @@ class ChatRouter:
         sc = bridge.get_scenario(2)
         r = sc["result"]
         t = r["totals"]
+        disp = sc.get("display_inputs", {})
+        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value", 36000)
+        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 39600)
+        hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
+        eff_date = disp.get("effective_date", {}).get("value", "2026-08-01")
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -399,11 +409,11 @@ class ChatRouter:
                         "employee_name": "Arjun Rao",
                         "employee_id": "E02",
                         "proposal_type": "Back-dated hike proposal",
-                        "requested_hike": "6%",
-                        "effective_date": "2026-09-01",
-                        "affected_periods": "1 month (2026-09)",
-                        "old_monthly_salary_total": 20000,
-                        "proposed_monthly_salary_total": 21200,
+                        "requested_hike": f"{hike_pct}%",
+                        "effective_date": eff_date,
+                        "affected_periods": f"{len(r.get('months', []))} months ({r.get('months', [{}])[0].get('month')} to {r.get('months', [{}])[-1].get('month')})",
+                        "old_monthly_salary_total": old_sal,
+                        "proposed_monthly_salary_total": prop_sal,
                         "status": r.get("proposal_status", "Needs HR approval; not applied")
                     }
                 },
@@ -466,6 +476,8 @@ class ChatRouter:
     def _build_scenario_3(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(3)
         r = sc["result"]
+        aug_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-08"), 4800)
+        sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), 4800)
         return {
             "messages": [
                 {"code": "C07", "text": "The required attendance record for 2026-07 is missing. I cannot explain a complete result for this scope."}
@@ -493,8 +505,8 @@ class ChatRouter:
                         "hero_label": "Expected net arrears",
                         "hero_amount": None,
                         "gross_arrears": None,
-                        "august_diff": 4800,
-                        "september_diff": 4800,
+                        "august_diff": aug_diff,
+                        "september_diff": sep_diff,
                         "note": "July attendance missing"
                     }
                 },
@@ -817,6 +829,8 @@ class ChatRouter:
     def _build_scenario_8(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(8)
         r = sc["result"]
+        c = r.get("components", {})
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 56667)
         return {
             "messages": [
                 {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
@@ -844,7 +858,7 @@ class ChatRouter:
                         "hero_label": "Final Net",
                         "hero_amount": None,
                         "components": [
-                            {"name": "Notice Shortfall Recovery", "amount": 56667, "status": "Verified"},
+                            {"name": "Notice Shortfall Recovery", "amount": notice_amt, "status": "Verified"},
                             {"name": "Asset Recovery", "amount": None, "status": "Unresolved"}
                         ]
                     }
@@ -889,6 +903,13 @@ class ChatRouter:
     def _build_scenario_9(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(9)
         r = sc["result"]
+        after_net = r["after"]["net_pay"]["value"]
+        before_net = r["before"]["net_pay"]["value"]
+        net_change = r["net_change"]["value"]
+        reasons_list = r.get("reasons", [])
+        lop_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -5000
+        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -420
+        tds_chg = r.get("tds_change", {}).get("value", 0)
         return {
             "messages": [
                 {"code": "C30", "text": "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."},
@@ -902,10 +923,10 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "September Take-Home",
-                        "hero_amount": 42780,
-                        "net_change": -5420,
+                        "hero_amount": after_net,
+                        "net_change": net_change,
                         "previous_month_label": "August Take-Home",
-                        "previous_month_amount": 48200
+                        "previous_month_amount": before_net
                     }
                 },
                 {
@@ -914,12 +935,12 @@ class ChatRouter:
                     "title": "Ranked by effect on take-home pay",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "net_change": -5420,
+                        "net_change": net_change,
                         "reasons": [
-                            {"cause": "Loss of Pay (LOP)", "detail": "3 days unpaid leave", "amount": -5000},
-                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": -420}
+                            {"cause": "Loss of Pay (LOP)", "detail": "3 days unpaid leave", "amount": lop_amt},
+                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
                         ],
-                        "tds_change": 0
+                        "tds_change": tds_chg
                     }
                 },
                 {
@@ -963,6 +984,11 @@ class ChatRouter:
     def _build_scenario_10(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(10)
         r = sc["result"]
+        after_tds = r["after"]["tds"]["amount"]["value"]
+        tds_increase = r["tds_change"]["value"]
+        reasons_list = r.get("reasons", [])
+        prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -12454
+        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -560
         return {
             "messages": [
                 {"code": "C30", "text": "Your September take-home is ₹13,014 lower than August. The main recorded reasons are below."},
@@ -977,8 +1003,8 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "September TDS Deduction",
-                        "hero_amount": 16043,
-                        "tds_increase": 12454
+                        "hero_amount": after_tds,
+                        "tds_increase": tds_increase
                     }
                 },
                 {
@@ -988,8 +1014,8 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "reasons": [
-                            {"cause": "Prior employer declaration", "detail": "Declared income added to yearly projection", "amount": -12454},
-                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": -560}
+                            {"cause": "Prior employer declaration", "detail": "Declared income added to yearly projection", "amount": prior_tds_amt},
+                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
                         ]
                     }
                 },
@@ -1033,6 +1059,9 @@ class ChatRouter:
     def _build_scenario_11(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(11)
         r = sc["result"]
+        net_change = r.get("net_change", {}).get("value", -420)
+        reasons_list = r.get("reasons", [])
+        pf_amt = reasons_list[0].get("effect_amount", {}).get("value", -420) if reasons_list else -420
         return {
             "messages": [
                 {"code": "C30", "text": "Your September take-home is ₹420 lower than August. The main recorded reasons are below."},
@@ -1047,7 +1076,7 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "Take-Home Net Change",
-                        "hero_amount": -420,
+                        "hero_amount": net_change,
                         "earnings_status": "No salary earning component change"
                     }
                 },
@@ -1058,7 +1087,7 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "reasons": [
-                            {"cause": "PF ceiling change", "detail": "PF deduction increased by ₹420 due to 17 Sep statutory ceiling revision", "amount": -420}
+                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
                         ]
                     }
                 },
@@ -1106,6 +1135,8 @@ class ChatRouter:
         sc = bridge.get_scenario(13)
         r = sc["result"]
         c = r["components"]
+        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 56667)
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -1131,9 +1162,9 @@ class ChatRouter:
                     "data": {
                         "hero_label": "Final Net",
                         "hero_amount": None,
-                        "known_recoveries_subtotal": 56667,
+                        "known_recoveries_subtotal": recov_subtotal,
                         "components": [
-                            {"name": "Notice Shortfall Recovery", "amount": 56667, "status": "Verified"},
+                            {"name": "Notice Shortfall Recovery", "amount": notice_amt, "status": "Verified"},
                             {"name": "Asset Recovery", "amount": None, "status": "Unresolved"}
                         ]
                     }

@@ -123,7 +123,7 @@ Run all test suites across engine, backend, frontend, and knowledge validation:
 # 1. Calculation Engine Tests (74 passed)
 engine\.venv\Scripts\pytest.exe engine/tests -q
 
-# 2. Backend API & Chat Endpoint Tests (28 passed)
+# 2. Backend API & Chat Provenance Tests (42 passed)
 app\backend\.venv\Scripts\python.exe -m pytest app/backend/tests -q
 
 # 3. Frontend Chat & Scenario Guard Tests (10 passed)

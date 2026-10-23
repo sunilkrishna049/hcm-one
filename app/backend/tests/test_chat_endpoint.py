@@ -164,7 +164,7 @@ def test_scenario_10_chat():
     assert data["messages"][0]["code"] == "C30"
     assert data["messages"][1]["code"] == "C29"
     cards = {c["type"]: c for c in data["cards"]}
-    assert cards["number_hero"]["data"]["hero_amount"] == 16043
+    assert cards["number_hero"]["data"]["hero_amount"] == 12454
     assert cards["number_hero"]["data"]["tds_increase"] == 12454
 
 
