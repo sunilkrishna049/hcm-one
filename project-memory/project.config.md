@@ -22,6 +22,7 @@
 - Frontend application: app/frontend/
 - Frontend design system: app/frontend/src/design-system/
 - Prototype screenshots: app/screenshots/
+- Payroll FAQ: data/knowledge/payroll_faq.json
 
 ## Agent Sequence
 | # | Agent | Skills | Output folder | Gate |

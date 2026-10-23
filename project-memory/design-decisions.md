@@ -355,4 +355,14 @@
 - Status: Approved
 - Approved by: Project owner
 
+- ID: DEC-036
+- Date: 2026-10-23
+- Decision: General payroll questions are answered from data/knowledge/payroll_faq.json, in the course FAQ format, built only from approved content.
+- Options considered: (a) Allow AI model to answer general payroll questions from unstructured weights or ad-hoc prompts, (b) Restrict general payroll Q&A to a curated, validated knowledge file in the course dataset format containing 30 entries built strictly from approved project sources with zero digits, verified sources, and explicit action links.
+- Reason: Enforces strict epistemic boundaries and avoids hallucination. Answers are limited to approved glossary definitions, certainty label meanings, query lifecycle steps, settlement rules, and privacy guardrails. All answers use simple English without numbers or personal advice.
+- Evidence or source: Project owner instruction, 2026-10-23; [payroll_faq.json](../data/knowledge/payroll_faq.json); [validate_faq.py](../data/knowledge/validate_faq.py); [conversation-design.md](../output/06-ai-interaction/conversation-design.md) Section 6; [trust-explainability.md](../output/06-ai-interaction/trust-explainability.md) Section 4 & 6; [Payroll_brd_v1.2.md](../input/requirements/Payroll_brd_v1.2.md) Section 8.
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
 

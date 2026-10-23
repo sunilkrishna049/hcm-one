@@ -1,0 +1,319 @@
+{
+  "schema_version": "1.0",
+  "dataset_name": "HCM One Payroll FAQ",
+  "language": "en-IN",
+  "updated_on": "2026-10-23",
+  "total_questions": 30,
+  "fields": [
+    "id",
+    "category",
+    "question",
+    "answer",
+    "link_text",
+    "url",
+    "audience",
+    "source"
+  ],
+  "questions": [
+    {
+      "id": "FAQ-PAY-01",
+      "category": "Glossary",
+      "question": "What is LOP?",
+      "answer": "Unpaid leave days used to work out paid days for salary.",
+      "link_text": "Show my latest payslip change",
+      "url": "/chat?action=explain-salary",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-02",
+      "category": "Glossary",
+      "question": "What is PF?",
+      "answer": "Provident Fund contribution recorded in payroll, based on the applicable PF wage and rule.",
+      "link_text": "Show my latest payslip change",
+      "url": "/chat?action=explain-salary",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-03",
+      "category": "Glossary",
+      "question": "What is EPF?",
+      "answer": "The provident fund part of the employer contribution after the pension share.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-04",
+      "category": "Glossary",
+      "question": "What is EPS?",
+      "answer": "The pension share of the employer contribution to provident fund.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-05",
+      "category": "Glossary",
+      "question": "What is TDS?",
+      "answer": "Tax deducted through payroll in monthly parts toward expected yearly tax.",
+      "link_text": "Show my TDS change",
+      "url": "/chat?action=explain-tds",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-06",
+      "category": "Glossary",
+      "question": "What are salary arrears?",
+      "answer": "The difference between revised earned salary and what was actually paid for past periods.",
+      "link_text": "Show my latest payslip change",
+      "url": "/chat?action=explain-salary",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-07",
+      "category": "Glossary",
+      "question": "What is Gratuity?",
+      "answer": "A settlement payment that applies only when the employee meets the configured eligibility rule.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-08",
+      "category": "Glossary",
+      "question": "What is leave encashment?",
+      "answer": "An amount for eligible unused leave, worked out under the company recorded settings.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-09",
+      "category": "Glossary",
+      "question": "What is notice recovery?",
+      "answer": "An amount recoverable for unserved notice when recorded terms permit it and notice was not waived.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-10",
+      "category": "Understanding your pay",
+      "question": "Why did my take-home pay change?",
+      "answer": "Take-home pay can change due to unpaid leave, revised statutory ceilings, salary revisions, or changed tax deductions. The assistant explains recorded differences by comparing your payslips.",
+      "link_text": "Show my latest payslip change",
+      "url": "/chat?action=explain-salary",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 7"
+    },
+    {
+      "id": "FAQ-PAY-11",
+      "category": "Understanding your pay",
+      "question": "Can HCM One predict my pay for next month?",
+      "answer": "No. The assistant explains only recorded months. It cannot promise future pay because upcoming pay depends on future attendance and inputs.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 8"
+    },
+    {
+      "id": "FAQ-PAY-12",
+      "category": "Understanding your pay",
+      "question": "Why is my bank deposit different from my payslip?",
+      "answer": "The assistant can explain only payroll records and cannot inspect your bank account. If your bank credit differs from your net pay, you can submit a query for HR.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-13",
+      "category": "Understanding your pay",
+      "question": "What does Incomplete mean?",
+      "answer": "A required record, input, or dependency is missing, so a full total cannot be calculated. Known line items may be shown while the full total waits for records.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "both",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 4"
+    },
+    {
+      "id": "FAQ-PAY-14",
+      "category": "Understanding your pay",
+      "question": "What does Cannot explain from available payroll data mean?",
+      "answer": "Available records do not establish the cause of a difference or dispute. When this occurs, the assistant offers to draft a query for HR.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "both",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 4"
+    },
+    {
+      "id": "FAQ-PAY-15",
+      "category": "Tax (TDS)",
+      "question": "Can the assistant recommend which tax regime I should choose?",
+      "answer": "No. The assistant explains the tax recorded in your payroll under your chosen regime. It cannot recommend a tax regime or provide personal tax advice.",
+      "link_text": "Show my TDS change",
+      "url": "/chat?action=explain-tds",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 5"
+    },
+    {
+      "id": "FAQ-PAY-16",
+      "category": "Tax (TDS)",
+      "question": "Why did my monthly TDS deduction increase?",
+      "answer": "Monthly TDS can rise if your estimated yearly taxable income increases, such as when you declare income from a previous employer or receive a salary revision.",
+      "link_text": "Show my TDS change",
+      "url": "/chat?action=explain-tds",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 7"
+    },
+    {
+      "id": "FAQ-PAY-17",
+      "category": "Queries",
+      "question": "How does the payroll query process work?",
+      "answer": "You review and confirm a draft with relevant payslip lines before it is sent. HR reviews the query, records a resolution, and you can close or dispute it.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 7"
+    },
+    {
+      "id": "FAQ-PAY-18",
+      "category": "Queries",
+      "question": "What do the query statuses mean?",
+      "answer": "Draft is unsent on your device. Sent means persisted for HR review. In review means HR is reviewing it. Resolved provides an answer, and Closed completes it.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "both",
+      "source": "output/06-ai-interaction/conversation-design.md Section 7"
+    },
+    {
+      "id": "FAQ-PAY-19",
+      "category": "Queries",
+      "question": "Can the assistant send a query to HR without my confirmation?",
+      "answer": "No. The assistant prepares a draft with your description and evidence, but will send it only after you explicitly confirm.",
+      "link_text": "Draft a query for HR",
+      "url": "/chat?action=draft-query",
+      "audience": "employee",
+      "source": "input/requirements/Payroll_brd_v1.2.md Section 8"
+    },
+    {
+      "id": "FAQ-PAY-20",
+      "category": "Approvals and payments",
+      "question": "Does approving a proposal mean payment is made?",
+      "answer": "No. Approving records that version and scope as ready for payroll. It does not apply the change or make a disbursement.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/approval-failure-handling.md Section 2"
+    },
+    {
+      "id": "FAQ-PAY-21",
+      "category": "Approvals and payments",
+      "question": "Can the AI assistant approve a payroll change?",
+      "answer": "No. The assistant only prepares calculations and explains records. Every salary change requires human review and approval by authorized HR.",
+      "link_text": "See what HCM One can do",
+      "url": "/chat?action=intro",
+      "audience": "both",
+      "source": "input/requirements/Payroll_brd_v1.2.md Section 8"
+    },
+    {
+      "id": "FAQ-PAY-22",
+      "category": "Approvals and payments",
+      "question": "What happens if a proposal is edited after review?",
+      "answer": "Editing creates a revised version. The system recalculates all affected amounts, and authorized HR must review the new version before approving.",
+      "link_text": "",
+      "url": "",
+      "audience": "hr",
+      "source": "output/06-ai-interaction/approval-failure-handling.md Section 3"
+    },
+    {
+      "id": "FAQ-PAY-23",
+      "category": "Approvals and payments",
+      "question": "What does Complete for this scope mean?",
+      "answer": "It means required inputs and verified rules were available to calculate that specific result. It does not mean the proposal has been approved or paid.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 4"
+    },
+    {
+      "id": "FAQ-PAY-24",
+      "category": "Approvals and payments",
+      "question": "What does Rule not verified mean?",
+      "answer": "A required statutory or company rule is missing or unverified, so that calculation part is blocked. The result cannot be calculated until verified configuration is supplied.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 4"
+    },
+    {
+      "id": "FAQ-PAY-25",
+      "category": "Settlement",
+      "question": "What does an applicable due date mean in a settlement?",
+      "answer": "An applicable due date is the target deadline for a specific settlement component under policy or statutory rules. It does not mean money has been paid.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "project-memory/design-decisions.md DEC-008"
+    },
+    {
+      "id": "FAQ-PAY-26",
+      "category": "Settlement",
+      "question": "Can pending asset clearance hold my earned salary?",
+      "answer": "No. Clearance holds never hold earned monthly salary. Pending clearance applies only to unreturned equipment or recovery items.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "project-memory/design-decisions.md DEC-013"
+    },
+    {
+      "id": "FAQ-PAY-27",
+      "category": "Settlement",
+      "question": "How long can exiting employees access settlement information in HCM One?",
+      "answer": "Settlement statements and query features remain accessible in the app while the employee has active login access. Later delivery uses company exit channels.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "project-memory/design-decisions.md DEC-019"
+    },
+    {
+      "id": "FAQ-PAY-28",
+      "category": "Privacy and access",
+      "question": "Can employees see other people salary or tax details?",
+      "answer": "No. Strict access boundaries prevent employees from viewing any records other than their own. The assistant refuses unauthorized requests.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "input/requirements/Payroll_brd_v1.2.md Section 8"
+    },
+    {
+      "id": "FAQ-PAY-29",
+      "category": "Privacy and access",
+      "question": "Are personal identification numbers visible in the assistant?",
+      "answer": "No. Sensitive identifiers such as permanent account numbers and bank accounts are masked or hidden to protect privacy.",
+      "link_text": "",
+      "url": "",
+      "audience": "both",
+      "source": "input/requirements/Payroll_brd_v1.2.md Section 8"
+    },
+    {
+      "id": "FAQ-PAY-30",
+      "category": "About HCM One",
+      "question": "What is HCM One and what data does it use?",
+      "answer": "HCM One is an agentic payroll assistant that explains calculations and prepares review drafts. It operates on fictional company data with simplified rules.",
+      "link_text": "See what HCM One can do",
+      "url": "/chat?action=intro",
+      "audience": "both",
+      "source": "output/06-ai-interaction/trust-explainability.md Section 6"
+    }
+  ]
+}
