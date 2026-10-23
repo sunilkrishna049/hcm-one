@@ -32,6 +32,7 @@ AI_MESSAGES = {
     "C27": "Would you like the earnings and deductions breakdown?",
     "C28": "The available payroll records do not explain this difference. I can help draft a query for HR.",
     "C29": "Your TDS is higher because you declared income from your previous employer for {declared_months}. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice.",
+    "C30": "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
 }
 
 

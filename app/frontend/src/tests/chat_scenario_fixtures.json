@@ -1,0 +1,1242 @@
+{
+  "1": {
+    "messages": [
+      {
+        "code": "C03",
+        "text": "This is a proposal for the recorded affected months."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-prop-s1",
+        "type": "proposal_summary",
+        "title": "Proposal Summary",
+        "certainty": "Complete for this scope",
+        "data": {
+          "employee_name": "Priya Sharma",
+          "employee_id": "E01",
+          "proposal_type": "Back-dated hike proposal",
+          "requested_hike": "10%",
+          "effective_date": "2026-04-01",
+          "affected_periods": "6 months (2026-04 to 2026-09)",
+          "old_monthly_salary_total": 120000,
+          "proposed_monthly_salary_total": 132000,
+          "status": "Needs HR approval; not applied"
+        }
+      },
+      {
+        "id": "card-numbers-s1",
+        "type": "number_cards",
+        "title": "Arrears & Tax Breakdown",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Expected net arrears",
+          "hero_amount": 67476,
+          "gross_arrears": 71200,
+          "employee_pf_change": 0,
+          "estimated_tds_impact": 3724,
+          "arrears_only_tds_impact": 1852,
+          "recurring_salary_tds_impact": 1872,
+          "payment_month": "2026-10",
+          "estimate_flag": "Estimated TDS if approved and paid in October 2026 payroll"
+        }
+      },
+      {
+        "id": "card-months-s1",
+        "type": "month_table",
+        "title": "Affected Months Summary",
+        "certainty": "Complete for this scope",
+        "data": {
+          "months": [
+            {
+              "month": "2026-04",
+              "old_gross": 120000,
+              "revised_gross": 132000,
+              "diff": 12000,
+              "tds_impact": 312,
+              "paid_days": 30
+            },
+            {
+              "month": "2026-05",
+              "old_gross": 120000,
+              "revised_gross": 132000,
+              "diff": 12000,
+              "tds_impact": 312,
+              "paid_days": 31
+            },
+            {
+              "month": "2026-06",
+              "old_gross": 112000,
+              "revised_gross": 123200,
+              "diff": 11200,
+              "tds_impact": 292,
+              "paid_days": 28
+            },
+            {
+              "month": "2026-07",
+              "old_gross": 120000,
+              "revised_gross": 132000,
+              "diff": 12000,
+              "tds_impact": 312,
+              "paid_days": 31
+            },
+            {
+              "month": "2026-08",
+              "old_gross": 120000,
+              "revised_gross": 132000,
+              "diff": 12000,
+              "tds_impact": 312,
+              "paid_days": 31
+            },
+            {
+              "month": "2026-09",
+              "old_gross": 120000,
+              "revised_gross": 132000,
+              "diff": 12000,
+              "tds_impact": 312,
+              "paid_days": 30
+            }
+          ],
+          "total_gross_arrears": 71200
+        }
+      },
+      {
+        "id": "card-approval-s1",
+        "type": "approval_card",
+        "title": "HR Authorization",
+        "certainty": "Complete for this scope",
+        "data": {
+          "scope_label": "Priya Sharma (E01) • 6 affected months (2026-04 to 2026-09)",
+          "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+          "actions": [
+            "Approve proposal for payroll",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-1"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 1
+        }
+      },
+      {
+        "label": "View full month breakdown",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 1
+        }
+      }
+    ],
+    "state": {
+      "intent": "prepare_hike_proposal",
+      "scenario_num": 1,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E01",
+      "panel": {
+        "title": "Calculation Proof & Month Breakdown",
+        "employee_name": "Priya Sharma",
+        "employee_id": "E01",
+        "months": [
+          {
+            "month": "2026-04",
+            "old_gross": 120000,
+            "revised_gross": 132000,
+            "diff": 12000,
+            "pf_change": 0,
+            "tds_impact": 312,
+            "paid_days": 30
+          },
+          {
+            "month": "2026-05",
+            "old_gross": 120000,
+            "revised_gross": 132000,
+            "diff": 12000,
+            "pf_change": 0,
+            "tds_impact": 312,
+            "paid_days": 31
+          },
+          {
+            "month": "2026-06",
+            "old_gross": 112000,
+            "revised_gross": 123200,
+            "diff": 11200,
+            "pf_change": 0,
+            "tds_impact": 292,
+            "paid_days": 28
+          },
+          {
+            "month": "2026-07",
+            "old_gross": 120000,
+            "revised_gross": 132000,
+            "diff": 12000,
+            "pf_change": 0,
+            "tds_impact": 312,
+            "paid_days": 31
+          },
+          {
+            "month": "2026-08",
+            "old_gross": 120000,
+            "revised_gross": 132000,
+            "diff": 12000,
+            "pf_change": 0,
+            "tds_impact": 312,
+            "paid_days": 31
+          },
+          {
+            "month": "2026-09",
+            "old_gross": 120000,
+            "revised_gross": 132000,
+            "diff": 12000,
+            "pf_change": 0,
+            "tds_impact": 312,
+            "paid_days": 30
+          }
+        ],
+        "formulas": [
+          "Earned salary = monthly salary × paid days ÷ calendar days",
+          "Monthly arrears = revised earned gross − old earned gross",
+          "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
+        ],
+        "rule_citations": [
+          "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
+          "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
+          "Income tax regime: New tax regime FY 2026-27",
+          "Standard deduction: ₹75,000",
+          "Health and education cess: 4%",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "2": {
+    "messages": [
+      {
+        "code": "C03",
+        "text": "This is a proposal for the recorded affected months."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-prop-s2",
+        "type": "proposal_summary",
+        "title": "Proposal Summary",
+        "certainty": "Complete for this scope",
+        "data": {
+          "employee_name": "Arjun Rao",
+          "employee_id": "E02",
+          "proposal_type": "Back-dated hike proposal",
+          "requested_hike": "6%",
+          "effective_date": "2026-09-01",
+          "affected_periods": "1 month (2026-09)",
+          "old_monthly_salary_total": 20000,
+          "proposed_monthly_salary_total": 21200,
+          "status": "Needs HR approval; not applied"
+        }
+      },
+      {
+        "id": "card-numbers-s2",
+        "type": "number_cards",
+        "title": "Arrears & PF Impact",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Expected net arrears",
+          "hero_amount": 7099,
+          "gross_arrears": 7200,
+          "employee_pf_change": 101,
+          "estimated_tds_impact": 0,
+          "payment_month": "2026-10"
+        }
+      },
+      {
+        "id": "card-approval-s2",
+        "type": "approval_card",
+        "title": "HR Authorization",
+        "certainty": "Complete for this scope",
+        "data": {
+          "scope_label": "Arjun Rao (E02) • September 2026",
+          "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+          "actions": [
+            "Approve proposal for payroll",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-2"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 2
+        }
+      }
+    ],
+    "state": {
+      "intent": "prepare_hike_proposal",
+      "scenario_num": 2,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E02",
+      "panel": {
+        "title": "September 2026 PF Dual-Segment Proof",
+        "employee_name": "Arjun Rao",
+        "employee_id": "E02",
+        "formulas": [
+          "Segment 1 (1–16 Sep): Wage ceiling ₹15,000. Pro-rated ceiling: ₹15,000 × 16 ÷ 30 = ₹8,000",
+          "Segment 2 (17–30 Sep): Wage ceiling ₹25,000. Pro-rated ceiling: ₹25,000 × 14 ÷ 30 = ₹11,666.67",
+          "Total PF change across dual segments = ₹101"
+        ],
+        "rule_citations": [
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
+          "Employee PF contribution rate: 12% of PF wage",
+          "Mid-month ceiling change: Pro-rated across dated calendar segments",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "3": {
+    "messages": [
+      {
+        "code": "C07",
+        "text": "The required attendance record for 2026-07 is missing. I cannot explain a complete result for this scope."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-prop-s3",
+        "type": "proposal_summary",
+        "title": "Incomplete Proposal Summary",
+        "certainty": "Incomplete",
+        "data": {
+          "employee_name": "Kavya Iyer",
+          "employee_id": "E03",
+          "proposal_type": "Back-dated hike proposal",
+          "status": "Needs HR approval; not applied",
+          "affected_periods": "3 months (2026-07 to 2026-09)"
+        }
+      },
+      {
+        "id": "card-numbers-s3",
+        "type": "number_cards",
+        "title": "Known Monthly Differences",
+        "certainty": "Incomplete",
+        "data": {
+          "hero_label": "Expected net arrears",
+          "hero_amount": null,
+          "gross_arrears": null,
+          "august_diff": 4800,
+          "september_diff": 4800,
+          "note": "July attendance missing"
+        }
+      },
+      {
+        "id": "card-approval-s3",
+        "type": "approval_card",
+        "title": "HR Authorization (Blocked)",
+        "certainty": "Incomplete",
+        "data": {
+          "scope_label": "Kavya Iyer (E03)",
+          "notice": "Cannot approve an incomplete proposal while required records are missing.",
+          "actions": [],
+          "disabled": true
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 3
+        }
+      }
+    ],
+    "state": {
+      "intent": "prepare_hike_proposal",
+      "scenario_num": 3,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E03",
+      "panel": {
+        "title": "Missing Attendance Proof",
+        "employee_name": "Kavya Iyer",
+        "employee_id": "E03",
+        "formulas": [
+          "2026-07: Attendance missing: Not available in generated data",
+          "2026-08: Monthly diff = ₹4,800",
+          "2026-09: Monthly diff = ₹4,800"
+        ],
+        "rule_citations": [
+          "Calendar-month divisor: Paid days equal eligible days up to last working day minus LOP",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "4": {
+    "messages": [
+      {
+        "code": "C03",
+        "text": "This is a proposal for the recorded affected months."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-bonus-s4",
+        "type": "proposal_summary",
+        "title": "Team Bonus Run Summary",
+        "certainty": "Incomplete",
+        "data": {
+          "proposal_type": "Annual & Sales Bonus Run",
+          "eligible_count": 3,
+          "ineligible_count": 1,
+          "needs_input_count": 1,
+          "gross_eligible_total": 213929,
+          "status": "Needs HR decision"
+        }
+      },
+      {
+        "id": "card-approval-s4",
+        "type": "approval_card",
+        "title": "HR Authorization",
+        "certainty": "Needs HR decision",
+        "data": {
+          "scope_label": "Team Bonus Run • 5 employees evaluated",
+          "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+          "actions": [
+            "Approve proposal for payroll",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-4"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 4
+        }
+      },
+      {
+        "label": "View bonus scope",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 4
+        }
+      }
+    ],
+    "state": {
+      "intent": "bonus_proposal",
+      "scenario_num": 4,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": null,
+      "panel": {
+        "title": "Bonus Eligibility & Scope Roster",
+        "formulas": [
+          "E01 (Priya Sharma): Annual bonus ₹1,08,000",
+          "E03 (Kavya Iyer): Annual bonus ₹36,000",
+          "E04 (Rohan Joshi): Sales bonus ₹60,000",
+          "E07 (Ananya Sen): Joiner proration ₹9,929",
+          "E08 (Vikramaditya Verma): Notice exclusion: ₹0 (Ineligible)",
+          "E09 (Meera Nair): Missing performance rating (Needs input)"
+        ],
+        "rule_citations": [
+          "Bonus proration rule: Joiners pro-rated by active days in performance year",
+          "Notice exclusion: Employees serving resignation notice excluded from bonus payout",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "5": {
+    "messages": [
+      {
+        "code": "C07",
+        "text": "The required performance record for FY 2025-26 is missing. I cannot explain a complete result for this scope."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-bonus-s5",
+        "type": "proposal_summary",
+        "title": "Employee Bonus Evaluation",
+        "certainty": "Incomplete",
+        "data": {
+          "employee_name": "Meera Nair",
+          "employee_id": "E09",
+          "rating": null,
+          "bonus_amount": null,
+          "status": "Needs input"
+        }
+      },
+      {
+        "id": "card-approval-s5",
+        "type": "approval_card",
+        "title": "HR Authorization (Blocked)",
+        "certainty": "Incomplete",
+        "data": {
+          "scope_label": "Meera Nair (E09)",
+          "notice": "Cannot approve bonus without verified performance rating.",
+          "actions": [],
+          "disabled": true
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 5
+        }
+      }
+    ],
+    "state": {
+      "intent": "bonus_proposal",
+      "scenario_num": 5,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E09",
+      "panel": {
+        "title": "Missing Performance Record",
+        "formulas": [
+          "Performance rating for FY 2025-26: Not available in generated data",
+          "Bonus calculation: Blocked until rating is supplied"
+        ],
+        "rule_citations": [
+          "Performance multiplier rule: Rating determines payout percentage",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "6": {
+    "messages": [
+      {
+        "code": "C03",
+        "text": "This is a proposal for the recorded affected months."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-settlement-s6",
+        "type": "proposal_summary",
+        "title": "Full & Final Settlement Proposal",
+        "certainty": "Complete for this scope",
+        "data": {
+          "employee_name": "Rahul Verma",
+          "employee_id": "E10",
+          "proposal_type": "Exit Settlement",
+          "status": "Needs HR approval; not applied",
+          "due_date": "2026-11-03"
+        }
+      },
+      {
+        "id": "card-components-s6",
+        "type": "component_list",
+        "title": "Settlement Components Ledger",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Final net settlement",
+          "hero_amount": 332256,
+          "gross_payables": 335256,
+          "total_deductions": 3000,
+          "components": [
+            {
+              "name": "Earned Salary",
+              "amount": 100000,
+              "status": "Eligible"
+            },
+            {
+              "name": "Gratuity",
+              "amount": 201923,
+              "status": "Eligible"
+            },
+            {
+              "name": "Leave Encashment",
+              "amount": 33333,
+              "status": "Eligible"
+            },
+            {
+              "name": "Notice Shortfall Recovery",
+              "amount": 0,
+              "status": "Eligible"
+            }
+          ],
+          "due_date": "2026-11-03"
+        }
+      },
+      {
+        "id": "card-approval-s6",
+        "type": "approval_card",
+        "title": "HR Authorization",
+        "certainty": "Complete for this scope",
+        "data": {
+          "scope_label": "Rahul Verma (E10) • Exit Settlement",
+          "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+          "actions": [
+            "Approve proposal for payroll",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-6"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 6
+        }
+      },
+      {
+        "label": "View full settlement breakdown",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 6
+        }
+      }
+    ],
+    "state": {
+      "intent": "settlement_proposal",
+      "scenario_num": 6,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E10",
+      "panel": {
+        "title": "Settlement Proof & Component Ledger",
+        "employee_name": "Rahul Verma",
+        "employee_id": "E10",
+        "formulas": [
+          "Final Net = Gross Payables (₹3,35,256) − Total Deductions (₹1,975) = ₹3,32,256",
+          "Gratuity = 15 × last drawn salary × completed years ÷ 26 = ₹2,01,923",
+          "Leave encashment = daily wage × unused encashable days = ₹1,26,559"
+        ],
+        "rule_citations": [
+          "Gratuity Act: 15 days wages per completed year of continuous service exceeding 5 years",
+          "Leave encashment formula: Daily rate calculated with 30-day divisor",
+          "Settlement due date rule: Target disbursement deadline 2026-11-03",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "7": {
+    "messages": [
+      {
+        "code": "C03",
+        "text": "This is a proposal for the recorded affected months."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-settlement-s7",
+        "type": "proposal_summary",
+        "title": "Full & Final Settlement Proposal",
+        "certainty": "Complete for this scope",
+        "data": {
+          "employee_name": "Lakshmi Reddy",
+          "employee_id": "E11",
+          "proposal_type": "Exit Settlement",
+          "status": "Needs HR approval; not applied"
+        }
+      },
+      {
+        "id": "card-components-s7",
+        "type": "component_list",
+        "title": "Settlement Components",
+        "certainty": "Complete for this scope",
+        "data": {
+          "components": [
+            {
+              "name": "Gratuity",
+              "amount": 0,
+              "status": "Ineligible",
+              "note": "Close to minimum service: 4 years, 8 months, 24 days"
+            }
+          ]
+        }
+      },
+      {
+        "id": "card-approval-s7",
+        "type": "approval_card",
+        "title": "HR Authorization",
+        "certainty": "Complete for this scope",
+        "data": {
+          "scope_label": "Lakshmi Reddy (E11)",
+          "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+          "actions": [
+            "Approve proposal for payroll",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-7"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 7
+        }
+      }
+    ],
+    "state": {
+      "intent": "settlement_proposal",
+      "scenario_num": 7,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E11",
+      "panel": {
+        "title": "Gratuity Service Eligibility Proof",
+        "formulas": [
+          "Tenure: 4 years, 8 months, 24 days (less than statutory 5-year threshold)",
+          "Gratuity payable = ₹0"
+        ],
+        "rule_citations": [
+          "Payment of Gratuity Act: Minimum 5 continuous years required",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "8": {
+    "messages": [
+      {
+        "code": "C07",
+        "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."
+      },
+      {
+        "code": "C19",
+        "text": "The final net is incomplete because unreturned company laptop is not yet known."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-settlement-s8",
+        "type": "proposal_summary",
+        "title": "Incomplete Settlement Proposal",
+        "certainty": "Incomplete",
+        "data": {
+          "employee_name": "Imran Khan",
+          "employee_id": "E12",
+          "proposal_type": "Exit Recovery",
+          "status": "Needs HR approval; not applied"
+        }
+      },
+      {
+        "id": "card-components-s8",
+        "type": "component_list",
+        "title": "Recovery Line Items",
+        "certainty": "Incomplete",
+        "data": {
+          "hero_label": "Final Net",
+          "hero_amount": null,
+          "components": [
+            {
+              "name": "Notice Shortfall Recovery",
+              "amount": 56667,
+              "status": "Verified"
+            },
+            {
+              "name": "Asset Recovery",
+              "amount": null,
+              "status": "Unresolved"
+            }
+          ]
+        }
+      },
+      {
+        "id": "card-approval-s8",
+        "type": "approval_card",
+        "title": "HR Authorization (Blocked)",
+        "certainty": "Incomplete",
+        "data": {
+          "scope_label": "Imran Khan (E12)",
+          "notice": "Cannot approve an incomplete settlement while clearance is pending.",
+          "actions": [],
+          "disabled": true
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 8
+        }
+      }
+    ],
+    "state": {
+      "intent": "settlement_proposal",
+      "scenario_num": 8,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E12",
+      "panel": {
+        "title": "Asset Clearance Status",
+        "formulas": [
+          "Notice shortfall recovery = ₹56,667",
+          "Asset clearance pending: Company laptop not received",
+          "Final Net: Not available in generated data"
+        ],
+        "rule_citations": [
+          "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "9": {
+    "messages": [
+      {
+        "code": "C30",
+        "text": "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."
+      },
+      {
+        "code": "C27",
+        "text": "Would you like the earnings and deductions breakdown?"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-hero-s9",
+        "type": "number_hero",
+        "title": "Take-Home Pay Comparison",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "September Take-Home",
+          "hero_amount": 42780,
+          "net_change": -5420,
+          "previous_month_label": "August Take-Home",
+          "previous_month_amount": 48200
+        }
+      },
+      {
+        "id": "card-reasons-s9",
+        "type": "reason_list",
+        "title": "Ranked by effect on take-home pay",
+        "certainty": "Complete for this scope",
+        "data": {
+          "net_change": -5420,
+          "reasons": [
+            {
+              "cause": "Loss of Pay (LOP)",
+              "detail": "3 days unpaid leave",
+              "amount": -5000
+            },
+            {
+              "cause": "PF ceiling change",
+              "detail": "Revised statutory ceiling from 17 Sep",
+              "amount": -420
+            }
+          ],
+          "tds_change": 0
+        }
+      },
+      {
+        "id": "card-calc-trigger-s9",
+        "type": "show_calculation",
+        "title": "Calculation Proof",
+        "certainty": "Complete for this scope",
+        "data": {
+          "button_label": "Show calculation"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 9
+        }
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {
+          "employee_id": "E05",
+          "period": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "What is PF?",
+        "action": "faq-pf",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "explain_salary_change",
+      "scenario_num": 9,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": {
+        "title": "September Pay Breakdown",
+        "formulas": [
+          "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
+          "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
+          "PF deduction: Increased from ₹1,800 to ₹2,220 (+₹420) due to statutory ceiling change on 17 Sep"
+        ],
+        "rule_citations": [
+          "Calendar-month divisor: Paid days equal calendar days minus LOP",
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "10": {
+    "messages": [
+      {
+        "code": "C30",
+        "text": "Your September take-home is ₹13,014 lower than August. The main recorded reasons are below."
+      },
+      {
+        "code": "C29",
+        "text": "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."
+      },
+      {
+        "code": "C27",
+        "text": "Would you like the earnings and deductions breakdown?"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-hero-s10",
+        "type": "number_hero",
+        "title": "TDS Deduction Increase",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "September TDS Deduction",
+          "hero_amount": 16043,
+          "tds_increase": 12454
+        }
+      },
+      {
+        "id": "card-reasons-s10",
+        "type": "reason_list",
+        "title": "Ranked by effect on take-home pay",
+        "certainty": "Complete for this scope",
+        "data": {
+          "reasons": [
+            {
+              "cause": "Prior employer declaration",
+              "detail": "Declared income added to yearly projection",
+              "amount": -12454
+            },
+            {
+              "cause": "PF ceiling change",
+              "detail": "Revised statutory ceiling from 17 Sep",
+              "amount": -560
+            }
+          ]
+        }
+      },
+      {
+        "id": "card-calc-trigger-s10",
+        "type": "show_calculation",
+        "title": "Calculation Proof",
+        "certainty": "Complete for this scope",
+        "data": {
+          "button_label": "Show calculation"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 10
+        }
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {
+          "employee_id": "E06",
+          "period": "2026-09"
+        }
+      },
+      {
+        "label": "What is TDS?",
+        "action": "faq-tds",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "explain_tds_change",
+      "scenario_num": 10,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E06",
+      "panel": {
+        "title": "Tax Calculation Proof",
+        "formulas": [
+          "Declared previous employer gross income = ₹4,50,000",
+          "Tax already deducted by previous employer = ₹15,000",
+          "Projected yearly income increased, remaining tax to distribute = ₹87,180"
+        ],
+        "rule_citations": [
+          "Income Tax Act Section 192: Previous employer earnings declared under Form 12B integrated into annualized TDS",
+          "Income tax regime: New tax regime FY 2026-27",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "11": {
+    "messages": [
+      {
+        "code": "C30",
+        "text": "Your September take-home is ₹420 lower than August. The main recorded reasons are below."
+      },
+      {
+        "code": "C26",
+        "text": "This explains the recorded months. I cannot promise next month's pay. It depends on that month's recorded inputs and applicable rules."
+      },
+      {
+        "code": "C27",
+        "text": "Would you like the earnings and deductions breakdown?"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-hero-s11",
+        "type": "number_hero",
+        "title": "Take-Home Pay Change",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Take-Home Net Change",
+          "hero_amount": -420,
+          "earnings_status": "No salary earning component change"
+        }
+      },
+      {
+        "id": "card-reasons-s11",
+        "type": "reason_list",
+        "title": "Main recorded reasons",
+        "certainty": "Complete for this scope",
+        "data": {
+          "reasons": [
+            {
+              "cause": "PF ceiling change",
+              "detail": "PF deduction increased by ₹420 due to 17 Sep statutory ceiling revision",
+              "amount": -420
+            }
+          ]
+        }
+      },
+      {
+        "id": "card-calc-trigger-s11",
+        "type": "show_calculation",
+        "title": "Calculation Proof",
+        "certainty": "Complete for this scope",
+        "data": {
+          "button_label": "Show calculation"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 11
+        }
+      },
+      {
+        "label": "What is PF?",
+        "action": "faq-pf",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "explain_salary_change",
+      "scenario_num": 11,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E16",
+      "panel": {
+        "title": "Earnings & Deduction Proof",
+        "formulas": [
+          "Basic pay: Unchanged at ₹20,000",
+          "Special allowance: Unchanged at ₹20,000",
+          "Gross earnings: Unchanged at ₹40,000",
+          "Take-home pay = earned gross − total employee deductions = ₹40,000 − ₹2,220 = ₹37,780 (change: −₹420)"
+        ],
+        "rule_citations": [
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
+          "Employee PF contribution rate: 12% of PF wage",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  },
+  "12": {
+    "messages": [
+      {
+        "code": "C10",
+        "text": "I cannot provide that information. I can help with payroll records you are authorized to access."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-refusal",
+        "type": "refusal_card",
+        "title": "Permission Denied",
+        "certainty": "Permission denied",
+        "data": {
+          "message": "I cannot provide that information. I can help with payroll records you are authorized to access.",
+          "reason": "Access boundary enforced."
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Ask about my payroll",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "What is PF?",
+        "action": "faq-pf",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "other_employee_data",
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "scenario_num": null,
+      "employee_id": null,
+      "panel": null
+    }
+  },
+  "13": {
+    "messages": [
+      {
+        "code": "C19",
+        "text": "The final net is incomplete because unreturned company laptop is not yet known."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-settlement-s13",
+        "type": "proposal_summary",
+        "title": "Settlement Breakdown (Unresolved Component)",
+        "certainty": "Incomplete",
+        "data": {
+          "employee_name": "Imran Khan",
+          "employee_id": "E12",
+          "proposal_type": "Exit Settlement Breakdown",
+          "status": "Needs HR approval; not applied"
+        }
+      },
+      {
+        "id": "card-components-s13",
+        "type": "component_list",
+        "title": "Settlement Ledger Lines",
+        "certainty": "Incomplete",
+        "data": {
+          "hero_label": "Final Net",
+          "hero_amount": null,
+          "known_recoveries_subtotal": 56667,
+          "components": [
+            {
+              "name": "Notice Shortfall Recovery",
+              "amount": 56667,
+              "status": "Verified"
+            },
+            {
+              "name": "Asset Recovery",
+              "amount": null,
+              "status": "Unresolved"
+            }
+          ]
+        }
+      },
+      {
+        "id": "card-approval-s13",
+        "type": "approval_card",
+        "title": "Partial Authorization",
+        "certainty": "Incomplete",
+        "data": {
+          "scope_label": "Imran Khan (E12)",
+          "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
+          "actions": [
+            "Approve verified lines only",
+            "Edit with reason",
+            "Reject proposal"
+          ],
+          "status": "pending",
+          "proposal_id": "PROP-SCENARIO-13"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "scenario_num": 13
+        }
+      }
+    ],
+    "state": {
+      "intent": "settlement_proposal",
+      "scenario_num": 13,
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "employee_id": "E12",
+      "panel": {
+        "title": "Settlement Line Review",
+        "formulas": [
+          "Notice shortfall recovery = ₹56,667",
+          "Asset clearance hold: Laptop status unconfirmed",
+          "Final Net: Not available in generated data"
+        ],
+        "rule_citations": [
+          "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
+          "Rules version: Northwind demo rules v1"
+        ]
+      }
+    }
+  }
+}

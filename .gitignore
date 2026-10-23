@@ -44,3 +44,6 @@ id_ed25519*
 Thumbs.db
 .idea/
 .vscode/
+
+# Scratch & Temporary
+scratch/

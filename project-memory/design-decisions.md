@@ -365,4 +365,15 @@
 - Status: Approved
 - Approved by: Project owner
 
+- ID: DEC-037
+- Date: 2026-10-23
+- Decision: The chat uses one /api/chat contract. A deterministic router answers it now; the CrewAI crew will replace only the router in step 4.
+- Options considered: (a) Multiple custom endpoints for different chat actions, screens, and card types, (b) Single unified `/api/chat` contract returning assistant messages (approved sentence codes + rendered text), cards, suggestion chips, and state changes, handled now by a deterministic router and later by the CrewAI crew.
+- Reason: Establishes a clean, stable API schema (`app/backend/chat_contract.md`) for the chat-first prototype. The frontend interacts strictly with this single endpoint. The deterministic router handles all 13 BRD v1.2 scenarios, role-based access checks, FAQ retrieval, and guardrails with 100% predictability for testing now, allowing the CrewAI agentic crew to replace only the router implementation in step 4 without breaking the contract or frontend components.
+- Evidence or source: Project owner instruction, 2026-10-23; [chat_contract.md](../app/backend/chat_contract.md); [chat_router.py](../app/backend/chat_router.py); [test_chat_endpoint.py](../app/backend/tests/test_chat_endpoint.py).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+
 

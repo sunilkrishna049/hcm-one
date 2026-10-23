@@ -12,6 +12,7 @@ from .auth import USERS, check_employee_access, check_query_access, get_current_
 from .config import MOCK_DIR
 from .engine_bridge import bridge
 from .lifecycle import lifecycle
+from .chat_router import chat_router
 
 
 def load_employees_map() -> Dict[str, dict]:
@@ -509,5 +510,27 @@ def reset_demo():
 
 @app.get("/api/ai/messages")
 def get_ai_messages():
-    """Expose verbatim C01-C29 copy catalog."""
+    """Expose verbatim C01-C30 copy catalog."""
     return AI_MESSAGES
+
+
+# --- Conversational Chat Endpoint (Chat-First Architecture) ---
+
+class ChatRequest(BaseModel):
+    user_id: Optional[str] = "HR01"
+    message: Optional[str] = ""
+    action: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+@app.post("/api/chat")
+def handle_chat_endpoint(req: ChatRequest, user: dict = Depends(get_current_user)):
+    """Unified chat endpoint executing deterministic intent router per chat_contract.md."""
+    target_user_id = req.user_id or user.get("user_id", "HR01")
+    return chat_router.handle_chat(
+        user_id=target_user_id,
+        message=req.message or "",
+        action=req.action,
+        context=req.context or {}
+    )
+

@@ -164,4 +164,39 @@ export const api = {
     }),
 
   getAiMessages: () => request<Record<string, string>>("/ai/messages"),
+
+  // Chat-first endpoint per chat_contract.md
+  chat: (
+    userIdOrOptions: string | { userId: string; message?: string; action?: string | null; context?: any },
+    message: string = "",
+    action?: string | null,
+    context?: any
+  ) => {
+    let uId = "";
+    let msg = "";
+    let act: string | null = null;
+    let ctx = {};
+
+    if (typeof userIdOrOptions === "object" && userIdOrOptions !== null) {
+      uId = userIdOrOptions.userId;
+      msg = userIdOrOptions.message || "";
+      act = userIdOrOptions.action || null;
+      ctx = userIdOrOptions.context || {};
+    } else {
+      uId = userIdOrOptions;
+      msg = message;
+      act = action || null;
+      ctx = context || {};
+    }
+
+    return request<any>("/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: uId,
+        message: msg,
+        action: act,
+        context: ctx,
+      }),
+    });
+  },
 };
