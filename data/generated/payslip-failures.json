@@ -1,0 +1,330 @@
+{
+  "not_generated": [
+    {
+      "employee_id": "E03",
+      "month": "2026-07",
+      "certainty": "Incomplete",
+      "reasons": [
+        {
+          "reason": "Monthly component times paid calendar days divided by days in the month; attendance is missing",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Monthly component times paid calendar days divided by days in the month; attendance is missing",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Monthly component times paid calendar days divided by days in the month; attendance is missing",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Monthly component times paid calendar days divided by days in the month; attendance is missing",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Monthly component times paid calendar days divided by days in the month; attendance is missing",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Calendar days less recorded LOP; attendance missing",
+          "certainty": "Incomplete",
+          "flags": []
+        },
+        {
+          "reason": "PF needs a verified wage basis and eligible days",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "PF needs a verified wage basis and eligible days",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "PF needs a verified wage basis and eligible days",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "PF needs a verified wage basis and eligible days",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded actual gross so far plus expected remaining salary and accepted prior-employer gross",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly gross income less one standard deduction",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly tax less TDS already deducted",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Remaining yearly tax divided by remaining tax-year months including this month",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded employee PF plus rounded monthly TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded gross pay less total employee deductions",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        }
+      ],
+      "partial_calculation_id": "PAY-E03-2026-07"
+    },
+    {
+      "employee_id": "E03",
+      "month": "2026-08",
+      "certainty": "Incomplete",
+      "reasons": [
+        {
+          "reason": "Rounded actual gross so far plus expected remaining salary and accepted prior-employer gross",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly gross income less one standard deduction",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Sum of previously calculated monthly TDS and accepted previous-employer TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Sum of previously calculated Northwind monthly TDS, excluding previous-employer TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly tax less TDS already deducted",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Remaining yearly tax divided by remaining tax-year months including this month",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded employee PF plus rounded monthly TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded gross pay less total employee deductions",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        }
+      ],
+      "partial_calculation_id": "PAY-E03-2026-08"
+    },
+    {
+      "employee_id": "E03",
+      "month": "2026-09",
+      "certainty": "Incomplete",
+      "reasons": [
+        {
+          "reason": "Rounded actual gross so far plus expected remaining salary and accepted prior-employer gross",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly gross income less one standard deduction",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Yearly tax requires complete projected income",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Sum of previously calculated monthly TDS and accepted previous-employer TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Sum of previously calculated Northwind monthly TDS, excluding previous-employer TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Projected yearly tax less TDS already deducted",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Remaining yearly tax divided by remaining tax-year months including this month",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded employee PF plus rounded monthly TDS",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        },
+        {
+          "reason": "Rounded gross pay less total employee deductions",
+          "certainty": "Incomplete",
+          "flags": [
+            "Attendance missing"
+          ]
+        }
+      ],
+      "partial_calculation_id": "PAY-E03-2026-09"
+    }
+  ],
+  "not_employed": [
+    {
+      "employee_id": "E06",
+      "month": "2026-04",
+      "reason": "Not employed in this month"
+    },
+    {
+      "employee_id": "E06",
+      "month": "2026-05",
+      "reason": "Not employed in this month"
+    },
+    {
+      "employee_id": "E06",
+      "month": "2026-06",
+      "reason": "Not employed in this month"
+    }
+  ]
+}

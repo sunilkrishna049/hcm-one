@@ -1,0 +1,90 @@
+[
+  {
+    "performance_id": "PERF-E01-FY2025-26",
+    "employee_id": "E01",
+    "performance_type": "annual performance",
+    "period": "FY 2025-26",
+    "period_start": "2025-04-01",
+    "period_end": "2026-03-31",
+    "target": null,
+    "achievement": null,
+    "rating": 5
+  },
+  {
+    "performance_id": "PERF-E03-FY2025-26",
+    "employee_id": "E03",
+    "performance_type": "annual performance",
+    "period": "FY 2025-26",
+    "period_start": "2025-04-01",
+    "period_end": "2026-03-31",
+    "target": null,
+    "achievement": null,
+    "rating": 4
+  },
+  {
+    "performance_id": "PERF-E04-FY2025-26",
+    "employee_id": "E04",
+    "performance_type": "annual performance",
+    "period": "FY 2025-26",
+    "period_start": "2025-04-01",
+    "period_end": "2026-03-31",
+    "target": null,
+    "achievement": null,
+    "rating": 4
+  },
+  {
+    "performance_id": "PERF-E07-FY2025-26",
+    "employee_id": "E07",
+    "performance_type": "annual performance",
+    "period": "FY 2025-26",
+    "period_start": "2025-04-01",
+    "period_end": "2026-03-31",
+    "target": null,
+    "achievement": null,
+    "rating": 3
+  },
+  {
+    "performance_id": "PERF-E08-FY2025-26",
+    "employee_id": "E08",
+    "performance_type": "annual performance",
+    "period": "FY 2025-26",
+    "period_start": "2025-04-01",
+    "period_end": "2026-03-31",
+    "target": null,
+    "achievement": null,
+    "rating": 4
+  },
+  {
+    "performance_id": "PERF-E13-Q2-2026-27",
+    "employee_id": "E13",
+    "performance_type": "sales incentive",
+    "period": "Q2 2026-27",
+    "period_start": "2026-07-01",
+    "period_end": "2026-09-30",
+    "target": 1000000,
+    "achievement": 850000,
+    "rating": null
+  },
+  {
+    "performance_id": "PERF-E14-Q2-2026-27",
+    "employee_id": "E14",
+    "performance_type": "sales incentive",
+    "period": "Q2 2026-27",
+    "period_start": "2026-07-01",
+    "period_end": "2026-09-30",
+    "target": 1000000,
+    "achievement": 1050000,
+    "rating": null
+  },
+  {
+    "performance_id": "PERF-E15-Q2-2026-27",
+    "employee_id": "E15",
+    "performance_type": "sales incentive",
+    "period": "Q2 2026-27",
+    "period_start": "2026-07-01",
+    "period_end": "2026-09-30",
+    "target": 1000000,
+    "achievement": 1250000,
+    "rating": null
+  }
+]

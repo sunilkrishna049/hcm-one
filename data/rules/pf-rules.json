@@ -1,0 +1,79 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "pf_wage_formula": {
+    "value": "Basic + DA",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-3.1",
+    "status": "demo_rule_approved"
+  },
+  "employee_contribution_rate_percent": {
+    "value": 12,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.2; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "employer_contribution_rate_percent": {
+    "value": 12,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.3; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "eps_allocation": {
+    "value": {
+      "rate_percent": 8.33,
+      "basis": "PF wage up to the wage ceiling",
+      "epf_remainder": "Rest of the employer contribution after EPS"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied EPS rate and allocation; BRD v1.1 BR-3.3 and BR-3.4; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "wage_ceiling_before_change_inr": {
+    "value": 15000,
+    "effective_from": null,
+    "effective_to": "2026-09-16",
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12; BRD v1.1 BR-3.7",
+    "status": "verified_by_project_owner_2026-10-12"
+  },
+  "wage_ceiling_from_change_inr": {
+    "value": 25000,
+    "effective_from": "2026-09-17",
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12; BRD v1.1 BR-3.7",
+    "status": "verified_by_project_owner_2026-10-12"
+  },
+  "company_pf_basis": {
+    "value": "PF calculated on PF wage capped at the wage ceiling",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies company setting; BRD v1.1 BR-3.5",
+    "status": "company_setting_demo"
+  },
+  "mid_month_ceiling_change": {
+    "value": "Split the month by calendar days. Days before the change use the old ceiling. Days from the change use the new ceiling. Each segment is pro-rated by days.",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-02 decision DEC-020",
+    "status": "demo_rule_approved"
+  },
+  "pf_wage_with_lop": {
+    "value": "PF wage for a month = Basic + DA earned after LOP (monthly amount × paid days ÷ days in month).",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "AMB-02",
+    "status": "demo_rule_approved"
+  },
+  "lop_across_dated_segments": {
+    "value": "Monthly LOP has no dates, so it is spread evenly across the month. When a month is split into dated segments (for example, the PF ceiling change on 17 September, or a mid-month hike), each segment's earned PF wage = the month's earned PF wage × segment calendar days ÷ month calendar days. The ceiling is applied per segment, pro-rated by calendar days.",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "AMB-02",
+    "status": "demo_rule_approved"
+  }
+}

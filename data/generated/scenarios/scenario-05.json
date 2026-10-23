@@ -1,0 +1,143 @@
+{
+  "scenario_id": "scenario-05",
+  "description": "Bonus where one employee's performance data is missing",
+  "result": {
+    "employee": {
+      "employee_id": "E09",
+      "period": "FY 2025-26",
+      "bonus_type": "annual_performance_bonus",
+      "proposal_status": "Needs HR approval; not applied",
+      "eligibility": "Needs input",
+      "reason": "Performance record missing",
+      "amount": {
+        "value": null,
+        "formula": "Bonus needs the performance record for the requested period",
+        "inputs": [
+          {
+            "source_file": "data/mock/employees.json",
+            "record_id": "E09"
+          },
+          {
+            "source_file": "data/mock/salary-structures.json",
+            "record_id": "SS-E09"
+          },
+          {
+            "source_file": "data/mock/company.json",
+            "record_id": "NORTHWIND-DEMO"
+          },
+          {
+            "source_file": "data/mock/company.json",
+            "record_id": "NORTHWIND-DEMO",
+            "fields": [
+              "bonus_request_inputs"
+            ]
+          },
+          {
+            "source_file": "data/mock/performance.json",
+            "record_id": "missing:E09:FY 2025-26"
+          },
+          {
+            "source_file": "data/generated/run-context.json",
+            "record_id": "RUN-CONTEXT"
+          }
+        ],
+        "rule_ids": [
+          {
+            "rule_id": "bonus-rules.json#annual_performance_bonus",
+            "source_file": "data/rules/bonus-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies annual performance-bonus policy",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "company_setting_demo",
+            "value": {
+              "basis": "percentage of annual Basic",
+              "rating_rates_percent": {
+                "3": 5,
+                "4": 10,
+                "5": 15,
+                "1_to_2": 0
+              },
+              "eligibility": {
+                "joined_at_least_days_before_period_end": 90,
+                "on_notice_allowed": false
+              },
+              "proration": "by eligible days",
+              "part_of_pf_wage": false
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "bonus-rules.json#annual_performance_bonus_notice_check",
+            "source_file": "data/rules/bonus-rules.json",
+            "source": "MR-02",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "check_date": "date the bonus is calculated",
+              "on_notice_eligibility": "not eligible",
+              "recorded_reason": "On notice at the time of calculation"
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "bonus-rules.json#annual_performance_bonus_calculation",
+            "source_file": "data/rules/bonus-rules.json",
+            "source": "MR-03",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "annual_basic_formula": "monthly Basic at period end × 12",
+              "eligible_days": "days employed within the period, from the later of joining date or period start to the period end",
+              "lop_reduces_eligible_days": false,
+              "bonus_formula": "rating rate × annual Basic × eligible days / total days in the period",
+              "proration_applications": 1
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          }
+        ],
+        "certainty": "Incomplete",
+        "flags": [
+          "Performance record missing"
+        ]
+      },
+      "certainty": "Incomplete"
+    },
+    "certainty": "Incomplete"
+  },
+  "display_inputs": {
+    "employees": {
+      "E09": {
+        "rating": {
+          "value": null,
+          "source_file": "data/mock/performance.json",
+          "record_id": "missing:E09:FY 2025-26",
+          "source_field": "rating",
+          "certainty": "Incomplete"
+        },
+        "policy_rating_rate_percent": {
+          "value": null,
+          "source_file": "data/rules/bonus-rules.json",
+          "record_id": "annual_performance_bonus",
+          "source_field": null,
+          "certainty": "Incomplete"
+        },
+        "applied_rating_rate_percent": {
+          "value": null,
+          "source_file": "data/rules/bonus-rules.json",
+          "record_id": "annual_performance_bonus",
+          "source_field": null,
+          "certainty": "Incomplete",
+          "application_status": "Not applied: Needs input"
+        }
+      }
+    }
+  }
+}

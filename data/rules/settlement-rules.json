@@ -1,0 +1,159 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "final_month_salary": {
+    "value": {
+      "classification": "separation wages",
+      "due": {
+        "within_days": 2,
+        "day_type": "working",
+        "trigger": "last working day"
+      }
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12 for classification and deadline",
+    "status": "verified_by_project_owner_2026-10-12"
+  },
+  "gratuity": {
+    "value": {
+      "classification": "gratuity",
+      "due": {
+        "within_days": 30,
+        "trigger": "becoming payable"
+      }
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied component classification and deadline; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "leave_encashment": {
+    "value": {
+      "classification": "paid with separation wages",
+      "due": {
+        "same_as": "separation wages",
+        "within_days": 2,
+        "day_type": "working"
+      }
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-06",
+    "status": "demo_rule_approved"
+  },
+  "notice_shortfall_recovery": {
+    "value": {
+      "classification": "deduction from settlement payables",
+      "due": null
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-06",
+    "status": "demo_rule_approved"
+  },
+  "loan_and_advance_recovery": {
+    "value": {
+      "classification": "recorded recovery"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+    "status": "company_setting_demo"
+  },
+  "asset_recovery": {
+    "value": {
+      "classification": "recorded recovery",
+      "condition": "Only if the company rule allows it"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+    "status": "company_setting_demo"
+  },
+  "separation_wages_clearance_hold": {
+    "value": "No hold is permitted on separation wages because of a pending clearance",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved demo hold rule; DEC-008 and PBRD-01 provide prior context",
+    "status": "demo_rule_approved"
+  },
+  "final_month_days": {
+    "value": "Use a calendar-month divisor. Paid days equal eligible days up to and including the last working day minus LOP in that period.",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; DEC-013 (GAP-04)",
+    "status": "demo_rule_approved"
+  },
+  "released_held_component": {
+    "value": "A released held component needs a new version and fresh HR approval",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; DEC-013",
+    "status": "demo_rule_approved"
+  },
+  "working_day_calendar": {
+    "value": {
+      "working_days": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "holidays": [],
+      "counting_start": "next working day after the last working day"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-05",
+    "status": "demo_rule_approved"
+  },
+  "gratuity_payable_trigger": {
+    "value": "Gratuity becomes payable on the day after the last working day",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-05",
+    "status": "demo_rule_approved"
+  },
+  "due_date_wording": {
+    "value": {
+      "label": "applicable due date",
+      "not_a_payment_date": true
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-05, DEC-011",
+    "status": "demo_rule_approved"
+  },
+  "asset_recovery_permission": {
+    "value": {
+      "allowed_clearance_status": "not returned",
+      "pending_clearance_status": "pending",
+      "pending_recovery_line_status": "unresolved",
+      "final_net_complete_when_asset_clearance_pending": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-07",
+    "status": "company_setting_demo"
+  },
+  "salary_advance_recovery_treatment": {
+    "value": "Deducted from settlement payables",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-07",
+    "status": "company_setting_demo"
+  },
+  "pending_clearance_holds": {
+    "value": {
+      "only_component_that_may_be_held_or_left_unresolved_due_to_pending_clearance": "unresolved asset recovery",
+      "separation_wages_held": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-07, DEC-008",
+    "status": "demo_rule_approved"
+  }
+}

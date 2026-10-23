@@ -1,0 +1,17 @@
+[
+  {
+    "declaration_id": "DECL-E06-PREVIOUS-EMPLOYER",
+    "employee_id": "E06",
+    "financial_year": "2026-27",
+    "declaration_type": "previous employer income",
+    "income_period_start": "2026-04-01",
+    "income_period_end": "2026-06-30",
+    "declared_amount": 450000,
+    "amount_basis": "gross income supplied as a previous-employer record, not a calculated demo amount",
+    "previous_employer_tds_already_deducted": 15000,
+    "tds_basis": "Supplied historical previous-employer TDS input, not calculated current payroll TDS",
+    "submitted_date": "2026-09-10",
+    "proof_status": "accepted",
+    "applied_from_payroll_month": "2026-09"
+  }
+]

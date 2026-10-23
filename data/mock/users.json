@@ -1,0 +1,180 @@
+[
+  {
+    "user_id": "HR01",
+    "name": "Anita Desai",
+    "role": "HR Admin",
+    "allowed_employee_ids": [
+      "E01",
+      "E02",
+      "E03",
+      "E04",
+      "E05",
+      "E06",
+      "E07",
+      "E08",
+      "E09",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+    ]
+  },
+  {
+    "user_id": "HR02",
+    "name": "Karan Bose",
+    "role": "HR Admin",
+    "allowed_department": "Sales",
+    "allowed_employee_ids": [
+      "E13",
+      "E14",
+      "E15"
+    ]
+  },
+  {
+    "user_id": "USER-E01",
+    "name": "Priya Sharma",
+    "role": "Employee",
+    "employee_id": "E01",
+    "allowed_employee_ids": [
+      "E01"
+    ]
+  },
+  {
+    "user_id": "USER-E02",
+    "name": "Arjun Rao",
+    "role": "Employee",
+    "employee_id": "E02",
+    "allowed_employee_ids": [
+      "E02"
+    ]
+  },
+  {
+    "user_id": "USER-E03",
+    "name": "Kavya Iyer",
+    "role": "Employee",
+    "employee_id": "E03",
+    "allowed_employee_ids": [
+      "E03"
+    ]
+  },
+  {
+    "user_id": "USER-E04",
+    "name": "Rohan Mehta",
+    "role": "Employee",
+    "employee_id": "E04",
+    "allowed_employee_ids": [
+      "E04"
+    ]
+  },
+  {
+    "user_id": "USER-E05",
+    "name": "Neha Gupta",
+    "role": "Employee",
+    "employee_id": "E05",
+    "allowed_employee_ids": [
+      "E05"
+    ]
+  },
+  {
+    "user_id": "USER-E06",
+    "name": "Siddharth Jain",
+    "role": "Employee",
+    "employee_id": "E06",
+    "allowed_employee_ids": [
+      "E06"
+    ]
+  },
+  {
+    "user_id": "USER-E07",
+    "name": "Sneha Kulkarni",
+    "role": "Employee",
+    "employee_id": "E07",
+    "allowed_employee_ids": [
+      "E07"
+    ]
+  },
+  {
+    "user_id": "USER-E08",
+    "name": "Vikram Singh",
+    "role": "Employee",
+    "employee_id": "E08",
+    "allowed_employee_ids": [
+      "E08"
+    ]
+  },
+  {
+    "user_id": "USER-E09",
+    "name": "Meera Nair",
+    "role": "Employee",
+    "employee_id": "E09",
+    "allowed_employee_ids": [
+      "E09"
+    ]
+  },
+  {
+    "user_id": "USER-E10",
+    "name": "Rahul Verma",
+    "role": "Employee",
+    "employee_id": "E10",
+    "allowed_employee_ids": [
+      "E10"
+    ]
+  },
+  {
+    "user_id": "USER-E11",
+    "name": "Lakshmi Reddy",
+    "role": "Employee",
+    "employee_id": "E11",
+    "allowed_employee_ids": [
+      "E11"
+    ]
+  },
+  {
+    "user_id": "USER-E12",
+    "name": "Imran Khan",
+    "role": "Employee",
+    "employee_id": "E12",
+    "allowed_employee_ids": [
+      "E12"
+    ]
+  },
+  {
+    "user_id": "USER-E13",
+    "name": "Ankit Jain",
+    "role": "Employee",
+    "employee_id": "E13",
+    "allowed_employee_ids": [
+      "E13"
+    ]
+  },
+  {
+    "user_id": "USER-E14",
+    "name": "Fatima Sheikh",
+    "role": "Employee",
+    "employee_id": "E14",
+    "allowed_employee_ids": [
+      "E14"
+    ]
+  },
+  {
+    "user_id": "USER-E15",
+    "name": "Deepak Pillai",
+    "role": "Employee",
+    "employee_id": "E15",
+    "allowed_employee_ids": [
+      "E15"
+    ]
+  },
+  {
+    "user_id": "USER-E16",
+    "name": "Pooja Das",
+    "role": "Employee",
+    "employee_id": "E16",
+    "allowed_employee_ids": [
+      "E16"
+    ]
+  }
+]

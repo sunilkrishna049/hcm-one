@@ -1,0 +1,38 @@
+[
+  {
+    "revision_id": "REV-E01",
+    "employee_id": "E01",
+    "old_salary_structure_id": "SS-E01",
+    "old_salary": null,
+    "new_salary": null,
+    "hike_percent": 10,
+    "effective_date": "2026-04-01",
+    "created_date": "2026-10-05",
+    "status": "pending HR proposal",
+    "applied_in_payroll": false
+  },
+  {
+    "revision_id": "REV-E02",
+    "employee_id": "E02",
+    "old_salary_structure_id": "SS-E02",
+    "old_salary": null,
+    "new_salary": null,
+    "hike_percent": 10,
+    "effective_date": "2026-08-01",
+    "created_date": "2026-10-06",
+    "status": "pending HR proposal",
+    "applied_in_payroll": false
+  },
+  {
+    "revision_id": "REV-E03",
+    "employee_id": "E03",
+    "old_salary_structure_id": "SS-E03",
+    "old_salary": null,
+    "new_salary": null,
+    "hike_percent": 8,
+    "effective_date": "2026-07-01",
+    "created_date": "2026-10-06",
+    "status": "pending HR proposal",
+    "applied_in_payroll": false
+  }
+]

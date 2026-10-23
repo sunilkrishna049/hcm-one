@@ -1,0 +1,74 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "formula": {
+    "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "part_year_counting": {
+    "value": "A part-year of more than 6 months counts as a full year",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "minimum_service_permanent_years": {
+    "value": 5,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "minimum_service_fixed_term_years": {
+    "value": 1,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12 for fixed-term employees",
+    "status": "verified_by_project_owner_2026-10-12"
+  },
+  "maximum_gratuity_inr": {
+    "value": 2000000,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "payment_due": {
+    "value": {
+      "within_days": 30,
+      "trigger": "becoming payable"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity payment deadline; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "wage_base_scope": {
+    "value": {
+      "wage_base": "Basic + DA",
+      "full_labour_code_wage_definition_in_scope": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+    "status": "demo_rule_approved"
+  },
+  "eligibility_order": {
+    "value": {
+      "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+      "part_year_rounding_use": "calculate the amount only after eligibility is met",
+      "informational_flag_condition": "actual service is within 6 months below the minimum",
+      "informational_flag": "Close to minimum service",
+      "flag_for": "HR",
+      "flag_changes_eligibility": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-04",
+    "status": "demo_rule_approved"
+  }
+}

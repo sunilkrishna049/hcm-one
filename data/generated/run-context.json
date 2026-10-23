@@ -1,0 +1,64 @@
+{
+  "record_id": "RUN-CONTEXT",
+  "calculation_date": {
+    "value": "2026-10-13",
+    "formula": "Calculation date explicitly supplied to the deterministic run; used for the notice check",
+    "inputs": [
+      {
+        "source_file": "data/generated/run-context.json",
+        "record_id": "RUN-CONTEXT",
+        "fields": [
+          "command_line.as_of"
+        ]
+      }
+    ],
+    "rule_ids": [
+      {
+        "rule_id": "bonus-rules.json#annual_performance_bonus_notice_check",
+        "source_file": "data/rules/bonus-rules.json",
+        "source": "MR-02",
+        "effective_from": null,
+        "effective_to": null,
+        "status": "demo_rule_approved",
+        "value": {
+          "check_date": "date the bonus is calculated",
+          "on_notice_eligibility": "not eligible",
+          "recorded_reason": "On notice at the time of calculation"
+        },
+        "rules_version": "Northwind demo rules v1",
+        "verified_on": "2026-10-13",
+        "date_note": "Applies to all demo periods"
+      }
+    ],
+    "certainty": "Complete for this scope",
+    "flags": []
+  },
+  "command_line": {
+    "as_of": "2026-10-13"
+  },
+  "source_sha256": {
+    "data/mock/attendance.json": "5e1688099ea9bc67bc7cc47df1d8a03ac240d0c1827a7400eed5df8caa3956e4",
+    "data/mock/audit-log.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "data/mock/clearances.json": "399a5160f73c13c107a8ccb37e4e0a94cabc40f41d0293fcc8cecc0e2116a531",
+    "data/mock/company.json": "e4a8c953bfb6813fc587c28af1de53dfa326b3f2760788191404cb361283ab1d",
+    "data/mock/declarations.json": "db9f4e952f824bab9c7de9847f4ae79c5ed2e5b101bf3c3c0e83d188d6129fde",
+    "data/mock/employees.json": "6d3e8d384dae0755579cc0d3a955ccf0b52a66120b6c3e99587be6a21fddab8e",
+    "data/mock/exits.json": "5f8b9e251e50ef45287e5e7ebe40725a11fdb611c5b39e02e232bf5258ee744e",
+    "data/mock/leave-balances.json": "0ead1146483250ec0a52d0c237bb497df38e4d42dfce36da498e68b4ce20e14a",
+    "data/mock/payroll-runs.json": "1b0e75228261c12fb4991a8fda7a2de3511aa2f112ca805b01473de2bc092c39",
+    "data/mock/performance.json": "03461df8cee18fd6d28590b38562b08a8978e83e37d0f98ea76f4a2803cb823a",
+    "data/mock/queries.json": "36c8c65d9a4809fb127cf16f7460a10112237aaa2ff5d449e267fc5954ee82eb",
+    "data/mock/recoveries.json": "c8f42fc700cf66705f422a7c31be3c0d59be95f55f9a734eafadb156ffe73a26",
+    "data/mock/salary-revisions.json": "3e7f465cb2cac9218bd2256c42d3d53d9702eec9cbaad00f0f0ad672f255f5eb",
+    "data/mock/salary-structures.json": "1221f3878fc2fbf262cacb9df4b18ffc5c3669881bb0013a5a03fc9625a41d9c",
+    "data/mock/users.json": "b045a7b5d0dc10c1e8e47177ee1c5ffd8c20d285894f6081161e163decae81e2",
+    "data/rules/bonus-rules.json": "2dd393abf48fbf613f5ba7857c5aa74345c64c11715f319ec9ec84c0b154cece",
+    "data/rules/company-settings.json": "f5d6307321b46698f94637f4002732540eafe657b4055e1e95cc2892c51a2691",
+    "data/rules/gratuity-rules.json": "97be37f14e87ec9947f89903eaa58cbaf3fe65497de5c41ec049118b25b4011c",
+    "data/rules/pf-rules.json": "eb88fd8a90a2a006b8aa9510bf6975e0a7c813886a768c891d1f96a00bb30a6c",
+    "data/rules/settlement-rules.json": "3df85fabc7a656e8b4b49770b69a20cbba2bbedb20a2b16a7e833cbc210ac3e0",
+    "data/rules/tax-rules.json": "29887073ace2aefe8b1b260d899e809d974d137ef654b7a3519417d381c85643"
+  },
+  "salary_history_scope": "The supplied original structures apply to this demo fixture; pending hikes are not applied",
+  "proposal_only": true
+}

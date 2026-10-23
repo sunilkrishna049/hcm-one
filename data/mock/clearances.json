@@ -1,0 +1,74 @@
+[
+  {
+    "clearance_id": "CLEAR-E10-IT",
+    "employee_id": "E10",
+    "clearance_type": "IT",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E10-FINANCE",
+    "employee_id": "E10",
+    "clearance_type": "finance",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E10-ASSET",
+    "employee_id": "E10",
+    "clearance_type": "asset",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E11-IT",
+    "employee_id": "E11",
+    "clearance_type": "IT",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E11-FINANCE",
+    "employee_id": "E11",
+    "clearance_type": "finance",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E11-ASSET",
+    "employee_id": "E11",
+    "clearance_type": "asset",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E12-IT",
+    "employee_id": "E12",
+    "clearance_type": "IT",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E12-FINANCE",
+    "employee_id": "E12",
+    "clearance_type": "finance",
+    "status": "complete",
+    "asset_description": null,
+    "completed_date": null
+  },
+  {
+    "clearance_id": "CLEAR-E12-ASSET",
+    "employee_id": "E12",
+    "clearance_type": "asset",
+    "status": "pending",
+    "asset_description": "laptop",
+    "completed_date": null
+  }
+]

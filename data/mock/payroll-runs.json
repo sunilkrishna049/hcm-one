@@ -1,0 +1,44 @@
+[
+  {
+    "payroll_run_id": "RUN-2026-04",
+    "month": "2026-04",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-05",
+    "month": "2026-05",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-06",
+    "month": "2026-06",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-07",
+    "month": "2026-07",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-08",
+    "month": "2026-08",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-09",
+    "month": "2026-09",
+    "status": "processed",
+    "processed_date": null
+  },
+  {
+    "payroll_run_id": "RUN-2026-10",
+    "month": "2026-10",
+    "status": "open",
+    "processed_date": null
+  }
+]

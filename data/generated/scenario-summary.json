@@ -1,0 +1,67 @@
+[
+  {
+    "scenario": "scenario-01",
+    "description": "Back-dated hike with LOP in one of the affected months",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-02",
+    "description": "Back-dated hike crossing 17 September 2026, when the PF wage ceiling changed",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-03",
+    "description": "Back-dated hike where one month's attendance is missing",
+    "certainty": "Incomplete"
+  },
+  {
+    "scenario": "scenario-04",
+    "description": "Bonus for a team with one mid-year joiner and one employee on notice period",
+    "certainty": "Incomplete"
+  },
+  {
+    "scenario": "scenario-05",
+    "description": "Bonus where one employee's performance data is missing",
+    "certainty": "Incomplete"
+  },
+  {
+    "scenario": "scenario-06",
+    "description": "Full and final settlement for an employee eligible for gratuity",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-07",
+    "description": "Full and final settlement for an employee just below gratuity eligibility",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-08",
+    "description": "Full and final settlement with a pending asset clearance and notice shortfall",
+    "certainty": "Incomplete"
+  },
+  {
+    "scenario": "scenario-09",
+    "description": "Employee whose salary dropped because of LOP",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-10",
+    "description": "Employee whose TDS increased because they declared income from a previous employer mid-year",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-11",
+    "description": "Employee with no salary change between two months",
+    "certainty": "Complete for this scope"
+  },
+  {
+    "scenario": "scenario-12",
+    "description": "An employee trying to see another employee's salary",
+    "certainty": "Permission denied"
+  },
+  {
+    "scenario": "scenario-13",
+    "description": "An unresolved settlement component alongside a confirmed component.",
+    "certainty": "Incomplete"
+  }
+]

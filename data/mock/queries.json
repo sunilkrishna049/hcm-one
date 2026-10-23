@@ -1,0 +1,21 @@
+[
+  {
+    "query_id": "QUERY-E05-SEPTEMBER",
+    "employee_id": "E05",
+    "category": "salary",
+    "months": [
+      "2026-09"
+    ],
+    "description": "Please check my September attendance.",
+    "evidence": [
+      {
+        "type": "attendance record",
+        "record_id": "ATT-E05-2026-09",
+        "file": "attendance.json"
+      }
+    ],
+    "status": "In review",
+    "hr_reply": null,
+    "created_date": null
+  }
+]

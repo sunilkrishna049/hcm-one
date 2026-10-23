@@ -1,0 +1,22 @@
+[
+  {
+    "recovery_id": "REC-E12-ASSET",
+    "employee_id": "E12",
+    "type": "asset",
+    "asset_description": "laptop",
+    "amount": 45000,
+    "status": "pending clearance",
+    "classification_ref": "../rules/settlement-rules.json#asset_recovery",
+    "clearance_id": "CLEAR-E12-ASSET",
+    "permitted_hold_basis": null,
+    "company_permission_record": null
+  },
+  {
+    "recovery_id": "REC-E12-ADVANCE",
+    "employee_id": "E12",
+    "type": "advance",
+    "amount": 10000,
+    "status": "recorded",
+    "classification_ref": "../rules/settlement-rules.json#loan_and_advance_recovery"
+  }
+]

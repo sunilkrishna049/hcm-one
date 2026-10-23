@@ -1,0 +1,26 @@
+[
+  {
+    "leave_balance_id": "LEAVE-E10",
+    "employee_id": "E10",
+    "leave_type": "encashable leave",
+    "balance": 20,
+    "encashable_days": 20,
+    "as_of": "2026-10-31"
+  },
+  {
+    "leave_balance_id": "LEAVE-E11",
+    "employee_id": "E11",
+    "leave_type": "encashable leave",
+    "balance": 12,
+    "encashable_days": 12,
+    "as_of": "2026-10-31"
+  },
+  {
+    "leave_balance_id": "LEAVE-E12",
+    "employee_id": "E12",
+    "leave_type": "encashable leave",
+    "balance": 8,
+    "encashable_days": 8,
+    "as_of": "2026-10-31"
+  }
+]

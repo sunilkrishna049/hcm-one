@@ -1,0 +1,62 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "leave_encashment": {
+    "value": {
+      "base": "Basic",
+      "divisor": 30,
+      "maximum_days": 30
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies leave policy",
+    "status": "company_setting_demo"
+  },
+  "notice_recovery": {
+    "value": {
+      "base": "monthly gross",
+      "divisor": 30,
+      "hr_can_waive": true
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies notice-recovery policy",
+    "status": "company_setting_demo"
+  },
+  "notice_period_days": {
+    "value": 60,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies policy for all employees",
+    "status": "company_setting_demo"
+  },
+  "rounding": {
+    "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+    "status": "demo_rule_approved"
+  },
+  "hike_allocation": {
+    "value": "A hike applies in proportion to every salary component",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+    "status": "demo_rule_approved"
+  },
+  "mid_month_hike": {
+    "value": "Pro-rate by calendar days",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+    "status": "demo_rule_approved"
+  },
+  "rounding_ties": {
+    "value": "An amount exactly halfway between two rupees is rounded up (round half up). Example: 1,249.50 becomes 1,250.",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "AMB-01",
+    "status": "demo_rule_approved"
+  }
+}

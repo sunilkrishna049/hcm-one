@@ -1,0 +1,69 @@
+[
+  {
+    "exit_id": "EXIT-E08",
+    "employee_id": "E08",
+    "resignation_date": "2026-09-30",
+    "last_working_day": "2026-11-29",
+    "notice_period_required": 60,
+    "notice_period_served": null,
+    "notice_waived": null,
+    "notice_service_status": "currently on notice"
+  },
+  {
+    "exit_id": "EXIT-E10",
+    "employee_id": "E10",
+    "resignation_date": "2026-09-01",
+    "last_working_day": "2026-10-31",
+    "notice_period_required": 60,
+    "notice_period_served": 60,
+    "notice_waived": false,
+    "notice_service_status": "served in full",
+    "settlement_component_rule_refs": {
+      "final_month_salary": "../rules/settlement-rules.json#final_month_salary",
+      "gratuity": "../rules/settlement-rules.json#gratuity",
+      "leave_encashment": "../rules/settlement-rules.json#leave_encashment",
+      "notice_shortfall_recovery": "../rules/settlement-rules.json#notice_shortfall_recovery",
+      "loan_and_advance_recovery": "../rules/settlement-rules.json#loan_and_advance_recovery",
+      "asset_recovery": "../rules/settlement-rules.json#asset_recovery"
+    },
+    "gratuity_becomes_payable_date": null
+  },
+  {
+    "exit_id": "EXIT-E11",
+    "employee_id": "E11",
+    "resignation_date": "2026-09-01",
+    "last_working_day": "2026-10-31",
+    "notice_period_required": 60,
+    "notice_period_served": 60,
+    "notice_waived": false,
+    "notice_service_status": "served in full",
+    "settlement_component_rule_refs": {
+      "final_month_salary": "../rules/settlement-rules.json#final_month_salary",
+      "gratuity": "../rules/settlement-rules.json#gratuity",
+      "leave_encashment": "../rules/settlement-rules.json#leave_encashment",
+      "notice_shortfall_recovery": "../rules/settlement-rules.json#notice_shortfall_recovery",
+      "loan_and_advance_recovery": "../rules/settlement-rules.json#loan_and_advance_recovery",
+      "asset_recovery": "../rules/settlement-rules.json#asset_recovery"
+    },
+    "gratuity_becomes_payable_date": null
+  },
+  {
+    "exit_id": "EXIT-E12",
+    "employee_id": "E12",
+    "resignation_date": "2026-09-22",
+    "last_working_day": "2026-10-31",
+    "notice_period_required": 60,
+    "notice_period_served": 40,
+    "notice_waived": false,
+    "notice_service_status": "served 40 days",
+    "settlement_component_rule_refs": {
+      "final_month_salary": "../rules/settlement-rules.json#final_month_salary",
+      "gratuity": "../rules/settlement-rules.json#gratuity",
+      "leave_encashment": "../rules/settlement-rules.json#leave_encashment",
+      "notice_shortfall_recovery": "../rules/settlement-rules.json#notice_shortfall_recovery",
+      "loan_and_advance_recovery": "../rules/settlement-rules.json#loan_and_advance_recovery",
+      "asset_recovery": "../rules/settlement-rules.json#asset_recovery"
+    },
+    "gratuity_becomes_payable_date": null
+  }
+]

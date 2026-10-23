@@ -1,0 +1,3200 @@
+{
+  "scenario_id": "scenario-13",
+  "description": "An unresolved settlement component alongside a confirmed component.",
+  "result": {
+    "employee_id": "E12",
+    "proposal_status": "Needs HR approval; no payment generated",
+    "components": {
+      "final_month_salary": {
+        "classification": "separation wages",
+        "amount": {
+          "value": 70000,
+          "formula": "Sum of rounded earning lines",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/attendance.json",
+              "record_id": "ATT-E12-2026-10"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#final_month_days",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; DEC-013 (GAP-04)",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Use a calendar-month divisor. Paid days equal eligible days up to and including the last working day minus LOP in that period.",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#rounding",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "applicable_due_date": {
+          "value": "2026-11-03",
+          "formula": "Count the configured working days from the next working day after the last working day; applicable due date, not payment date",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#final_month_salary",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12 for classification and deadline",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-12",
+              "value": {
+                "classification": "separation wages",
+                "due": {
+                  "within_days": 2,
+                  "day_type": "working",
+                  "trigger": "last working day"
+                }
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#working_day_calendar",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "working_days": [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday"
+                ],
+                "holidays": [],
+                "counting_start": "next working day after the last working day"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Calculated; needs HR approval",
+        "hold_or_unresolved_reason": null,
+        "held": false,
+        "certainty": "Complete for this scope",
+        "clearance_rule": {
+          "rule_id": "settlement-rules.json#separation_wages_clearance_hold",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved demo hold rule; DEC-008 and PBRD-01 provide prior context",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "No hold is permitted on separation wages because of a pending clearance",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      },
+      "leave_encashment": {
+        "classification": "paid with separation wages",
+        "amount": {
+          "value": 9333,
+          "formula": "Lower of recorded encashable leave and policy maximum, times salary base divided by the policy divisor",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            },
+            {
+              "source_file": "data/mock/leave-balances.json",
+              "record_id": "LEAVE-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "company-settings.json#leave_encashment",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies leave policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "base": "Basic",
+                "divisor": 30,
+                "maximum_days": 30
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#leave_encashment",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-06",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "classification": "paid with separation wages",
+                "due": {
+                  "same_as": "separation wages",
+                  "within_days": 2,
+                  "day_type": "working"
+                }
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#rounding",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "applicable_due_date": {
+          "value": "2026-11-03",
+          "formula": "Count the configured working days from the next working day after the last working day; applicable due date, not payment date",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#leave_encashment",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-06",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "classification": "paid with separation wages",
+                "due": {
+                  "same_as": "separation wages",
+                  "within_days": 2,
+                  "day_type": "working"
+                }
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#working_day_calendar",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "working_days": [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday"
+                ],
+                "holidays": [],
+                "counting_start": "next working day after the last working day"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Calculated; needs HR approval",
+        "hold_or_unresolved_reason": null,
+        "held": false,
+        "certainty": "Complete for this scope"
+      },
+      "gratuity": {
+        "classification": "gratuity",
+        "amount": {
+          "value": 0,
+          "formula": "No gratuity because actual service is below the minimum before part-year rounding",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "gratuity-rules.json#formula",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-13",
+              "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "gratuity-rules.json#part_year_counting",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-13",
+              "value": "A part-year of more than 6 months counts as a full year",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "gratuity-rules.json#eligibility_order",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "MR-04",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+                "part_year_rounding_use": "calculate the amount only after eligibility is met",
+                "informational_flag_condition": "actual service is within 6 months below the minimum",
+                "informational_flag": "Close to minimum service",
+                "flag_for": "HR",
+                "flag_changes_eligibility": false
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-13",
+              "value": 2000000,
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "gratuity-rules.json#wage_base_scope",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "wage_base": "Basic + DA",
+                "full_labour_code_wage_definition_in_scope": false
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+              "source_file": "data/rules/gratuity-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-13",
+              "value": 5,
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#rounding",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "applicable_due_date": {
+          "value": null,
+          "formula": "No separate applicable due date for this non-payable or deduction component",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#gratuity",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; supplied component classification and deadline; verify before build",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "verified_by_project_owner_2026-10-13",
+              "value": {
+                "classification": "gratuity",
+                "due": {
+                  "within_days": 30,
+                  "trigger": "becoming payable"
+                }
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Not applicable",
+        "hold_or_unresolved_reason": null,
+        "held": false,
+        "certainty": "Complete for this scope",
+        "service": {
+          "years": {
+            "value": 3,
+            "formula": "Actual completed service years before rounding",
+            "inputs": [
+              {
+                "source_file": "data/mock/employees.json",
+                "record_id": "E12"
+              },
+              {
+                "source_file": "data/mock/salary-structures.json",
+                "record_id": "SS-E12"
+              },
+              {
+                "source_file": "data/mock/company.json",
+                "record_id": "NORTHWIND-DEMO"
+              },
+              {
+                "source_file": "data/mock/exits.json",
+                "record_id": "EXIT-E12"
+              }
+            ],
+            "rule_ids": [
+              {
+                "rule_id": "gratuity-rules.json#formula",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#part_year_counting",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "A part-year of more than 6 months counts as a full year",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#eligibility_order",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "MR-04",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+                  "part_year_rounding_use": "calculate the amount only after eligibility is met",
+                  "informational_flag_condition": "actual service is within 6 months below the minimum",
+                  "informational_flag": "Close to minimum service",
+                  "flag_for": "HR",
+                  "flag_changes_eligibility": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 2000000,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#wage_base_scope",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "wage_base": "Basic + DA",
+                  "full_labour_code_wage_definition_in_scope": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 5,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              }
+            ],
+            "certainty": "Complete for this scope",
+            "flags": []
+          },
+          "months": {
+            "value": 8,
+            "formula": "Actual remaining completed service months",
+            "inputs": [
+              {
+                "source_file": "data/mock/employees.json",
+                "record_id": "E12"
+              },
+              {
+                "source_file": "data/mock/salary-structures.json",
+                "record_id": "SS-E12"
+              },
+              {
+                "source_file": "data/mock/company.json",
+                "record_id": "NORTHWIND-DEMO"
+              },
+              {
+                "source_file": "data/mock/exits.json",
+                "record_id": "EXIT-E12"
+              }
+            ],
+            "rule_ids": [
+              {
+                "rule_id": "gratuity-rules.json#formula",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#part_year_counting",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "A part-year of more than 6 months counts as a full year",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#eligibility_order",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "MR-04",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+                  "part_year_rounding_use": "calculate the amount only after eligibility is met",
+                  "informational_flag_condition": "actual service is within 6 months below the minimum",
+                  "informational_flag": "Close to minimum service",
+                  "flag_for": "HR",
+                  "flag_changes_eligibility": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 2000000,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#wage_base_scope",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "wage_base": "Basic + DA",
+                  "full_labour_code_wage_definition_in_scope": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 5,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              }
+            ],
+            "certainty": "Complete for this scope",
+            "flags": []
+          },
+          "days": {
+            "value": 30,
+            "formula": "Actual remaining service days",
+            "inputs": [
+              {
+                "source_file": "data/mock/employees.json",
+                "record_id": "E12"
+              },
+              {
+                "source_file": "data/mock/salary-structures.json",
+                "record_id": "SS-E12"
+              },
+              {
+                "source_file": "data/mock/company.json",
+                "record_id": "NORTHWIND-DEMO"
+              },
+              {
+                "source_file": "data/mock/exits.json",
+                "record_id": "EXIT-E12"
+              }
+            ],
+            "rule_ids": [
+              {
+                "rule_id": "gratuity-rules.json#formula",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#part_year_counting",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": "A part-year of more than 6 months counts as a full year",
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#eligibility_order",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "MR-04",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+                  "part_year_rounding_use": "calculate the amount only after eligibility is met",
+                  "informational_flag_condition": "actual service is within 6 months below the minimum",
+                  "informational_flag": "Close to minimum service",
+                  "flag_for": "HR",
+                  "flag_changes_eligibility": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 2000000,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#wage_base_scope",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "demo_rule_approved",
+                "value": {
+                  "wage_base": "Basic + DA",
+                  "full_labour_code_wage_definition_in_scope": false
+                },
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              },
+              {
+                "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+                "source_file": "data/rules/gratuity-rules.json",
+                "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+                "effective_from": null,
+                "effective_to": null,
+                "status": "verified_by_project_owner_2026-10-13",
+                "value": 5,
+                "rules_version": "Northwind demo rules v1",
+                "verified_on": "2026-10-13",
+                "date_note": "Applies to all demo periods"
+              }
+            ],
+            "certainty": "Complete for this scope",
+            "flags": []
+          }
+        },
+        "flags": []
+      },
+      "notice_shortfall_recovery": {
+        "classification": "deduction from settlement payables",
+        "amount": {
+          "value": 46667,
+          "formula": "Required notice days less served days, not below zero, times monthly gross divided by the policy divisor",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "company-settings.json#notice_recovery",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies notice-recovery policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "base": "monthly gross",
+                "divisor": 30,
+                "hr_can_waive": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#notice_period_days",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies policy for all employees",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": 60,
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#notice_shortfall_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-06",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "classification": "deduction from settlement payables",
+                "due": null
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#rounding",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "applicable_due_date": {
+          "value": null,
+          "formula": "No separate applicable due date for this non-payable or deduction component",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#notice_shortfall_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-06",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "classification": "deduction from settlement payables",
+                "due": null
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Calculated; needs HR approval",
+        "hold_or_unresolved_reason": null,
+        "held": false,
+        "certainty": "Complete for this scope"
+      },
+      "loan_and_advance_recovery": {
+        "classification": "recorded recovery",
+        "amount": {
+          "value": 10000,
+          "formula": "Sum of recorded advance and loan recovery lines; no records means no recorded recovery",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            },
+            {
+              "source_file": "data/mock/recoveries.json",
+              "record_id": "$",
+              "fields": [
+                "employee_id=E12"
+              ]
+            },
+            {
+              "source_file": "data/mock/recoveries.json",
+              "record_id": "REC-E12-ADVANCE"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#loan_and_advance_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "classification": "recorded recovery"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#salary_advance_recovery_treatment",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-07",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": "Deducted from settlement payables",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "company-settings.json#rounding",
+              "source_file": "data/rules/company-settings.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "applicable_due_date": {
+          "value": null,
+          "formula": "No separate applicable due date for this non-payable or deduction component",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#loan_and_advance_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "classification": "recorded recovery"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Calculated; needs HR approval",
+        "hold_or_unresolved_reason": null,
+        "held": false,
+        "certainty": "Complete for this scope"
+      },
+      "asset_recovery": {
+        "classification": "recorded recovery",
+        "amount": {
+          "value": null,
+          "formula": "Sum of allowed recorded asset recovery lines; pending recovery prevents this total",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            },
+            {
+              "source_file": "data/mock/recoveries.json",
+              "record_id": "$",
+              "fields": [
+                "employee_id=E12"
+              ]
+            },
+            {
+              "source_file": "data/mock/recoveries.json",
+              "record_id": "REC-E12-ASSET"
+            },
+            {
+              "source_file": "data/mock/clearances.json",
+              "record_id": "CLEAR-E12-ASSET"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#asset_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "classification": "recorded recovery",
+                "condition": "Only if the company rule allows it"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#asset_recovery_permission",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-07",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "allowed_clearance_status": "not returned",
+                "pending_clearance_status": "pending",
+                "pending_recovery_line_status": "unresolved",
+                "final_net_complete_when_asset_clearance_pending": false
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#pending_clearance_holds",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-07, DEC-008",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "only_component_that_may_be_held_or_left_unresolved_due_to_pending_clearance": "unresolved asset recovery",
+                "separation_wages_held": false
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Incomplete",
+          "flags": [
+            "Asset recovery unresolved"
+          ]
+        },
+        "applicable_due_date": {
+          "value": null,
+          "formula": "No separate applicable due date for this non-payable or deduction component",
+          "inputs": [
+            {
+              "source_file": "data/mock/employees.json",
+              "record_id": "E12"
+            },
+            {
+              "source_file": "data/mock/salary-structures.json",
+              "record_id": "SS-E12"
+            },
+            {
+              "source_file": "data/mock/company.json",
+              "record_id": "NORTHWIND-DEMO"
+            },
+            {
+              "source_file": "data/mock/exits.json",
+              "record_id": "EXIT-E12"
+            }
+          ],
+          "rule_ids": [
+            {
+              "rule_id": "settlement-rules.json#asset_recovery",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "company_setting_demo",
+              "value": {
+                "classification": "recorded recovery",
+                "condition": "Only if the company rule allows it"
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            },
+            {
+              "rule_id": "settlement-rules.json#due_date_wording",
+              "source_file": "data/rules/settlement-rules.json",
+              "source": "MR-05, DEC-011",
+              "effective_from": null,
+              "effective_to": null,
+              "status": "demo_rule_approved",
+              "value": {
+                "label": "applicable due date",
+                "not_a_payment_date": true
+              },
+              "rules_version": "Northwind demo rules v1",
+              "verified_on": "2026-10-13",
+              "date_note": "Applies to all demo periods"
+            }
+          ],
+          "certainty": "Complete for this scope",
+          "flags": []
+        },
+        "status": "Unresolved",
+        "hold_or_unresolved_reason": "Asset clearance pending; final net incomplete",
+        "held": false,
+        "certainty": "Incomplete"
+      }
+    },
+    "employee_pf": {
+      "value": 3000,
+      "formula": "Sum of rounded employee PF segment lines",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/attendance.json",
+          "record_id": "ATT-E12-2026-10"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "pf-rules.json#pf_wage_formula",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-3.1",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Basic + DA",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#employee_contribution_rate_percent",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.2; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 12,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#employer_contribution_rate_percent",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.3; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 12,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#eps_allocation",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied EPS rate and allocation; BRD v1.1 BR-3.3 and BR-3.4; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "rate_percent": 8.33,
+            "basis": "PF wage up to the wage ceiling",
+            "epf_remainder": "Rest of the employer contribution after EPS"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#company_pf_basis",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies company setting; BRD v1.1 BR-3.5",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": "PF calculated on PF wage capped at the wage ceiling",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#mid_month_ceiling_change",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-02 decision DEC-020",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Split the month by calendar days. Days before the change use the old ceiling. Days from the change use the new ceiling. Each segment is pro-rated by days.",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#pf_wage_with_lop",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "AMB-02",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "PF wage for a month = Basic + DA earned after LOP (monthly amount × paid days ÷ days in month).",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#lop_across_dated_segments",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "AMB-02",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Monthly LOP has no dates, so it is spread evenly across the month. When a month is split into dated segments (for example, the PF ceiling change on 17 September, or a mid-month hike), each segment's earned PF wage = the month's earned PF wage × segment calendar days ÷ month calendar days. The ceiling is applied per segment, pro-rated by calendar days.",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#wage_ceiling_from_change_inr",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12; BRD v1.1 BR-3.7",
+          "effective_from": "2026-09-17",
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-12",
+          "value": 25000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Complete for this scope",
+      "flags": []
+    },
+    "tds": {
+      "value": 0,
+      "formula": "Remaining yearly tax divided by remaining tax-year months including the current month",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "tax-rules.json#regime_scope",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "regime": "new",
+            "old_regime_in_scope": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#tax_year",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied tax year and Act; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "year": "2026-27",
+            "act": "Income-tax Act, 2025"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#slabs",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; last known values for FY 2025-26 supplied by Project owner; must be checked for Tax Year 2026-27; effective dates not supplied",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": [
+            {
+              "income_from_inr": 0,
+              "income_to_inr": 400000,
+              "rate_percent": 0
+            },
+            {
+              "income_from_inr": 400001,
+              "income_to_inr": 800000,
+              "rate_percent": 5
+            },
+            {
+              "income_from_inr": 800001,
+              "income_to_inr": 1200000,
+              "rate_percent": 10
+            },
+            {
+              "income_from_inr": 1200001,
+              "income_to_inr": 1600000,
+              "rate_percent": 15
+            },
+            {
+              "income_from_inr": 1600001,
+              "income_to_inr": 2000000,
+              "rate_percent": 20
+            },
+            {
+              "income_from_inr": 2000001,
+              "income_to_inr": 2400000,
+              "rate_percent": 25
+            },
+            {
+              "income_above_inr": 2400000,
+              "income_to_inr": null,
+              "rate_percent": 30
+            }
+          ],
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#standard_deduction_inr",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied standard deduction; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 75000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#rebate",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rebate rule; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "taxable_income_limit_inr": 1200000,
+            "tax_up_to_limit_inr": 0
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#health_and_education_cess",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied cess rate and basis; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "rate_percent": 4,
+            "basis": "tax"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#marginal_relief_scope",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified demo scope",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Marginal relief near the rebate limit is out of scope for the demo",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#monthly_tds_formula",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-4.3; Project owner specifies current month inclusion",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "(projected yearly tax - TDS already deducted) / remaining months including the current month",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#previous_employer_income",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "MR-01",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "declaration_status": "accepted",
+            "gross_income_treatment": "Add accepted declared gross income to projected yearly income",
+            "previous_employer_tds_treatment": "Count declared previous-employer TDS as tax already deducted",
+            "standard_deduction_applications_per_person_per_tax_year": 1,
+            "remaining_tax_schedule": "Spread remaining tax over the remaining months starting from the month the declaration is applied"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#negative_remaining_tax",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "monthly_tds_inr": 0,
+            "flag": "Excess tax is claimed through the tax return, not payroll."
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#last_month_tds",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "In the last month of the tax year, deduct all remaining tax",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Complete for this scope",
+      "flags": []
+    },
+    "tax_exemptions": [
+      {
+        "value": 0,
+        "formula": "Lower of actual component and exemption limit when the configured exit type qualifies",
+        "inputs": [
+          {
+            "source_file": "data/mock/employees.json",
+            "record_id": "E12"
+          },
+          {
+            "source_file": "data/mock/salary-structures.json",
+            "record_id": "SS-E12"
+          },
+          {
+            "source_file": "data/mock/company.json",
+            "record_id": "NORTHWIND-DEMO"
+          },
+          {
+            "source_file": "data/mock/exits.json",
+            "record_id": "EXIT-E12"
+          }
+        ],
+        "rule_ids": [
+          {
+            "rule_id": "tax-rules.json#gratuity_tax_exemption",
+            "source_file": "data/rules/tax-rules.json",
+            "source": "MR-08",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": {
+              "employee_sector": "private",
+              "available_under_new_tax_regime": true,
+              "exemption_limit_inr": 2000000,
+              "exempt_amount_formula": "lower of actual gratuity and exemption limit"
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#formula",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#part_year_counting",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": "A part-year of more than 6 months counts as a full year",
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#eligibility_order",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "MR-04",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+              "part_year_rounding_use": "calculate the amount only after eligibility is met",
+              "informational_flag_condition": "actual service is within 6 months below the minimum",
+              "informational_flag": "Close to minimum service",
+              "flag_for": "HR",
+              "flag_changes_eligibility": false
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": 2000000,
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#wage_base_scope",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "wage_base": "Basic + DA",
+              "full_labour_code_wage_definition_in_scope": false
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": 5,
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "company-settings.json#rounding",
+            "source_file": "data/rules/company-settings.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          }
+        ],
+        "certainty": "Complete for this scope",
+        "flags": []
+      },
+      {
+        "value": 9333,
+        "formula": "Lower of actual component and exemption limit when the configured exit type qualifies",
+        "inputs": [
+          {
+            "source_file": "data/mock/employees.json",
+            "record_id": "E12"
+          },
+          {
+            "source_file": "data/mock/salary-structures.json",
+            "record_id": "SS-E12"
+          },
+          {
+            "source_file": "data/mock/company.json",
+            "record_id": "NORTHWIND-DEMO"
+          },
+          {
+            "source_file": "data/mock/exits.json",
+            "record_id": "EXIT-E12"
+          },
+          {
+            "source_file": "data/mock/leave-balances.json",
+            "record_id": "LEAVE-E12"
+          }
+        ],
+        "rule_ids": [
+          {
+            "rule_id": "tax-rules.json#leave_encashment_tax_exemption",
+            "source_file": "data/rules/tax-rules.json",
+            "source": "MR-08",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "verified_by_project_owner_2026-10-13",
+            "value": {
+              "employee_sector": "private",
+              "exit_types": [
+                "resignation",
+                "retirement"
+              ],
+              "available_under_new_tax_regime": true,
+              "exemption_limit_inr": 2500000,
+              "exempt_amount_formula": "lower of actual leave encashment and exemption limit"
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "company-settings.json#leave_encashment",
+            "source_file": "data/rules/company-settings.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies leave policy",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "company_setting_demo",
+            "value": {
+              "base": "Basic",
+              "divisor": 30,
+              "maximum_days": 30
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "settlement-rules.json#leave_encashment",
+            "source_file": "data/rules/settlement-rules.json",
+            "source": "MR-06",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "classification": "paid with separation wages",
+              "due": {
+                "same_as": "separation wages",
+                "within_days": 2,
+                "day_type": "working"
+              }
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "company-settings.json#rounding",
+            "source_file": "data/rules/company-settings.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          }
+        ],
+        "certainty": "Complete for this scope",
+        "flags": []
+      }
+    ],
+    "taxable_additional_components": {
+      "value": 0,
+      "formula": "Sum of taxable settlement components beyond final salary",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        },
+        {
+          "source_file": "data/mock/leave-balances.json",
+          "record_id": "LEAVE-E12"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "gratuity-rules.json#formula",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#part_year_counting",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": "A part-year of more than 6 months counts as a full year",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#eligibility_order",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "MR-04",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+            "part_year_rounding_use": "calculate the amount only after eligibility is met",
+            "informational_flag_condition": "actual service is within 6 months below the minimum",
+            "informational_flag": "Close to minimum service",
+            "flag_for": "HR",
+            "flag_changes_eligibility": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 2000000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#wage_base_scope",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "wage_base": "Basic + DA",
+            "full_labour_code_wage_definition_in_scope": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 5,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#gratuity_tax_exemption",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "MR-08",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "employee_sector": "private",
+            "available_under_new_tax_regime": true,
+            "exemption_limit_inr": 2000000,
+            "exempt_amount_formula": "lower of actual gratuity and exemption limit"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#leave_encashment",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies leave policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "base": "Basic",
+            "divisor": 30,
+            "maximum_days": 30
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#leave_encashment",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-06",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "classification": "paid with separation wages",
+            "due": {
+              "same_as": "separation wages",
+              "within_days": 2,
+              "day_type": "working"
+            }
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#leave_encashment_tax_exemption",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "MR-08",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "employee_sector": "private",
+            "exit_types": [
+              "resignation",
+              "retirement"
+            ],
+            "available_under_new_tax_regime": true,
+            "exemption_limit_inr": 2500000,
+            "exempt_amount_formula": "lower of actual leave encashment and exemption limit"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Complete for this scope",
+      "flags": []
+    },
+    "gross_payables": {
+      "value": 79333,
+      "formula": "Sum of rounded settlement earning components",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/attendance.json",
+          "record_id": "ATT-E12-2026-10"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        },
+        {
+          "source_file": "data/mock/leave-balances.json",
+          "record_id": "LEAVE-E12"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "settlement-rules.json#final_month_days",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; DEC-013 (GAP-04)",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Use a calendar-month divisor. Paid days equal eligible days up to and including the last working day minus LOP in that period.",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#leave_encashment",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies leave policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "base": "Basic",
+            "divisor": 30,
+            "maximum_days": 30
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#leave_encashment",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-06",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "classification": "paid with separation wages",
+            "due": {
+              "same_as": "separation wages",
+              "within_days": 2,
+              "day_type": "working"
+            }
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#formula",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied formula; BRD v1.1 BR-6.4; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": "15 / 26 × last drawn (Basic + DA) × completed years",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#part_year_counting",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied part-year rule; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": "A part-year of more than 6 months counts as a full year",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#eligibility_order",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "MR-04",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "minimum_service_basis": "actual completed service in years, months and days before any part-year rounding",
+            "part_year_rounding_use": "calculate the amount only after eligibility is met",
+            "informational_flag_condition": "actual service is within 6 months below the minimum",
+            "informational_flag": "Close to minimum service",
+            "flag_for": "HR",
+            "flag_changes_eligibility": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#maximum_gratuity_inr",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied gratuity maximum; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 2000000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#wage_base_scope",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "wage_base": "Basic + DA",
+            "full_labour_code_wage_definition_in_scope": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "gratuity-rules.json#minimum_service_permanent_years",
+          "source_file": "data/rules/gratuity-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied permanent-employee service threshold; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 5,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Complete for this scope",
+      "flags": []
+    },
+    "total_deductions": {
+      "value": null,
+      "formula": "Sum of rounded notice, recorded recoveries, employee PF and TDS; stop if any component is unresolved",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "$",
+          "fields": [
+            "employee_id=E12"
+          ]
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "REC-E12-ADVANCE"
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "REC-E12-ASSET"
+        },
+        {
+          "source_file": "data/mock/clearances.json",
+          "record_id": "CLEAR-E12-ASSET"
+        },
+        {
+          "source_file": "data/mock/attendance.json",
+          "record_id": "ATT-E12-2026-10"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "company-settings.json#notice_recovery",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies notice-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "base": "monthly gross",
+            "divisor": 30,
+            "hr_can_waive": true
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#notice_period_days",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies policy for all employees",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": 60,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#notice_shortfall_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-06",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "classification": "deduction from settlement payables",
+            "due": null
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#loan_and_advance_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#salary_advance_recovery_treatment",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": "Deducted from settlement payables",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery",
+            "condition": "Only if the company rule allows it"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery_permission",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "allowed_clearance_status": "not returned",
+            "pending_clearance_status": "pending",
+            "pending_recovery_line_status": "unresolved",
+            "final_net_complete_when_asset_clearance_pending": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#pending_clearance_holds",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07, DEC-008",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "only_component_that_may_be_held_or_left_unresolved_due_to_pending_clearance": "unresolved asset recovery",
+            "separation_wages_held": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#pf_wage_formula",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-3.1",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Basic + DA",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#employee_contribution_rate_percent",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.2; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 12,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#employer_contribution_rate_percent",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rate; BRD v1.1 BR-3.3; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 12,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#eps_allocation",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied EPS rate and allocation; BRD v1.1 BR-3.3 and BR-3.4; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "rate_percent": 8.33,
+            "basis": "PF wage up to the wage ceiling",
+            "epf_remainder": "Rest of the employer contribution after EPS"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#company_pf_basis",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies company setting; BRD v1.1 BR-3.5",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": "PF calculated on PF wage capped at the wage ceiling",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#mid_month_ceiling_change",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-02 decision DEC-020",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Split the month by calendar days. Days before the change use the old ceiling. Days from the change use the new ceiling. Each segment is pro-rated by days.",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#pf_wage_with_lop",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "AMB-02",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "PF wage for a month = Basic + DA earned after LOP (monthly amount × paid days ÷ days in month).",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#lop_across_dated_segments",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "AMB-02",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Monthly LOP has no dates, so it is spread evenly across the month. When a month is split into dated segments (for example, the PF ceiling change on 17 September, or a mid-month hike), each segment's earned PF wage = the month's earned PF wage × segment calendar days ÷ month calendar days. The ceiling is applied per segment, pro-rated by calendar days.",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "pf-rules.json#wage_ceiling_from_change_inr",
+          "source_file": "data/rules/pf-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner declares verification dated 2026-10-12; BRD v1.1 BR-3.7",
+          "effective_from": "2026-09-17",
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-12",
+          "value": 25000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13"
+        },
+        {
+          "rule_id": "tax-rules.json#regime_scope",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "regime": "new",
+            "old_regime_in_scope": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#tax_year",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied tax year and Act; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "year": "2026-27",
+            "act": "Income-tax Act, 2025"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#slabs",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; last known values for FY 2025-26 supplied by Project owner; must be checked for Tax Year 2026-27; effective dates not supplied",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": [
+            {
+              "income_from_inr": 0,
+              "income_to_inr": 400000,
+              "rate_percent": 0
+            },
+            {
+              "income_from_inr": 400001,
+              "income_to_inr": 800000,
+              "rate_percent": 5
+            },
+            {
+              "income_from_inr": 800001,
+              "income_to_inr": 1200000,
+              "rate_percent": 10
+            },
+            {
+              "income_from_inr": 1200001,
+              "income_to_inr": 1600000,
+              "rate_percent": 15
+            },
+            {
+              "income_from_inr": 1600001,
+              "income_to_inr": 2000000,
+              "rate_percent": 20
+            },
+            {
+              "income_from_inr": 2000001,
+              "income_to_inr": 2400000,
+              "rate_percent": 25
+            },
+            {
+              "income_above_inr": 2400000,
+              "income_to_inr": null,
+              "rate_percent": 30
+            }
+          ],
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#standard_deduction_inr",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied standard deduction; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": 75000,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#rebate",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied rebate rule; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "taxable_income_limit_inr": 1200000,
+            "tax_up_to_limit_inr": 0
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#health_and_education_cess",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; supplied cess rate and basis; verify before build",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "verified_by_project_owner_2026-10-13",
+          "value": {
+            "rate_percent": 4,
+            "basis": "tax"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#marginal_relief_scope",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified demo scope",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Marginal relief near the rebate limit is out of scope for the demo",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#monthly_tds_formula",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-4.3; Project owner specifies current month inclusion",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "(projected yearly tax - TDS already deducted) / remaining months including the current month",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#previous_employer_income",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "MR-01",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "declaration_status": "accepted",
+            "gross_income_treatment": "Add accepted declared gross income to projected yearly income",
+            "previous_employer_tds_treatment": "Count declared previous-employer TDS as tax already deducted",
+            "standard_deduction_applications_per_person_per_tax_year": 1,
+            "remaining_tax_schedule": "Spread remaining tax over the remaining months starting from the month the declaration is applied"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#negative_remaining_tax",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "monthly_tds_inr": 0,
+            "flag": "Excess tax is claimed through the tax return, not payroll."
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "tax-rules.json#last_month_tds",
+          "source_file": "data/rules/tax-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "In the last month of the tax year, deduct all remaining tax",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Incomplete",
+      "flags": [
+        "Asset recovery unresolved"
+      ]
+    },
+    "recoveries_total": {
+      "value": null,
+      "formula": "Sum of rounded notice, loan or advance, and asset recoveries only; exclude employee PF and TDS",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "$",
+          "fields": [
+            "employee_id=E12"
+          ]
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "REC-E12-ADVANCE"
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "REC-E12-ASSET"
+        },
+        {
+          "source_file": "data/mock/clearances.json",
+          "record_id": "CLEAR-E12-ASSET"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "company-settings.json#notice_recovery",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies notice-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "base": "monthly gross",
+            "divisor": 30,
+            "hr_can_waive": true
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#notice_period_days",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies policy for all employees",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": 60,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#notice_shortfall_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-06",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "classification": "deduction from settlement payables",
+            "due": null
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#loan_and_advance_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#salary_advance_recovery_treatment",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": "Deducted from settlement payables",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery",
+            "condition": "Only if the company rule allows it"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery_permission",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "allowed_clearance_status": "not returned",
+            "pending_clearance_status": "pending",
+            "pending_recovery_line_status": "unresolved",
+            "final_net_complete_when_asset_clearance_pending": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#pending_clearance_holds",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07, DEC-008",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "only_component_that_may_be_held_or_left_unresolved_due_to_pending_clearance": "unresolved asset recovery",
+            "separation_wages_held": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Incomplete",
+      "flags": [
+        "Asset recovery unresolved"
+      ]
+    },
+    "known_recoveries_subtotal": {
+      "value": 56667,
+      "formula": "Sum of known rounded recovery lines only; exclude unresolved recoveries",
+      "inputs": [
+        {
+          "source_file": "data/mock/employees.json",
+          "record_id": "E12"
+        },
+        {
+          "source_file": "data/mock/salary-structures.json",
+          "record_id": "SS-E12"
+        },
+        {
+          "source_file": "data/mock/company.json",
+          "record_id": "NORTHWIND-DEMO"
+        },
+        {
+          "source_file": "data/mock/exits.json",
+          "record_id": "EXIT-E12"
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "$",
+          "fields": [
+            "employee_id=E12"
+          ]
+        },
+        {
+          "source_file": "data/mock/recoveries.json",
+          "record_id": "REC-E12-ADVANCE"
+        }
+      ],
+      "rule_ids": [
+        {
+          "rule_id": "company-settings.json#notice_recovery",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies notice-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "base": "monthly gross",
+            "divisor": 30,
+            "hr_can_waive": true
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#notice_period_days",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies policy for all employees",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": 60,
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#notice_shortfall_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-06",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "classification": "deduction from settlement payables",
+            "due": null
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#loan_and_advance_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#salary_advance_recovery_treatment",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": "Deducted from settlement payables",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies conditional recorded-recovery policy",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "classification": "recorded recovery",
+            "condition": "Only if the company rule allows it"
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#asset_recovery_permission",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "company_setting_demo",
+          "value": {
+            "allowed_clearance_status": "not returned",
+            "pending_clearance_status": "pending",
+            "pending_recovery_line_status": "unresolved",
+            "final_net_complete_when_asset_clearance_pending": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "settlement-rules.json#pending_clearance_holds",
+          "source_file": "data/rules/settlement-rules.json",
+          "source": "MR-07, DEC-008",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": {
+            "only_component_that_may_be_held_or_left_unresolved_due_to_pending_clearance": "unresolved asset recovery",
+            "separation_wages_held": false
+          },
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        },
+        {
+          "rule_id": "company-settings.json#rounding",
+          "source_file": "data/rules/company-settings.json",
+          "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+          "effective_from": null,
+          "effective_to": null,
+          "status": "demo_rule_approved",
+          "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+          "rules_version": "Northwind demo rules v1",
+          "verified_on": "2026-10-13",
+          "date_note": "Applies to all demo periods"
+        }
+      ],
+      "certainty": "Complete for this scope",
+      "flags": [
+        "Excludes unresolved asset recovery"
+      ]
+    },
+    "certainty": "Incomplete",
+    "final_net_not_generated_reason": "One or more settlement components are unknown; unknowns are not treated as zero"
+  },
+  "display_inputs": {
+    "resignation_date": {
+      "value": "2026-09-22",
+      "source_file": "data/mock/exits.json",
+      "record_id": "EXIT-E12",
+      "source_field": "resignation_date",
+      "certainty": "Complete for this scope"
+    },
+    "last_working_day": {
+      "value": "2026-10-31",
+      "source_file": "data/mock/exits.json",
+      "record_id": "EXIT-E12",
+      "source_field": "last_working_day",
+      "certainty": "Complete for this scope"
+    },
+    "notice_period_required": {
+      "value": 60,
+      "source_file": "data/mock/exits.json",
+      "record_id": "EXIT-E12",
+      "source_field": "notice_period_required",
+      "certainty": "Complete for this scope"
+    },
+    "notice_period_served": {
+      "value": 40,
+      "source_file": "data/mock/exits.json",
+      "record_id": "EXIT-E12",
+      "source_field": "notice_period_served",
+      "certainty": "Complete for this scope"
+    },
+    "notice_waived": {
+      "value": false,
+      "source_file": "data/mock/exits.json",
+      "record_id": "EXIT-E12",
+      "source_field": "notice_waived",
+      "certainty": "Complete for this scope"
+    },
+    "encashable_leave_days_used": {
+      "value": 8,
+      "source_file": "data/mock/leave-balances.json",
+      "record_id": "LEAVE-E12",
+      "source_field": "encashable_days",
+      "certainty": "Complete for this scope"
+    },
+    "last_drawn_basic": {
+      "value": 35000,
+      "source_file": "data/mock/salary-structures.json",
+      "record_id": "SS-E12",
+      "source_field": "monthly_components/basic",
+      "certainty": "Complete for this scope"
+    },
+    "last_drawn_da": {
+      "value": 0,
+      "source_file": "data/mock/salary-structures.json",
+      "record_id": "SS-E12",
+      "source_field": "monthly_components/da",
+      "certainty": "Complete for this scope"
+    },
+    "last_drawn_basic_plus_da": {
+      "value": 35000,
+      "source_file": "data/generated/scenarios/scenario-13.json",
+      "record_id": "scenario-13",
+      "source_field": "display_inputs/last_drawn_basic_plus_da",
+      "certainty": "Complete for this scope",
+      "calculation": {
+        "value": 35000,
+        "formula": "Last drawn contractual monthly Basic plus DA used for the gratuity wage base",
+        "inputs": [
+          {
+            "source_file": "data/mock/employees.json",
+            "record_id": "E12"
+          },
+          {
+            "source_file": "data/mock/salary-structures.json",
+            "record_id": "SS-E12"
+          },
+          {
+            "source_file": "data/mock/company.json",
+            "record_id": "NORTHWIND-DEMO"
+          },
+          {
+            "source_file": "data/mock/exits.json",
+            "record_id": "EXIT-E12"
+          }
+        ],
+        "rule_ids": [
+          {
+            "rule_id": "gratuity-rules.json#wage_base_scope",
+            "source_file": "data/rules/gratuity-rules.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified wage base; BRD v1.1 BR-6.4",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": {
+              "wage_base": "Basic + DA",
+              "full_labour_code_wage_definition_in_scope": false
+            },
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          },
+          {
+            "rule_id": "company-settings.json#rounding",
+            "source_file": "data/rules/company-settings.json",
+            "source": "Project owner rules setup instruction, 2026-10-13; GAP-03 decision DEC-021",
+            "effective_from": null,
+            "effective_to": null,
+            "status": "demo_rule_approved",
+            "value": "Round each line to the nearest rupee, then add rounded lines for totals",
+            "rules_version": "Northwind demo rules v1",
+            "verified_on": "2026-10-13",
+            "date_note": "Applies to all demo periods"
+          }
+        ],
+        "certainty": "Complete for this scope",
+        "flags": []
+      }
+    }
+  }
+}

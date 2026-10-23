@@ -1,0 +1,290 @@
+[
+  {
+    "salary_structure_id": "SS-E01",
+    "employee_id": "E01",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 60000,
+      "da": 0,
+      "hra": 30000,
+      "special_allowance": 30000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E02",
+    "employee_id": "E02",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 18000,
+      "da": 0,
+      "hra": 9000,
+      "special_allowance": 9000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E03",
+    "employee_id": "E03",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 30000,
+      "da": 0,
+      "hra": 15000,
+      "special_allowance": 15000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E04",
+    "employee_id": "E04",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 50000,
+      "da": 0,
+      "hra": 25000,
+      "special_allowance": 25000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E05",
+    "employee_id": "E05",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 25000,
+      "da": 0,
+      "hra": 12500,
+      "special_allowance": 12500,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E06",
+    "employee_id": "E06",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 60000,
+      "da": 0,
+      "hra": 30000,
+      "special_allowance": 30000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E07",
+    "employee_id": "E07",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 40000,
+      "da": 0,
+      "hra": 20000,
+      "special_allowance": 20000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E08",
+    "employee_id": "E08",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 45000,
+      "da": 0,
+      "hra": 22500,
+      "special_allowance": 22500,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E09",
+    "employee_id": "E09",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 35000,
+      "da": 0,
+      "hra": 17500,
+      "special_allowance": 17500,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E10",
+    "employee_id": "E10",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 50000,
+      "da": 0,
+      "hra": 25000,
+      "special_allowance": 25000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E11",
+    "employee_id": "E11",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 40000,
+      "da": 0,
+      "hra": 20000,
+      "special_allowance": 20000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E12",
+    "employee_id": "E12",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 35000,
+      "da": 0,
+      "hra": 17500,
+      "special_allowance": 17500,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E13",
+    "employee_id": "E13",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 25000,
+      "da": 0,
+      "hra": 12500,
+      "special_allowance": 12500,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E14",
+    "employee_id": "E14",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 28000,
+      "da": 0,
+      "hra": 14000,
+      "special_allowance": 14000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E15",
+    "employee_id": "E15",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 26000,
+      "da": 0,
+      "hra": 13000,
+      "special_allowance": 13000,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  },
+  {
+    "salary_structure_id": "SS-E16",
+    "employee_id": "E16",
+    "currency": "INR",
+    "effective_from": null,
+    "effective_to": null,
+    "monthly_components": {
+      "basic": 22500,
+      "da": 0,
+      "hra": 11250,
+      "special_allowance": 11250,
+      "others": []
+    },
+    "pf_wage_components": [
+      "basic",
+      "da"
+    ]
+  }
+]

@@ -1,0 +1,136 @@
+ai-payroll-assistant/
+├── agents/
+│   ├── 01-project.md
+│   ├── 02-research.md
+│   ├── 03-analysis.md
+│   ├── 04-strategy.md
+│   ├── 05-architecture.md
+│   └── 06-ai-interaction.md
+├── data/
+│   ├── generated/
+│   │   ├── scenarios/
+│   │   │   ├── scenario-01.json
+│   │   │   ├── scenario-02.json
+│   │   │   ├── scenario-03.json
+│   │   │   ├── scenario-04.json
+│   │   │   ├── scenario-05.json
+│   │   │   ├── scenario-06.json
+│   │   │   ├── scenario-07.json
+│   │   │   ├── scenario-08.json
+│   │   │   ├── scenario-09.json
+│   │   │   ├── scenario-10.json
+│   │   │   ├── scenario-11.json
+│   │   │   ├── scenario-12.json
+│   │   │   └── scenario-13.json
+│   │   ├── ambiguities.json
+│   │   ├── bonus-proposals.json
+│   │   ├── calculation-ledger.json
+│   │   ├── payslip-failures.json
+│   │   ├── payslips.json
+│   │   ├── run-context.json
+│   │   └── scenario-summary.json
+│   ├── mock/
+│   │   ├── attendance.json
+│   │   ├── audit-log.json
+│   │   ├── clearances.json
+│   │   ├── company.json
+│   │   ├── declarations.json
+│   │   ├── employees.json
+│   │   ├── exits.json
+│   │   ├── leave-balances.json
+│   │   ├── payroll-runs.json
+│   │   ├── performance.json
+│   │   ├── queries.json
+│   │   ├── README.md
+│   │   ├── recoveries.json
+│   │   ├── salary-revisions.json
+│   │   ├── salary-structures.json
+│   │   └── users.json
+│   └── rules/
+│       ├── bonus-rules.json
+│       ├── company-settings.json
+│       ├── gratuity-rules.json
+│       ├── pf-rules.json
+│       ├── settlement-rules.json
+│       └── tax-rules.json
+├── engine/
+│   ├── .venv/
+│   ├── payroll/
+│   │   ├── __init__.py
+│   │   ├── core.py
+│   │   ├── flows.py
+│   │   ├── history.py
+│   │   └── scenarios.py
+│   ├── tests/
+│   │   ├── conftest.py
+│   │   ├── test_hand_checks.py
+│   │   ├── test_invariants.py
+│   │   └── test_scenarios.py
+│   ├── .gitignore
+│   ├── folder-tree.txt
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── run.py
+│   └── test-results.xml
+├── gates/
+│   ├── G01-project-approval.md
+│   ├── G02-research-approval.md
+│   ├── G03-synthesis-approval.md
+│   ├── G04-strategy-approval.md
+│   ├── G05-architecture-approval.md
+│   └── G06-ai-interaction-approval.md
+├── input/
+│   ├── requirements/
+│   │   ├── Payroll_brd_v1.1.md
+│   │   ├── Payroll_brd_v1.2.md
+│   │   └── Payroll_brd.md
+│   └── research/
+│       ├── desk-research-bonus-settlement.pdf
+│       └── desk-research.pdf
+├── output/
+│   ├── 01-project/
+│   │   ├── assumptions.md
+│   │   └── project-brief.md
+│   ├── 02-research/
+│   │   ├── competitor-analysis.md
+│   │   └── secondary-research.md
+│   ├── 03-analysis/
+│   │   ├── journey-maps.md
+│   │   ├── pain-points.md
+│   │   └── personas.md
+│   ├── 04-strategy/
+│   │   ├── mvp-scope.md
+│   │   ├── problem-statements.md
+│   │   └── ux-principles.md
+│   ├── 05-architecture/
+│   │   ├── edge-cases-states.md
+│   │   └── user-flows.md
+│   ├── 06-ai-interaction/
+│   │   ├── approval-failure-handling.md
+│   │   ├── conversation-design.md
+│   │   └── trust-explainability.md
+│   ├── 07-prototype/
+│   └── 08-testing/
+├── project-memory/
+│   ├── design-decisions.md
+│   ├── project.config.md
+│   └── project.state.md
+├── skills/
+│   ├── approval-failure-handling.md
+│   ├── assumption-tracking.md
+│   ├── brief-synthesis.md
+│   ├── competitor-analysis.md
+│   ├── conversation-design.md
+│   ├── design-decision-log.md
+│   ├── edge-cases-states.md
+│   ├── journey-mapping.md
+│   ├── mvp-scope.md
+│   ├── pain-point-extraction.md
+│   ├── persona-synthesis.md
+│   ├── problem-framing-hmw.md
+│   ├── secondary-research-synthesis.md
+│   ├── skill-validation.md
+│   ├── trust-explainability.md
+│   ├── user-flows.md
+│   └── ux-principles.md
+└── workflow/

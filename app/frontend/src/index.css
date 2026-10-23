@@ -1,0 +1,109 @@
+@import './design-system/tokens.css';
+@import './design-system/components.css';
+
+/* Global Reset & Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabular figures for all numeric cells */
+.tabular-nums {
+  font-feature-settings: "tnum";
+}
+
+/* Mobile Frame Container (390px realistic mobile container) */
+.mobile-frame-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--space-6) var(--space-4);
+  background-color: #0F172A;
+  min-height: calc(100vh - 120px);
+}
+
+.mobile-frame {
+  width: var(--width-mobile-frame);
+  max-width: 100%;
+  background-color: var(--color-background);
+  border: 8px solid #1E293B;
+  border-radius: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px #334155;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 780px;
+}
+
+.mobile-notch {
+  width: 120px;
+  height: 20px;
+  background-color: #1E293B;
+  margin: 0 auto;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.mobile-screen-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--color-background);
+}
+
+/* Desktop App Container */
+.desktop-app-container {
+  max-width: var(--width-desktop-max);
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--space-6) var(--space-8);
+  flex: 1;
+}
+
+/* Navigation tabs in header */
+.hcm-nav-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.hcm-nav-tab {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-table);
+  font-weight: var(--font-weight-medium);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.15s ease;
+}
+
+.hcm-nav-tab:hover {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.hcm-nav-tab.active {
+  background-color: var(--color-brand-tint);
+  color: var(--color-brand-accent);
+  font-weight: var(--font-weight-semibold);
+}

@@ -1,0 +1,46 @@
+# Virtual Environments
+.venv/
+**/.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Testing
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+**/.pytest_cache/
+
+# Node & Frontend Build
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-ssr/
+*.local
+
+# Runtime Data & Logs
+data/runtime/
+*.log
+logs/
+
+# Secrets, Environment & Keys
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+*.pfx
+*secret*
+*credentials*
+id_rsa*
+id_ed25519*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

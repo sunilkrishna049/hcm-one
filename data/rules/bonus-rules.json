@@ -1,0 +1,89 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "annual_performance_bonus": {
+    "value": {
+      "basis": "percentage of annual Basic",
+      "rating_rates_percent": {
+        "3": 5,
+        "4": 10,
+        "5": 15,
+        "1_to_2": 0
+      },
+      "eligibility": {
+        "joined_at_least_days_before_period_end": 90,
+        "on_notice_allowed": false
+      },
+      "proration": "by eligible days",
+      "part_of_pf_wage": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies annual performance-bonus policy",
+    "status": "company_setting_demo"
+  },
+  "quarterly_sales_incentive": {
+    "value": {
+      "basis": "slab on target achievement",
+      "slabs": [
+        {
+          "achievement_range": "below 80%",
+          "amount_inr": 0
+        },
+        {
+          "achievement_range": "80 to 99%",
+          "amount_inr": 20000
+        },
+        {
+          "achievement_range": "100 to 119%",
+          "amount_inr": 40000
+        },
+        {
+          "achievement_range": "120% and above",
+          "amount_inr": 60000
+        }
+      ],
+      "eligibility": {
+        "team": "Sales",
+        "on_notice_allowed": false
+      },
+      "part_of_pf_wage": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; fictional Northwind Technologies quarterly sales-incentive policy; achievement ranges preserved exactly as supplied",
+    "status": "company_setting_demo"
+  },
+  "statutory_bonus_scope": {
+    "value": "Out of scope",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner instruction: company_setting_demo for all bonus policies; BRD v1.1 BR-5.5",
+    "status": "company_setting_demo"
+  },
+  "annual_performance_bonus_notice_check": {
+    "value": {
+      "check_date": "date the bonus is calculated",
+      "on_notice_eligibility": "not eligible",
+      "recorded_reason": "On notice at the time of calculation"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-02",
+    "status": "demo_rule_approved"
+  },
+  "annual_performance_bonus_calculation": {
+    "value": {
+      "annual_basic_formula": "monthly Basic at period end × 12",
+      "eligible_days": "days employed within the period, from the later of joining date or period start to the period end",
+      "lop_reduces_eligible_days": false,
+      "bonus_formula": "rating rate × annual Basic × eligible days / total days in the period",
+      "proration_applications": 1
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-03",
+    "status": "demo_rule_approved"
+  }
+}

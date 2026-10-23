@@ -1,0 +1,974 @@
+[
+  {
+    "attendance_id": "ATT-E01-2026-04",
+    "employee_id": "E01",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-05",
+    "employee_id": "E01",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-06",
+    "employee_id": "E01",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 2,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-07",
+    "employee_id": "E01",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-08",
+    "employee_id": "E01",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-09",
+    "employee_id": "E01",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E01-2026-10",
+    "employee_id": "E01",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-04",
+    "employee_id": "E02",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-05",
+    "employee_id": "E02",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-06",
+    "employee_id": "E02",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-07",
+    "employee_id": "E02",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-08",
+    "employee_id": "E02",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-09",
+    "employee_id": "E02",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E02-2026-10",
+    "employee_id": "E02",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-04",
+    "employee_id": "E03",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-05",
+    "employee_id": "E03",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-06",
+    "employee_id": "E03",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-08",
+    "employee_id": "E03",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-09",
+    "employee_id": "E03",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E03-2026-10",
+    "employee_id": "E03",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-04",
+    "employee_id": "E04",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-05",
+    "employee_id": "E04",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-06",
+    "employee_id": "E04",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-07",
+    "employee_id": "E04",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-08",
+    "employee_id": "E04",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-09",
+    "employee_id": "E04",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E04-2026-10",
+    "employee_id": "E04",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-04",
+    "employee_id": "E05",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-05",
+    "employee_id": "E05",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-06",
+    "employee_id": "E05",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-07",
+    "employee_id": "E05",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-08",
+    "employee_id": "E05",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-09",
+    "employee_id": "E05",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 3,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E05-2026-10",
+    "employee_id": "E05",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E06-2026-07",
+    "employee_id": "E06",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E06-2026-08",
+    "employee_id": "E06",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E06-2026-09",
+    "employee_id": "E06",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E06-2026-10",
+    "employee_id": "E06",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-04",
+    "employee_id": "E07",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-05",
+    "employee_id": "E07",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-06",
+    "employee_id": "E07",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-07",
+    "employee_id": "E07",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-08",
+    "employee_id": "E07",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-09",
+    "employee_id": "E07",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E07-2026-10",
+    "employee_id": "E07",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-04",
+    "employee_id": "E08",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-05",
+    "employee_id": "E08",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-06",
+    "employee_id": "E08",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-07",
+    "employee_id": "E08",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-08",
+    "employee_id": "E08",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-09",
+    "employee_id": "E08",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E08-2026-10",
+    "employee_id": "E08",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-04",
+    "employee_id": "E09",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-05",
+    "employee_id": "E09",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-06",
+    "employee_id": "E09",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-07",
+    "employee_id": "E09",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-08",
+    "employee_id": "E09",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-09",
+    "employee_id": "E09",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E09-2026-10",
+    "employee_id": "E09",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-04",
+    "employee_id": "E10",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-05",
+    "employee_id": "E10",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-06",
+    "employee_id": "E10",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-07",
+    "employee_id": "E10",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-08",
+    "employee_id": "E10",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-09",
+    "employee_id": "E10",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E10-2026-10",
+    "employee_id": "E10",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-04",
+    "employee_id": "E11",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-05",
+    "employee_id": "E11",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-06",
+    "employee_id": "E11",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-07",
+    "employee_id": "E11",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-08",
+    "employee_id": "E11",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-09",
+    "employee_id": "E11",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E11-2026-10",
+    "employee_id": "E11",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-04",
+    "employee_id": "E12",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-05",
+    "employee_id": "E12",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-06",
+    "employee_id": "E12",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-07",
+    "employee_id": "E12",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-08",
+    "employee_id": "E12",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-09",
+    "employee_id": "E12",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E12-2026-10",
+    "employee_id": "E12",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-04",
+    "employee_id": "E13",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-05",
+    "employee_id": "E13",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-06",
+    "employee_id": "E13",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-07",
+    "employee_id": "E13",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-08",
+    "employee_id": "E13",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-09",
+    "employee_id": "E13",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E13-2026-10",
+    "employee_id": "E13",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-04",
+    "employee_id": "E14",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-05",
+    "employee_id": "E14",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-06",
+    "employee_id": "E14",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-07",
+    "employee_id": "E14",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-08",
+    "employee_id": "E14",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-09",
+    "employee_id": "E14",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E14-2026-10",
+    "employee_id": "E14",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-04",
+    "employee_id": "E15",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-05",
+    "employee_id": "E15",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-06",
+    "employee_id": "E15",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-07",
+    "employee_id": "E15",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-08",
+    "employee_id": "E15",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-09",
+    "employee_id": "E15",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E15-2026-10",
+    "employee_id": "E15",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-04",
+    "employee_id": "E16",
+    "month": "2026-04",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-05",
+    "employee_id": "E16",
+    "month": "2026-05",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-06",
+    "employee_id": "E16",
+    "month": "2026-06",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-07",
+    "employee_id": "E16",
+    "month": "2026-07",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-08",
+    "employee_id": "E16",
+    "month": "2026-08",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-09",
+    "employee_id": "E16",
+    "month": "2026-09",
+    "days_in_month": 30,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional attendance input; days present were not supplied."
+  },
+  {
+    "attendance_id": "ATT-E16-2026-10",
+    "employee_id": "E16",
+    "month": "2026-10",
+    "days_in_month": 31,
+    "days_present": null,
+    "lop_days": 0,
+    "input_note": "Fictional input for the open October payroll; not a processed payroll result."
+  }
+]

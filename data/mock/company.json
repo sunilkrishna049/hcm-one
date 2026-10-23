@@ -1,0 +1,49 @@
+{
+  "company_id": "NORTHWIND-DEMO",
+  "company_name": "Northwind Technologies",
+  "fictional": true,
+  "currency": "INR",
+  "financial_year": "2026-27",
+  "tax_year_start": "2026-04-01",
+  "tax_year_end": "2027-03-31",
+  "payroll_cut_off_date": null,
+  "payroll_settings": {
+    "pf_basis_ref": "../rules/pf-rules.json#company_pf_basis",
+    "leave_encashment_ref": "../rules/company-settings.json#leave_encashment",
+    "notice_recovery_ref": "../rules/company-settings.json#notice_recovery",
+    "notice_period_ref": "../rules/company-settings.json#notice_period_days"
+  },
+  "bonus_request_inputs": [
+    {
+      "bonus_type": "annual_performance_bonus",
+      "department": "Engineering",
+      "employee_ids": [
+        "E01",
+        "E03",
+        "E04",
+        "E07",
+        "E08",
+        "E09"
+      ],
+      "period": "FY 2025-26",
+      "period_start": "2025-04-01",
+      "period_end": "2026-03-31",
+      "rule_ref": "../rules/bonus-rules.json#annual_performance_bonus"
+    },
+    {
+      "bonus_type": "quarterly_sales_incentive",
+      "department": "Sales",
+      "team": "Sales",
+      "location": "Hyderabad",
+      "employee_ids": [
+        "E13",
+        "E14",
+        "E15"
+      ],
+      "period": "Q2 2026-27",
+      "period_start": "2026-07-01",
+      "period_end": "2026-09-30",
+      "rule_ref": "../rules/bonus-rules.json#quarterly_sales_incentive"
+    }
+  ]
+}

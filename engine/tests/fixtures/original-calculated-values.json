@@ -1,0 +1,82 @@
+{
+  "data/generated/ambiguities.json": {
+    "count": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "data/generated/bonus-proposals.json": {
+    "count": 3063,
+    "sha256": "44ac545493e7df78834a4b8f95406ee9ed7020bf1a0c527910a8faf47e54a052"
+  },
+  "data/generated/calculation-ledger.json": {
+    "count": 36654,
+    "sha256": "7db78a5e8510a7d767320b5fd58ed9258feceb882f9d26109effc18807401adb"
+  },
+  "data/generated/payslip-failures.json": {
+    "count": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "data/generated/payslips.json": {
+    "count": 35739,
+    "sha256": "7d200508219ac279828902d2799d9e7bb136baba536bc28df11ab752ac9306dd"
+  },
+  "data/generated/run-context.json": {
+    "count": 2,
+    "sha256": "15ec3bb0bac807122d39ec79203eddca9662790219585982f5d59d7950c9398d"
+  },
+  "data/generated/scenario-summary.json": {
+    "count": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "data/generated/scenarios/scenario-01.json": {
+    "count": 3804,
+    "sha256": "6c5355c74dc5e9b25787e566740bb4b69d701f2167cbe47fc58ae5a9feea4f99"
+  },
+  "data/generated/scenarios/scenario-02.json": {
+    "count": 1787,
+    "sha256": "48f6f9f1d0cd0ef0206211d644d24b788163e409fcc965bafd9369f04d35cfad"
+  },
+  "data/generated/scenarios/scenario-03.json": {
+    "count": 1810,
+    "sha256": "42386ce6a09b135383f40efe8a55b67ea0186d2d43136531b8add825fdda2b7a"
+  },
+  "data/generated/scenarios/scenario-04.json": {
+    "count": 3063,
+    "sha256": "b11d8f41ed469e55df1ddf3db03d6d6315804ae3b81e5cfe07c2c2e7a2f190dd"
+  },
+  "data/generated/scenarios/scenario-05.json": {
+    "count": 4,
+    "sha256": "bb3b0327fde8270fbe04e66afe770941f2919ddbe5d621107e1b0575afd5e108"
+  },
+  "data/generated/scenarios/scenario-06.json": {
+    "count": 210,
+    "sha256": "bd2bab8a86f5160bc2a4924b210e16ca169daf733595ce42fbd2d9a89e8977dc"
+  },
+  "data/generated/scenarios/scenario-07.json": {
+    "count": 201,
+    "sha256": "661ff98ade955962a2fceff286855f89def0c85cb75d2d9ea7dae9831013a30d"
+  },
+  "data/generated/scenarios/scenario-08.json": {
+    "count": 161,
+    "sha256": "85a825233cac7dc5a7efc5ab09df5012e00a05a6128769e3ad8488023670776b"
+  },
+  "data/generated/scenarios/scenario-09.json": {
+    "count": 933,
+    "sha256": "ad84abe04dc6eb7548f0c5ec94ff07233543e413b78c5c1607a3ce0ac9318d85"
+  },
+  "data/generated/scenarios/scenario-10.json": {
+    "count": 933,
+    "sha256": "da1a121668bfbbfaad59def2e62714eaee3820cb9a421deb22fda6312615a99b"
+  },
+  "data/generated/scenarios/scenario-11.json": {
+    "count": 933,
+    "sha256": "46fc06e78704bb52ec1eddfb9755455e8d6247cbcec9938d9b3f58c03512d8d0"
+  },
+  "data/generated/scenarios/scenario-12.json": {
+    "count": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "data/generated/scenarios/scenario-13.json": {
+    "count": 161,
+    "sha256": "85a825233cac7dc5a7efc5ab09df5012e00a05a6128769e3ad8488023670776b"
+  }
+}

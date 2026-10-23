@@ -1,0 +1,184 @@
+{
+  "rules_version": "Northwind demo rules v1",
+  "verified_on": "2026-10-13",
+  "note": "Simplified rules for a portfolio demo with fictional data. Not for real payroll.",
+  "regime_scope": {
+    "value": {
+      "regime": "new",
+      "old_regime_in_scope": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+    "status": "demo_rule_approved"
+  },
+  "tax_year": {
+    "value": {
+      "year": "2026-27",
+      "act": "Income-tax Act, 2025"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied tax year and Act; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "slabs": {
+    "value": [
+      {
+        "income_from_inr": 0,
+        "income_to_inr": 400000,
+        "rate_percent": 0
+      },
+      {
+        "income_from_inr": 400001,
+        "income_to_inr": 800000,
+        "rate_percent": 5
+      },
+      {
+        "income_from_inr": 800001,
+        "income_to_inr": 1200000,
+        "rate_percent": 10
+      },
+      {
+        "income_from_inr": 1200001,
+        "income_to_inr": 1600000,
+        "rate_percent": 15
+      },
+      {
+        "income_from_inr": 1600001,
+        "income_to_inr": 2000000,
+        "rate_percent": 20
+      },
+      {
+        "income_from_inr": 2000001,
+        "income_to_inr": 2400000,
+        "rate_percent": 25
+      },
+      {
+        "income_above_inr": 2400000,
+        "income_to_inr": null,
+        "rate_percent": 30
+      }
+    ],
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; last known values for FY 2025-26 supplied by Project owner; must be checked for Tax Year 2026-27; effective dates not supplied",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "standard_deduction_inr": {
+    "value": 75000,
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied standard deduction; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "rebate": {
+    "value": {
+      "taxable_income_limit_inr": 1200000,
+      "tax_up_to_limit_inr": 0
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied rebate rule; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "marginal_relief_scope": {
+    "value": "Marginal relief near the rebate limit is out of scope for the demo",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; Project owner approved simplified demo scope",
+    "status": "demo_rule_approved"
+  },
+  "health_and_education_cess": {
+    "value": {
+      "rate_percent": 4,
+      "basis": "tax"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; supplied cess rate and basis; verify before build",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "monthly_tds_formula": {
+    "value": "(projected yearly tax - TDS already deducted) / remaining months including the current month",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; BRD v1.1 BR-4.3; Project owner specifies current month inclusion",
+    "status": "demo_rule_approved"
+  },
+  "negative_remaining_tax": {
+    "value": {
+      "monthly_tds_inr": 0,
+      "flag": "Excess tax is claimed through the tax return, not payroll."
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+    "status": "demo_rule_approved"
+  },
+  "last_month_tds": {
+    "value": "In the last month of the tax year, deduct all remaining tax",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+    "status": "demo_rule_approved"
+  },
+  "past_year_arrears": {
+    "value": {
+      "taxed_in": "year received",
+      "relief_claims_in_scope": false
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "Project owner rules setup instruction, 2026-10-13; GAP-05 decision DEC-022",
+    "status": "demo_rule_approved"
+  },
+  "previous_employer_income": {
+    "value": {
+      "declaration_status": "accepted",
+      "gross_income_treatment": "Add accepted declared gross income to projected yearly income",
+      "previous_employer_tds_treatment": "Count declared previous-employer TDS as tax already deducted",
+      "standard_deduction_applications_per_person_per_tax_year": 1,
+      "remaining_tax_schedule": "Spread remaining tax over the remaining months starting from the month the declaration is applied"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-01",
+    "status": "demo_rule_approved"
+  },
+  "gratuity_tax_exemption": {
+    "value": {
+      "employee_sector": "private",
+      "available_under_new_tax_regime": true,
+      "exemption_limit_inr": 2000000,
+      "exempt_amount_formula": "lower of actual gratuity and exemption limit"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-08",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "leave_encashment_tax_exemption": {
+    "value": {
+      "employee_sector": "private",
+      "exit_types": [
+        "resignation",
+        "retirement"
+      ],
+      "available_under_new_tax_regime": true,
+      "exemption_limit_inr": 2500000,
+      "exempt_amount_formula": "lower of actual leave encashment and exemption limit"
+    },
+    "effective_from": null,
+    "effective_to": null,
+    "source": "MR-08",
+    "status": "verified_by_project_owner_2026-10-13"
+  },
+  "proposal_tds_estimate": {
+    "value": "For a pending hike or bonus proposal, TDS impact is estimated as if the amount is paid in the next open payroll month. Record that month in the result and add the flag \"Estimated TDS if approved and paid in [month] payroll\". The estimate is recalculated if the actual payment month differs.",
+    "effective_from": null,
+    "effective_to": null,
+    "source": "AMB-03, BR-2.4",
+    "status": "demo_rule_approved"
+  }
+}
