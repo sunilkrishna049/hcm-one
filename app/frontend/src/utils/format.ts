@@ -63,3 +63,69 @@ export function formatNumberPlain(val: number | null | undefined): string {
   const minusSign = isNeg ? "−" : "";
   return `${minusSign}${formatted}`;
 }
+
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+/**
+ * Dates as people read them (presentation only):
+ * "2026-04-01" -> "1 Apr 2026"
+ * "2026-04" -> "Apr 2026"
+ * "2026-04 to 2026-09" -> "Apr–Sep 2026"
+ * "6 months (2026-04 to 2026-09)" -> "6 months (Apr–Sep 2026)"
+ */
+export function formatHumanDate(dateStr: string | null | undefined): string {
+  if (!dateStr || typeof dateStr !== "string") return "";
+
+  // 1. Range: "2026-04 to 2026-09" -> "Apr–Sep 2026"
+  const rangeMatch = dateStr.match(/^(\d{4})-(\d{2})\s+to\s+(\d{4})-(\d{2})$/);
+  if (rangeMatch) {
+    const [, y1, m1, y2, m2] = rangeMatch;
+    const month1 = MONTH_NAMES[parseInt(m1, 10) - 1] || m1;
+    const month2 = MONTH_NAMES[parseInt(m2, 10) - 1] || m2;
+    if (y1 === y2) {
+      return `${month1}–${month2} ${y1}`;
+    }
+    return `${month1} ${y1}–${month2} ${y2}`;
+  }
+
+  // Embedded range: e.g. "6 months (2026-04 to 2026-09)" -> "6 months (Apr–Sep 2026)"
+  if (dateStr.includes(" to ")) {
+    return dateStr.replace(/(\d{4})-(\d{2})\s+to\s+(\d{4})-(\d{2})/g, (_, y1, m1, y2, m2) => {
+      const month1 = MONTH_NAMES[parseInt(m1, 10) - 1] || m1;
+      const month2 = MONTH_NAMES[parseInt(m2, 10) - 1] || m2;
+      return y1 === y2 ? `${month1}–${month2} ${y1}` : `${month1} ${y1}–${month2} ${y2}`;
+    });
+  }
+
+  // 2. Full date: "2026-04-01" -> "1 Apr 2026"
+  const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateMatch) {
+    const [, y, m, d] = dateMatch;
+    const day = parseInt(d, 10);
+    const month = MONTH_NAMES[parseInt(m, 10) - 1] || m;
+    return `${day} ${month} ${y}`;
+  }
+
+  // 3. Month only: "2026-04" -> "Apr 2026"
+  const monthMatch = dateStr.match(/^(\d{4})-(\d{2})$/);
+  if (monthMatch) {
+    const [, y, m] = monthMatch;
+    const month = MONTH_NAMES[parseInt(m, 10) - 1] || m;
+    return `${month} ${y}`;
+  }
+
+  return dateStr;
+}
+
+export function formatShortMonth(monthStr: string | null | undefined): string {
+  if (!monthStr) return "";
+  const match = monthStr.match(/^\d{4}-(\d{2})/);
+  if (match) {
+    const m = parseInt(match[1], 10);
+    return MONTH_NAMES[m - 1] || monthStr;
+  }
+  return monthStr;
+}

@@ -6,6 +6,7 @@ import { SuggestionChips, type ChipItem } from './SuggestionChips';
 import { Composer } from './Composer';
 import { SheetEMP, type SheetEMPData } from './SheetEMP';
 import { User } from 'lucide-react';
+import { getUserDisplayName } from '../../../utils/userDisplay';
 
 export interface ChatMessageTurn {
   id: string;
@@ -22,6 +23,29 @@ interface ChatEMPProps {
   currentUser: string;
   currentScenario: number;
   initialMessage?: string;
+}
+
+function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
+  let code = 'C09';
+  let text = 'The payroll calculation did not produce a usable result for this operation. I cannot give a complete amount for it.';
+
+  const errMsg = String(err?.message || err?.detail || err || '');
+  if (actionName === 'send-query' || actionName === 'confirm-send-query' || errMsg.includes('draft') || errMsg.includes('query')) {
+    code = 'C17';
+    text = 'Your query has not been sent. It remains a draft.';
+  } else if (errMsg.includes('version') || errMsg.includes('stale') || errMsg.includes('conflict')) {
+    code = 'C25';
+    text = 'This proposal changed after you reviewed it. Review the current version before approving.';
+  }
+
+  return {
+    id: `asst-err-${Date.now()}`,
+    type: 'assistant',
+    messages: [{ code, text }],
+    cards: [],
+    chips: [],
+    time: 'Just now',
+  };
 }
 
 export const ChatEMP: React.FC<ChatEMPProps> = ({
@@ -56,14 +80,14 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       setIsSheetOpen(false);
 
       const msg = initialMessage || 'Why is my September salary lower than August?';
-      try {
-        const userTurn: ChatMessageTurn = {
-          id: `user-${Date.now()}`,
-          type: 'user',
-          text: msg,
-          time: 'Just now',
-        };
+      const userTurn: ChatMessageTurn = {
+        id: `user-${Date.now()}`,
+        type: 'user',
+        text: msg,
+        time: 'Just now',
+      };
 
+      try {
         const res = await api.chat({
           userId: currentUser,
           message: msg,
@@ -71,6 +95,12 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         });
 
         if (isCancelled) return;
+
+        if ((res as any)?.error) {
+          const errTurn = buildErrorTurn(undefined, (res as any).error);
+          setTurns([userTurn, errTurn]);
+          return;
+        }
 
         const assistantTurn: ChatMessageTurn = {
           id: `asst-${Date.now()}`,
@@ -88,7 +118,11 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           setSheetData(res.state.panel);
         }
       } catch (err) {
-        console.error('Chat error:', err);
+        if (!isCancelled) {
+          console.error('Chat error:', err);
+          const errTurn = buildErrorTurn(undefined, err);
+          setTurns([userTurn, errTurn]);
+        }
       } finally {
         if (!isCancelled) setIsLoading(false);
       }
@@ -119,6 +153,12 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         context: { scenario_num: currentScenario },
       });
 
+      if ((res as any)?.error) {
+        const errTurn = buildErrorTurn(undefined, (res as any).error);
+        setTurns((prev) => [...prev, errTurn]);
+        return;
+      }
+
       const assistantTurn: ChatMessageTurn = {
         id: `asst-${Date.now()}`,
         type: 'assistant',
@@ -136,6 +176,8 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       }
     } catch (err) {
       console.error('Failed to send message:', err);
+      const errTurn = buildErrorTurn(undefined, err);
+      setTurns((prev) => [...prev, errTurn]);
     } finally {
       setIsLoading(false);
     }
@@ -151,6 +193,12 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         action: actionName,
         context: { scenario_num: currentScenario, ...actionPayload },
       });
+
+      if ((res as any)?.error) {
+        const errTurn = buildErrorTurn(actionName, (res as any).error);
+        setTurns((prev) => [...prev, errTurn]);
+        return;
+      }
 
       const assistantTurn: ChatMessageTurn = {
         id: `asst-${Date.now()}`,
@@ -169,6 +217,8 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       }
     } catch (err) {
       console.error('Failed to execute action:', err);
+      const errTurn = buildErrorTurn(actionName, err);
+      setTurns((prev) => [...prev, errTurn]);
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +247,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           </div>
           <div className="hcm-chat-emp-user-tag">
             <User size={14} />
-            <span>{currentUser.replace('USER-', '')}</span>
+            <span>{getUserDisplayName(currentUser)}</span>
           </div>
         </header>
 
@@ -221,9 +271,9 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
                   cards={turn.cards || []}
                   time={turn.time}
                   onShowCalculation={() => setIsSheetOpen(true)}
-                  onSendQuery={(desc) => handleAction('send-query', { description: desc })}
+                  onSendQuery={(desc) => handleAction('confirm-send-query', { draft: { description: desc } })}
                   onCancelQueryDraft={() => handleAction('cancel-draft')}
-                  onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid })}
+                  onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
                   onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
                   onActionClick={(act) => handleAction(act)}
                 />

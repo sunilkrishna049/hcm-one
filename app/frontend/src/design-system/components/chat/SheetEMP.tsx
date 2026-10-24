@@ -140,10 +140,10 @@ export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => 
               </section>
             )}
 
-            {/* Human-Readable Rule Citations */}
+            {/* Rules used (Northwind demo rules v1) */}
             {ruleCitations.length > 0 && (
               <section className="hcm-sheet-section">
-                <h4 className="hcm-sheet-section-title">Statutory & Company Rule Citations</h4>
+                <h4 className="hcm-sheet-section-title">Rules used (Northwind demo rules v1)</h4>
                 <div className="hcm-sheet-citations-box">
                   {ruleCitations.map((cite, idx) => (
                     <div key={idx} className="hcm-sheet-citation-item">
@@ -158,7 +158,7 @@ export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => 
             {/* Footer Assurance */}
             <div className="hcm-sheet-footer-note">
               <CheckCircle2 size={14} color="var(--brand-accent)" />
-              <span>Calculated from verified company rules. Display only.</span>
+              <span>Calculated with simplified demo rules. Not for real payroll.</span>
             </div>
           </div>
         </Dialog.Content>

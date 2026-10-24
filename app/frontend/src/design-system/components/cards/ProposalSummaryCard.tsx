@@ -1,6 +1,5 @@
 import React from 'react';
-import { CertaintyLabel } from '../CertaintyLabel';
-import { formatINR } from '../../../utils/format';
+import { formatINR, formatHumanDate } from '../../../utils/format';
 
 interface ProposalSummaryCardProps {
   card: {
@@ -36,15 +35,13 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
     <div className="hcm-rich-card hcm-card-proposal-summary" data-testid={`card-${card.id}`}>
       <div className="hcm-card-header">
         <div>
-          <span className="hcm-card-type-badge">{card.title || d.proposal_type}</span>
+          <h3 className="hcm-card-title">{card.title || d.proposal_type || 'Proposal Summary'}</h3>
           {d.employee_name && (
-            <h3 className="hcm-card-title">
-              {d.employee_name}{' '}
-              {d.employee_id && <span className="hcm-tech-id">({d.employee_id})</span>}
-            </h3>
+            <span className="hcm-card-subtitle" style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+              {d.employee_name} {d.employee_id ? `(${d.employee_id})` : ''}
+            </span>
           )}
         </div>
-        <CertaintyLabel certainty={card.certainty} />
       </div>
 
       <div className="hcm-card-body">
@@ -56,11 +53,11 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
             </div>
             <div className="hcm-kv-item">
               <span className="hcm-kv-label">Effective Date</span>
-              <span className="hcm-kv-value tnum">{d.effective_date}</span>
+              <span className="hcm-kv-value tnum">{formatHumanDate(d.effective_date)}</span>
             </div>
             <div className="hcm-kv-item">
               <span className="hcm-kv-label">Affected Periods</span>
-              <span className="hcm-kv-value">{d.affected_periods}</span>
+              <span className="hcm-kv-value">{formatHumanDate(d.affected_periods)}</span>
             </div>
             {d.status && (
               <div className="hcm-kv-item">
@@ -98,21 +95,34 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
               <span className="hcm-kv-value tnum">{d.ineligible_count}</span>
             </div>
             <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Needs Input</span>
+              <span className="hcm-kv-label">Pending Inputs</span>
               <span className="hcm-kv-value tnum">{d.needs_input_count}</span>
             </div>
             <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Gross Eligible Total</span>
+              <span className="hcm-kv-label">Total Eligible Pool</span>
               <strong className="hcm-kv-value tnum">{formatINR(d.gross_eligible_total)}</strong>
             </div>
           </div>
         )}
 
-        {/* Exit settlement due date if available */}
+        {/* Missing input or individual bonus summary */}
+        {d.rating !== undefined && (
+          <div className="hcm-key-value-grid">
+            <div className="hcm-kv-item">
+              <span className="hcm-kv-label">Recorded Performance Rating</span>
+              <strong className="hcm-kv-value">{d.rating || 'Not recorded'}</strong>
+            </div>
+            <div className="hcm-kv-item">
+              <span className="hcm-kv-label">Bonus Amount</span>
+              <span className="hcm-kv-value tnum">{d.bonus_amount !== null && d.bonus_amount !== undefined ? formatINR(d.bonus_amount) : 'Cannot calculate'}</span>
+            </div>
+          </div>
+        )}
+
         {d.due_date && (
-          <div className="hcm-due-date-row">
-            <span className="hcm-kv-label">Applicable Due Date:</span>
-            <strong className="tnum" style={{ color: 'var(--color-brand-accent)' }}>{d.due_date}</strong>
+          <div className="hcm-kv-item" style={{ marginTop: 'var(--space-2)' }}>
+            <span className="hcm-kv-label">Applicable Due Date</span>
+            <strong className="hcm-kv-value tnum">{formatHumanDate(d.due_date)}</strong>
           </div>
         )}
       </div>

@@ -1322,3 +1322,406 @@
   color: #64748B;
   border-color: #E2E8F0;
 }
+
+/* ==========================================================================
+   Chat-First Rich Cards Design System (visual-spec.md Section 5)
+   ========================================================================== */
+
+/* Card Containers */
+.hcm-rich-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.hcm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hcm-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+  line-height: 24px;
+}
+
+.hcm-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Key-Value Pair Spacing (ensures labels & values are NEVER stuck together) */
+.hcm-key-value-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px 16px;
+  margin: 8px 0;
+}
+
+.hcm-kv-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hcm-kv-label {
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748B;
+  line-height: 18px;
+}
+
+.hcm-kv-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0F172A;
+  line-height: 22px;
+}
+
+/* Hero Number Card (largest element: 40px desktop, 32px mobile) */
+.hcm-hero-number-box {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.hcm-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hcm-hero-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  text-transform: none;
+}
+
+.hcm-hero-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0 8px 0;
+}
+
+.hcm-hero-amount {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #0F172A;
+  font-feature-settings: "tnum";
+}
+
+@media (max-width: 640px) {
+  .hcm-hero-amount {
+    font-size: 32px;
+    line-height: 40px;
+  }
+}
+
+.hcm-hero-sublabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  margin-top: 4px;
+}
+
+/* Secondary Stat Grid (3 columns on desktop) */
+.hcm-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .hcm-secondary-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.hcm-grid-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.hcm-stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.hcm-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+  font-feature-settings: "tnum";
+}
+
+/* Reason List Card (ranking numbers inline, clean card layout) */
+.hcm-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.hcm-reason-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.hcm-reason-index {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #E2E8F0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hcm-reason-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hcm-reason-cause {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.hcm-reason-detail {
+  font-size: 13px;
+  color: #64748B;
+}
+
+.hcm-reason-amount {
+  font-size: 15px;
+  font-weight: 600;
+  font-feature-settings: "tnum";
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.hcm-reason-footnote {
+  font-size: 13px;
+  color: #475569;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Approval Card */
+.hcm-approval-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #0F172A;
+  padding: 10px 14px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.hcm-approval-notice {
+  font-size: 14px;
+  color: #334155;
+  line-height: 20px;
+  margin: 6px 0;
+}
+
+.hcm-approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hcm-approval-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 6px;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hcm-approval-rejected-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  color: #B91C1C;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Tables in Cards */
+.hcm-table-container {
+  overflow-x: auto;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+.hcm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hcm-table th {
+  background-color: #F8FAFC;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.hcm-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #0F172A;
+  vertical-align: middle;
+}
+
+.hcm-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Salary Comparison Box */
+.hcm-salary-comparison {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.hcm-salary-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.hcm-salary-proposed {
+  background-color: #F0FDFA;
+  border-color: #99F6E4;
+}
+
+.hcm-salary-label {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.hcm-salary-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+  font-feature-settings: "tnum";
+}
+
+.hcm-arrow-separator {
+  color: #94A3B8;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Total Badges & Net Change Pills */
+.hcm-total-badge,
+.hcm-net-change-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Side Panel Arrears Proof Table (no horizontal scroll) */
+.hcm-panel-proof-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hcm-panel-proof-table th {
+  background-color: #F8FAFC;
+  padding: 6px 8px;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 1px solid #E2E8F0;
+  font-size: 12px;
+}
+
+.hcm-panel-proof-table td {
+  padding: 8px 8px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #0F172A;
+  font-size: 12px;
+}
+
+.hcm-panel-proof-formula {
+  font-size: 11px;
+  color: #64748B;
+  font-family: inherit;
+}
+

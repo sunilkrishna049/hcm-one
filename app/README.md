@@ -123,10 +123,10 @@ Run all test suites across engine, backend, frontend, and knowledge validation:
 # 1. Calculation Engine Tests (74 passed)
 engine\.venv\Scripts\pytest.exe engine/tests -q
 
-# 2. Backend API & Chat Provenance Tests (42 passed)
-app\backend\.venv\Scripts\python.exe -m pytest app/backend/tests -q
+# 2. Backend API, Chat Actions & Chat Provenance Tests (50 passed)
+$env:PYTHONPATH="."; app\backend\.venv\Scripts\python.exe -m pytest app/backend/tests -q
 
-# 3. Frontend Chat & Scenario Guard Tests (10 passed)
+# 3. Frontend Chat, Scenario Guard & Action Click Tests (16 passed)
 cd app\frontend; npm run test
 
 # 4. Frontend Clean Build Verification

@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatINR } from '../../../utils/format';
+import { formatINR, formatHumanDate } from '../../../utils/format';
 
 interface MonthRecord {
   month: string;
@@ -8,6 +8,7 @@ interface MonthRecord {
   diff: number;
   tds_impact?: number;
   paid_days?: number;
+  lop_days?: number;
 }
 
 interface MonthTableCardProps {
@@ -24,7 +25,7 @@ interface MonthTableCardProps {
   onShowCalculation?: () => void;
 }
 
-export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card, onShowCalculation }) => {
+export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
   const { months, total_gross_arrears } = card.data;
 
   return (
@@ -50,34 +51,33 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card, onShowCalc
             </tr>
           </thead>
           <tbody>
-            {months.map((m) => (
-              <tr key={m.month}>
-                <td className="tnum" style={{ fontWeight: 'var(--font-weight-medium)' }}>{m.month}</td>
-                <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
-                <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
-                <td className="tnum" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
-                  {formatINR(m.diff)}
-                </td>
-                <td className="tnum" style={{ textAlign: 'right' }}>
-                  {m.tds_impact !== undefined ? formatINR(m.tds_impact) : '—'}
-                </td>
-              </tr>
-            ))}
+            {months.map((m) => {
+              const formattedMonth = formatHumanDate(m.month);
+              const hasLop = m.lop_days !== undefined && m.lop_days > 0;
+              return (
+                <tr key={m.month}>
+                  <td className="tnum" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                    <span>{formattedMonth}</span>
+                    {hasLop && (
+                      <span style={{ fontSize: '12px', color: 'var(--color-status-warning-text)', marginLeft: '6px', fontWeight: 'var(--font-weight-semibold)' }}>
+                        · {m.lop_days} LOP days
+                      </span>
+                    )}
+                  </td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
+                  <td className="tnum" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
+                    {formatINR(m.diff)}
+                  </td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>
+                    {m.tds_impact !== undefined ? formatINR(m.tds_impact) : '—'}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-
-      {onShowCalculation && (
-        <div className="hcm-card-footer-action">
-          <button
-            type="button"
-            className="hcm-button hcm-button-outline hcm-button-sm"
-            onClick={onShowCalculation}
-          >
-            Show calculation & full month breakdown →
-          </button>
-        </div>
-      )}
     </div>
   );
 };

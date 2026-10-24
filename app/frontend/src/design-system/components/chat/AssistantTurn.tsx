@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { CardRenderer } from '../cards/CardRenderer';
+import { CertaintyLabel } from '../CertaintyLabel';
 
 interface AssistantMessage {
   code: string;
@@ -42,24 +43,38 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   onCloseQuery,
   onActionClick,
 }) => {
+  // Epistemic certainty shown once per assistant reply
+  const turnCertainty = cards.find((c) => c.certainty)?.certainty;
+
+  // Ordering: Lead sentences (e.g. C30) first, then cards, then C27 follow-up offer
+  const leadMessages = messages.filter((m) => m.code !== 'C27');
+  const followUpMessages = messages.filter((m) => m.code === 'C27');
+
   return (
     <div className="hcm-assistant-turn-wrapper" data-testid="assistant-turn" role="region" aria-label="Assistant turn">
       <div className="hcm-assistant-header">
-        <div className="hcm-assistant-avatar" aria-hidden="true">
-          <Sparkles size={14} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className="hcm-assistant-avatar" aria-hidden="true">
+            <Sparkles size={14} />
+          </div>
+          <span className="hcm-assistant-sender-tag">HCM One Assistant</span>
+          <span className="hcm-message-timestamp">{time}</span>
         </div>
-        <span className="hcm-assistant-sender-tag">HCM One Assistant</span>
-        <span className="hcm-message-timestamp">{time}</span>
+        {turnCertainty && (
+          <CertaintyLabel certainty={turnCertainty} className="hcm-turn-certainty" />
+        )}
       </div>
 
-      {/* Message Bubbles (Approved copy C01-C30 verbatim) */}
-      <div className="hcm-assistant-bubbles-container">
-        {messages.map((m, idx) => (
-          <div key={idx} className="hcm-assistant-bubble">
-            <p className="hcm-assistant-bubble-text">{m.text}</p>
-          </div>
-        ))}
-      </div>
+      {/* Lead Message Bubbles (C30, C01, C03 verbatim) */}
+      {leadMessages.length > 0 && (
+        <div className="hcm-assistant-bubbles-container">
+          {leadMessages.map((m, idx) => (
+            <div key={idx} className="hcm-assistant-bubble">
+              <p className="hcm-assistant-bubble-text">{m.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Attached Rich Cards */}
       {cards.length > 0 && (
@@ -81,6 +96,17 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
               onCloseQuery={onCloseQuery}
               onActionClick={onActionClick}
             />
+          ))}
+        </div>
+      )}
+
+      {/* Follow-up Message Bubbles (e.g. C27 follow-up offer after cards) */}
+      {followUpMessages.length > 0 && (
+        <div className="hcm-assistant-bubbles-container" style={{ marginTop: 'var(--space-2)' }}>
+          {followUpMessages.map((m, idx) => (
+            <div key={idx} className="hcm-assistant-bubble">
+              <p className="hcm-assistant-bubble-text">{m.text}</p>
+            </div>
           ))}
         </div>
       )}

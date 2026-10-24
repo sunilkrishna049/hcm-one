@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatHumanDate } from '../../../utils/format';
 
 interface QueryDraftCardProps {
   card: {
@@ -33,7 +34,6 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
     <div className="hcm-rich-card hcm-card-query-draft" data-testid={`card-${card.id}`}>
       <div className="hcm-card-header">
         <div>
-          <span className="hcm-card-type-badge">Flow 6 Query Draft</span>
           <h4 className="hcm-card-title">{card.title}</h4>
         </div>
       </div>
@@ -46,7 +46,7 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
           </div>
           <div className="hcm-kv-item">
             <span className="hcm-kv-label">Target Months</span>
-            <span className="tnum">{draft.months.join(', ')}</span>
+            <span className="tnum">{draft.months.map((m: string) => formatHumanDate(m)).join(', ')}</span>
           </div>
         </div>
 

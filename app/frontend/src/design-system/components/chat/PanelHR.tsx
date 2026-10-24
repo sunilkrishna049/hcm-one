@@ -87,35 +87,39 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
 
       {/* Content Body */}
       <div className="hcm-panel-body">
-        {/* Multi-month Breakdown Table */}
+        {/* Multi-month Proof Table (Fits without horizontal scrolling) */}
         {months.length > 0 && (
-          <section className="hcm-panel-section" aria-label="Month-by-month breakdown">
-            <h3 className="hcm-panel-section-title">Month-by-Month Breakdown</h3>
-            <div className="hcm-panel-table-wrapper">
-              <table className="hcm-panel-table">
+          <section className="hcm-panel-section" aria-label="Month-by-month proof">
+            <h3 className="hcm-panel-section-title">Month-by-Month Proof</h3>
+            <div className="hcm-panel-table-wrapper" style={{ overflowX: 'hidden' }}>
+              <table className="hcm-panel-table" style={{ width: '100%', tableLayout: 'fixed' }}>
                 <thead>
                   <tr>
-                    <th>Month</th>
-                    <th className="hcm-num-cell">Old Gross</th>
-                    <th className="hcm-num-cell">Revised</th>
-                    <th className="hcm-num-cell">Arrears</th>
-                    <th className="hcm-num-cell">PF Diff</th>
-                    <th className="hcm-num-cell">TDS</th>
-                    <th className="hcm-num-cell">Paid</th>
+                    <th style={{ width: '60px' }}>Month</th>
+                    <th className="hcm-num-cell" style={{ width: '60px' }}>Paid</th>
+                    <th className="hcm-num-cell" style={{ width: '60px' }}>LOP</th>
+                    <th style={{ textAlign: 'left', paddingLeft: 'var(--space-2)' }}>Formula Used</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {months.map((m, idx) => (
-                    <tr key={idx}>
-                      <td className="hcm-tnum" style={{ fontWeight: 500 }}>{m.month}</td>
-                      <td className="hcm-num-cell hcm-tnum">{formatINR(m.old_gross)}</td>
-                      <td className="hcm-num-cell hcm-tnum">{formatINR(m.revised_gross)}</td>
-                      <td className="hcm-num-cell hcm-tnum" style={{ fontWeight: 600 }}>{formatINR(m.diff)}</td>
-                      <td className="hcm-num-cell hcm-tnum">{formatINR(m.pf_change)}</td>
-                      <td className="hcm-num-cell hcm-tnum">{formatINR(m.tds_impact)}</td>
-                      <td className="hcm-num-cell hcm-tnum">{m.paid_days ?? '—'}</td>
-                    </tr>
-                  ))}
+                  {months.map((m: any, idx) => {
+                    const shortMonth = m.short_month || (m.month ? m.month.split('-')[1] : `M${idx + 1}`);
+                    const lopText = m.lop_days ? `${m.lop_days} d` : '0';
+                    const paidText = m.paid_days !== undefined ? `${m.paid_days} d` : '—';
+                    const formulaText = m.formula || `Diff = ${formatINR(m.diff)}`;
+                    return (
+                      <tr key={idx}>
+                        <td className="hcm-tnum" style={{ fontWeight: 600 }}>{shortMonth}</td>
+                        <td className="hcm-num-cell hcm-tnum">{paidText}</td>
+                        <td className="hcm-num-cell hcm-tnum" style={{ color: m.lop_days ? 'var(--color-status-error-text)' : 'inherit' }}>
+                          {lopText}
+                        </td>
+                        <td style={{ fontSize: '11px', color: 'var(--color-text-secondary)', wordBreak: 'break-word', paddingLeft: 'var(--space-2)' }}>
+                          {formulaText}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -164,10 +168,10 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
           </section>
         )}
 
-        {/* Human-Readable Rule Citations */}
+        {/* Rules used (Northwind demo rules v1) */}
         {ruleCitations.length > 0 && (
           <section className="hcm-panel-section" aria-label="Rule citations">
-            <h3 className="hcm-panel-section-title">Statutory & Company Rule Citations</h3>
+            <h3 className="hcm-panel-section-title">Rules used (Northwind demo rules v1)</h3>
             <div className="hcm-panel-citations-box">
               {ruleCitations.map((cite, idx) => (
                 <div key={idx} className="hcm-panel-citation-item">
@@ -182,7 +186,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
         {/* Audit / Policy Notice */}
         <div className="hcm-panel-footer-note">
           <CheckCircle2 size={14} color="var(--brand-accent)" />
-          <span>Every number originates from verified rules in the engine. Display only.</span>
+          <span>Calculated with simplified demo rules. Not for real payroll.</span>
         </div>
       </div>
     </aside>

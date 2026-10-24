@@ -1,5 +1,5 @@
 import React from 'react';
-import { CertaintyLabel } from '../CertaintyLabel';
+import { formatHumanDate } from '../../../utils/format';
 
 interface ApprovalCardProps {
   card: {
@@ -12,7 +12,11 @@ interface ApprovalCardProps {
       notice: string;
       actions?: string[];
       status?: 'pending' | 'approved' | 'rejected' | string;
+      status_text?: string;
       status_badge?: string;
+      version?: number;
+      approver?: string;
+      approved_at?: string;
       disabled?: boolean;
       proposal_id?: string;
     };
@@ -32,23 +36,28 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   const isApproved = d.status === 'approved';
   const isRejected = d.status === 'rejected';
 
+  // Format clean scope display: "You're approving: Priya Sharma · Apr–Sep 2026"
+  const rawScope = d.scope_label || "Priya Sharma · Apr–Sep 2026";
+  const cleanScope = rawScope.replace(/^Authorized Scope:\s*/i, '');
+  const scopeDisplay = cleanScope.startsWith("You're approving:")
+    ? cleanScope
+    : `You're approving: ${cleanScope}`;
+
+  // Heading: plain heading without dev labels
+  const heading = card.title === 'HR Authorization' || !card.title ? 'Approval' : card.title;
+
   return (
     <div
       className={`hcm-rich-card hcm-card-approval ${isApproved ? 'hcm-approval-approved' : ''}`}
       data-testid={`card-${card.id}`}
     >
       <div className="hcm-card-header">
-        <div>
-          <span className="hcm-card-type-badge">HR Governance Action</span>
-          <h4 className="hcm-card-title">{card.title}</h4>
-        </div>
-        <CertaintyLabel certainty={card.certainty} />
+        <h4 className="hcm-card-title">{heading}</h4>
       </div>
 
       <div className="hcm-card-body">
         <div className="hcm-approval-scope">
-          <span className="hcm-kv-label">Authorized Scope:</span>
-          <strong>{d.scope_label}</strong>
+          <strong>{scopeDisplay}</strong>
         </div>
 
         {/* Mandatory C04 Governance Notice */}
@@ -59,7 +68,12 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
         {/* Post-Action Status Badge */}
         {isApproved && (
           <div className="hcm-approval-success-banner" data-testid="approval-status-badge">
-            ✓ {d.status_badge || 'Approved for payroll • Version 1 • Awaiting payroll processing'}
+            <div style={{ fontWeight: 600, marginBottom: '2px' }}>
+              ✓ Approved and ready for payroll
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              Version {d.version ?? 1} • Approver: {d.approver || 'HR Admin'} • {d.approved_at ? formatHumanDate(d.approved_at) : 'Just now'}
+            </div>
           </div>
         )}
 

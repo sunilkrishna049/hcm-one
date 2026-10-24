@@ -8,25 +8,18 @@ export interface UserOption {
   dept?: string;
 }
 
-export interface UserOption {
-  id: string;
-  name: string;
-  role: 'HR' | 'Employee';
-  dept?: string;
-}
-
 export const DEMO_USERS: UserOption[] = [
-  { id: 'HR01', name: 'HR Admin (All Depts)', role: 'HR', dept: 'All' },
-  { id: 'HR02', name: 'HR Sales (Sales Only)', role: 'HR', dept: 'Sales' },
-  { id: 'USER-E01', name: 'Priya Sharma (E01)', role: 'Employee', dept: 'Engineering' },
-  { id: 'USER-E02', name: 'Arjun Rao (E02)', role: 'Employee', dept: 'Operations' },
-  { id: 'USER-E03', name: 'Kavya Iyer (E03)', role: 'Employee', dept: 'Engineering' },
-  { id: 'USER-E05', name: 'Neha Gupta (E05)', role: 'Employee', dept: 'Operations' },
-  { id: 'USER-E06', name: 'Siddharth Jain (E06)', role: 'Employee', dept: 'Engineering' },
-  { id: 'USER-E10', name: 'Rahul Verma (E10)', role: 'Employee', dept: 'Finance' },
-  { id: 'USER-E11', name: 'Lakshmi Reddy (E11)', role: 'Employee', dept: 'Finance' },
-  { id: 'USER-E12', name: 'Imran Khan (E12)', role: 'Employee', dept: 'Engineering' },
-  { id: 'USER-E16', name: 'Pooja Das (E16)', role: 'Employee', dept: 'Operations' },
+  { id: 'HR01', name: 'Anita Desai (HR Admin)', role: 'HR', dept: 'All' },
+  { id: 'HR02', name: 'Kiran Patel (HR Sales)', role: 'HR', dept: 'Sales' },
+  { id: 'USER-E01', name: 'Priya Sharma (Engineering)', role: 'Employee', dept: 'Engineering' },
+  { id: 'USER-E02', name: 'Arjun Rao (Operations)', role: 'Employee', dept: 'Operations' },
+  { id: 'USER-E03', name: 'Kavya Iyer (Engineering)', role: 'Employee', dept: 'Engineering' },
+  { id: 'USER-E05', name: 'Neha Gupta (Operations)', role: 'Employee', dept: 'Operations' },
+  { id: 'USER-E06', name: 'Siddharth Jain (Engineering)', role: 'Employee', dept: 'Engineering' },
+  { id: 'USER-E10', name: 'Rahul Verma (Finance)', role: 'Employee', dept: 'Finance' },
+  { id: 'USER-E11', name: 'Lakshmi Reddy (Finance)', role: 'Employee', dept: 'Finance' },
+  { id: 'USER-E12', name: 'Imran Khan (Engineering)', role: 'Employee', dept: 'Engineering' },
+  { id: 'USER-E16', name: 'Pooja Das (Operations)', role: 'Employee', dept: 'Operations' },
 ];
 
 export interface ScenarioOption {

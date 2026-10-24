@@ -1,5 +1,4 @@
 import React from 'react';
-import { CertaintyLabel } from '../CertaintyLabel';
 import { formatINR } from '../../../utils/format';
 
 interface NumberCardsClusterProps {
@@ -25,14 +24,17 @@ interface NumberCardsClusterProps {
       payment_month?: string;
       estimate_flag?: string;
       earnings_status?: string;
+      pf_rule?: string;
+      pf_explanation?: string;
       note?: string;
     };
   };
   onShowCalculation?: () => void;
 }
 
-export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card, onShowCalculation }) => {
+export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) => {
   const d = card.data;
+  const pfNote = d.pf_rule || d.pf_explanation;
 
   return (
     <div className="hcm-rich-card hcm-card-number-cluster" data-testid={`card-${card.id}`}>
@@ -41,12 +43,11 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card, on
           <h4 className="hcm-card-title">{card.title}</h4>
         </div>
       )}
-      {/* Hero Number Card */}
+      {/* Hero Number Card (40 px desktop / 32 px mobile) */}
       {d.hero_label && (
         <div className="hcm-hero-number-box">
           <div className="hcm-hero-header">
             <span className="hcm-hero-label">{d.hero_label}</span>
-            <CertaintyLabel certainty={card.certainty} />
           </div>
           <div className="hcm-hero-amount-row">
             <span className="hcm-hero-amount tnum" data-testid="hero-amount">
@@ -92,13 +93,20 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card, on
             <span className="hcm-stat-value tnum">{formatINR(d.gross_arrears)}</span>
           </div>
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">PF Change</span>
+            <span className="hcm-stat-label">PF change</span>
             <span className="hcm-stat-value tnum">{formatINR(d.employee_pf_change)}</span>
           </div>
           <div className="hcm-grid-stat">
             <span className="hcm-stat-label">Estimated TDS</span>
             <span className="hcm-stat-value tnum">{formatINR(d.estimated_tds_impact)}</span>
           </div>
+        </div>
+      )}
+
+      {/* PF Ceiling Plain Explanation (Requirement 13) */}
+      {pfNote && (
+        <div className="hcm-card-flag-note" style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
+          <span>ℹ {pfNote}</span>
         </div>
       )}
 
@@ -118,22 +126,8 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card, on
 
       {/* Footnote flag if present */}
       {d.estimate_flag && (
-        <div className="hcm-card-flag-note">
+        <div className="hcm-card-flag-note" style={{ marginTop: '8px' }}>
           <span>ℹ {d.estimate_flag}</span>
-        </div>
-      )}
-
-      {/* Action link */}
-      {onShowCalculation && (
-        <div className="hcm-card-action-row">
-          <button
-            type="button"
-            className="hcm-button hcm-button-outline hcm-button-sm"
-            onClick={onShowCalculation}
-            aria-label="Show calculation proof"
-          >
-            Show calculation →
-          </button>
         </div>
       )}
     </div>

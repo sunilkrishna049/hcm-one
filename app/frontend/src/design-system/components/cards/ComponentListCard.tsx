@@ -1,6 +1,5 @@
 import React from 'react';
-import { CertaintyLabel } from '../CertaintyLabel';
-import { formatINR } from '../../../utils/format';
+import { formatINR, formatHumanDate } from '../../../utils/format';
 
 interface SettlementComponent {
   name: string;
@@ -28,7 +27,7 @@ interface ComponentListCardProps {
   onShowCalculation?: () => void;
 }
 
-export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card, onShowCalculation }) => {
+export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) => {
   const d = card.data;
 
   return (
@@ -38,11 +37,10 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card, onSh
           <h4 className="hcm-card-title">{card.title}</h4>
           {d.due_date && (
             <span className="hcm-due-date-pill tnum">
-              Due Date: {d.due_date}
+              Due Date: {formatHumanDate(d.due_date)}
             </span>
           )}
         </div>
-        <CertaintyLabel certainty={card.certainty} />
       </div>
 
       {/* Hero Final Net Settlement if applicable */}
@@ -86,18 +84,6 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card, onSh
           </div>
         ))}
       </div>
-
-      {onShowCalculation && (
-        <div className="hcm-card-footer-action">
-          <button
-            type="button"
-            className="hcm-button hcm-button-outline hcm-button-sm"
-            onClick={onShowCalculation}
-          >
-            Show calculation proof →
-          </button>
-        </div>
-      )}
     </div>
   );
 };

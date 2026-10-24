@@ -2,8 +2,10 @@
 Follows app/backend/chat_contract.md and output/07-prototype/screen-specs.md.
 Zero dynamic LLM calls. All payroll figures come from engine_bridge (data/generated/scenarios/).
 """
+from datetime import datetime, timezone
 import re
 from typing import Any, Dict, List, Optional
+from fastapi import HTTPException
 
 from .ai_messages import get_message
 from .auth import USERS, check_employee_access
@@ -160,31 +162,63 @@ class ChatRouter:
                 return self._build_scenario_12(user, role, surface)
             elif act in ("scenario-13", "scenario-13"):
                 return self._build_scenario_13(user, role, surface)
-            elif act == "approve-proposal":
+            elif act in ("approve-proposal", "approve", "approve proposal for payroll"):
                 return self._handle_approve_proposal(user, role, surface, context)
-            elif act == "edit-proposal":
+            elif act in ("edit-proposal", "edit", "edit with reason"):
                 return self._handle_edit_proposal(user, role, surface, context)
-            elif act == "reject-proposal":
+            elif act in ("reject-proposal", "reject", "reject proposal"):
                 return self._handle_reject_proposal(user, role, surface, context)
-            elif act == "draft-query":
+            elif act in ("draft-query", "draft query", "draft a query for hr", "draft-query-for-hr"):
                 return self._handle_draft_query(user, role, surface, context)
-            elif act == "confirm-send-query":
+            elif act in ("confirm-send-query", "send-query", "confirm and send", "send this query to hr", "send query with listed evidence"):
                 return self._handle_confirm_send_query(user, role, surface, context)
-            elif act == "query-status":
+            elif act in ("append-query", "add to open query", "add to existing query"):
+                return self._handle_append_query(user, role, surface, context)
+            elif act in ("query-status", "check my query status"):
                 return self._handle_query_status(user, role, surface, context)
-            elif act == "take-into-review":
+            elif act in ("take-into-review", "take for review", "take into review", "hr-take-into-review"):
                 return self._handle_take_into_review(user, role, surface, context)
-            elif act == "resolve-query":
+            elif act in ("reply-query", "reply", "hr-reply"):
+                return self._handle_reply_query(user, role, surface, context)
+            elif act in ("resolve-query", "resolve", "hr-resolve"):
                 return self._handle_resolve_query(user, role, surface, context)
-            elif act == "dispute-query":
+            elif act in ("dispute-query", "dispute", "employee-dispute"):
                 return self._handle_dispute_query(user, role, surface, context)
-            elif act == "close-query":
+            elif act in ("close-query", "close", "employee-close", "acknowledge and close"):
                 return self._handle_close_query(user, role, surface, context)
+            elif act in ("show-calculation", "show calculation", "show calculation proof", "view full month breakdown"):
+                return self._handle_show_calculation(user, role, surface, context)
             elif act.startswith("faq-"):
                 faq_topic = act.replace("faq-", "")
                 return self._handle_faq_query(faq_topic, role, surface)
 
         # 5. Natural Language Intent Mapping
+
+        # Direct Natural Language Action Matchers
+        if re.search(r"^(approve proposal|approve for payroll|approve\b)", lower_msg):
+            return self._handle_approve_proposal(user, role, surface, context)
+        if re.search(r"^(edit with reason|edit proposal)", lower_msg):
+            return self._handle_edit_proposal(user, role, surface, context)
+        if re.search(r"^(reject proposal|reject\b)", lower_msg):
+            return self._handle_reject_proposal(user, role, surface, context)
+        if re.search(r"\bdraft.*query\b", lower_msg):
+            return self._handle_draft_query(user, role, surface, context)
+        if re.search(r"\b(send.*query|confirm and send)\b", lower_msg):
+            return self._handle_confirm_send_query(user, role, surface, context)
+        if re.search(r"\b(add to.*query|append.*query)\b", lower_msg):
+            return self._handle_append_query(user, role, surface, context)
+        if re.search(r"\b(take into review|take for review)\b", lower_msg):
+            return self._handle_take_into_review(user, role, surface, context)
+        if re.search(r"\b(reply to query|reply.*query)\b", lower_msg):
+            return self._handle_reply_query(user, role, surface, context)
+        if re.search(r"\b(resolve query|resolve\b)", lower_msg):
+            return self._handle_resolve_query(user, role, surface, context)
+        if re.search(r"\b(dispute query|dispute\b)", lower_msg):
+            return self._handle_dispute_query(user, role, surface, context)
+        if re.search(r"\b(close query|acknowledge and close)\b", lower_msg):
+            return self._handle_close_query(user, role, surface, context)
+        if re.search(r"\b(show calculation|view full month breakdown)\b", lower_msg):
+            return self._handle_show_calculation(user, role, surface, context)
 
         # FAQ lookup priority for general questions
         if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or len(lower_msg.split()) <= 4:
@@ -321,7 +355,8 @@ class ChatRouter:
                         "arrears_only_tds_impact": t["arrears_only_tds_impact"]["value"],
                         "recurring_salary_tds_impact": t["recurring_salary_tds_impact"]["value"],
                         "payment_month": r.get("estimated_payment_month", "2026-10"),
-                        "estimate_flag": r.get("flags", ["Estimated TDS if approved and paid in October 2026 payroll"])[0]
+                        "estimate_flag": r.get("flags", ["Estimated TDS if approved and paid in October 2026 payroll"])[0],
+                        "pf_rule": "PF change is ₹0 because monthly basic pay exceeds the statutory PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026; Northwind demo rules v1), keeping contributions capped before and after the revision."
                     }
                 },
                 {
@@ -331,7 +366,15 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "months": [
-                            {"month": m["month"], "old_gross": m["old"]["gross"]["value"], "revised_gross": m["revised"]["gross"]["value"], "diff": m["difference"]["value"], "tds_impact": m["tds_impact"]["value"], "paid_days": m["paid_days"]["value"]}
+                            {
+                                "month": m["month"],
+                                "old_gross": m["old"]["gross"]["value"],
+                                "revised_gross": m["revised"]["gross"]["value"],
+                                "diff": m["difference"]["value"],
+                                "tds_impact": m["tds_impact"]["value"],
+                                "paid_days": m["paid_days"]["value"],
+                                "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value", 0)
+                            }
                             for m in r.get("months", [])
                         ],
                         "total_gross_arrears": t["gross_arrears"]["value"]
@@ -340,10 +383,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s1",
                     "type": "approval_card",
-                    "title": "HR Authorization",
+                    "title": "Approval",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "scope_label": "Priya Sharma (E01) • 6 affected months (2026-04 to 2026-09)",
+                        "scope_label": "Priya Sharma · Apr–Sep 2026",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
@@ -352,8 +395,7 @@ class ChatRouter:
                 }
             ],
             "chips": [
-                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": 1}},
-                {"label": "View full month breakdown", "action": "show-calculation", "payload": {"scenario_num": 1}}
+                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": 1}}
             ],
             "state": {
                 "intent": "prepare_hike_proposal",
@@ -366,22 +408,36 @@ class ChatRouter:
                     "employee_name": "Priya Sharma",
                     "employee_id": "E01",
                     "months": [
-                        {"month": m["month"], "old_gross": m["old"]["gross"]["value"], "revised_gross": m["revised"]["gross"]["value"], "diff": m["difference"]["value"], "pf_change": m["pf_change"]["employee"]["value"], "tds_impact": m["tds_impact"]["value"], "paid_days": m["paid_days"]["value"]}
-                        for m in r.get("months", [])
+                        {
+                            "month": m["month"],
+                            "short_month": ["Apr", "May", "Jun", "Jul", "Aug", "Sep"][idx] if idx < 6 else m["month"][-2:],
+                            "old_gross": m["old"]["gross"]["value"],
+                            "revised_gross": m["revised"]["gross"]["value"],
+                            "diff": m["difference"]["value"],
+                            "pf_change": m["pf_change"]["employee"]["value"],
+                            "tds_impact": m["tds_impact"]["value"],
+                            "paid_days": m["paid_days"]["value"],
+                            "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value", 0),
+                            "formula": f"Earned = revised × {m['paid_days']['value']} ÷ {30 if m['month'] in ('2026-04', '2026-06', '2026-09') else 31}"
+                        }
+                        for idx, m in enumerate(r.get("months", []))
                     ],
                     "formulas": [
                         "Earned salary = monthly salary × paid days ÷ calendar days",
                         "Monthly arrears = revised earned gross − old earned gross",
+                        "PF ceiling rule: PF change is ₹0 because monthly basic pay exceeds the statutory PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026; Northwind demo rules v1).",
                         "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
                     ],
                     "rule_citations": [
+                        "PF wage ceiling: ₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026 (Northwind demo rules v1)",
                         "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
                         "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
-                        "Income tax regime: New tax regime FY 2026-27",
+                        "Income tax regime: New tax regime Tax year 2026-27",
                         "Standard deduction: ₹75,000",
                         "Health and education cess: 4%",
                         "Rules version: Northwind demo rules v1"
-                    ]
+                    ],
+                    "note": "Calculated with simplified demo rules. Not for real payroll."
                 }
             }
         }
@@ -942,15 +998,6 @@ class ChatRouter:
                         ],
                         "tds_change": tds_chg
                     }
-                },
-                {
-                    "id": "card-calc-trigger-s9",
-                    "type": "show_calculation",
-                    "title": "Calculation Proof",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "button_label": "Show calculation"
-                    }
                 }
             ],
             "chips": [
@@ -1018,15 +1065,6 @@ class ChatRouter:
                             {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
                         ]
                     }
-                },
-                {
-                    "id": "card-calc-trigger-s10",
-                    "type": "show_calculation",
-                    "title": "Calculation Proof",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "button_label": "Show calculation"
-                    }
                 }
             ],
             "chips": [
@@ -1049,7 +1087,7 @@ class ChatRouter:
                     ],
                     "rule_citations": [
                         "Income Tax Act Section 192: Previous employer earnings declared under Form 12B integrated into annualized TDS",
-                        "Income tax regime: New tax regime FY 2026-27",
+                        "Income tax regime: New tax regime Tax year 2026-27",
                         "Rules version: Northwind demo rules v1"
                     ]
                 }
@@ -1089,15 +1127,6 @@ class ChatRouter:
                         "reasons": [
                             {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
                         ]
-                    }
-                },
-                {
-                    "id": "card-calc-trigger-s11",
-                    "type": "show_calculation",
-                    "title": "Calculation Proof",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "button_label": "Show calculation"
                     }
                 }
             ],
@@ -1246,17 +1275,26 @@ class ChatRouter:
             "I cannot answer that question in this demo. You can ask about recorded salary and tax "
             "changes, full and final settlements, bonus eligibility, or choose a topic below:"
         )
+        if role == "HR Admin":
+            chips = [
+                {"label": "Prepare Priya Sharma hike", "action": "scenario-1", "payload": {}},
+                {"label": "Prepare team bonus proposal", "action": "scenario-4", "payload": {}},
+                {"label": "Prepare Rahul Verma settlement", "action": "scenario-6", "payload": {}},
+                {"label": "What is LOP?", "action": "faq-lop", "payload": {}}
+            ]
+        else:
+            chips = [
+                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
+                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
+                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+            ]
         return {
             "messages": [
                 {"code": "FALLBACK", "text": fallback_text}
             ],
             "cards": [],
-            "chips": [
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
-                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
-                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "unknown",
                 "role": role,
@@ -1268,6 +1306,18 @@ class ChatRouter:
         }
 
     def _build_faq_response(self, faq_entry: dict, confidence: float, role: str, surface: str) -> dict:
+        if role == "HR Admin":
+            chips = [
+                {"label": "Prepare Priya Sharma hike", "action": "scenario-1", "payload": {}},
+                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
+            ]
+        else:
+            chips = [
+                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
+                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
+            ]
         return {
             "messages": [
                 {"code": "FAQ", "text": "Here is the recorded meaning from the payroll glossary:"}
@@ -1289,11 +1339,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": [
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
-                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "faq_question",
                 "role": role,
@@ -1317,67 +1363,167 @@ class ChatRouter:
             return self._build_refusal(role, surface, "Only HR Admin can approve proposals.")
         s_num = context.get("scenario_num", 1)
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
-        # Record approval in runtime store
-        lifecycle.record_approval(prop_id, user, version=1, notes="Approved for payroll")
+        version = int(context.get("version", 1))
+
+        lifecycle.get_or_create_proposal(prop_id, {
+            "status": "Calculated; needs HR approval",
+            "certainty": "Complete for this scope",
+            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
+        })
+
+        try:
+            res = lifecycle.approve_proposal(
+                proposal_id=prop_id,
+                version=version,
+                actor=user,
+                selected_scope=context.get("selected_scope")
+            )
+        except HTTPException as he:
+            detail = he.detail
+            if isinstance(detail, dict) and detail.get("code") == "C25":
+                return {
+                    "messages": [{"code": "C25", "text": get_message("C25")}],
+                    "cards": [],
+                    "chips": [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}],
+                    "state": {"intent": "approve_error", "code": "C25", "role": role, "surface": surface, "panel": None}
+                }
+            raise he
+
+        approver_name = user.get("name", "Anita Desai")
+        approved_time = datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC")
+        status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name} at {approved_time}"
+
         return {
             "messages": [
-                {"code": "APPROVED", "text": "The proposal has been recorded as approved for payroll."}
+                {"code": "C04", "text": get_message("C04")}
             ],
             "cards": [
                 {
                     "id": "card-approval-success",
                     "type": "approval_card",
-                    "title": "Proposal Authorized",
+                    "title": "Approval",
                     "certainty": "Complete for this scope",
                     "data": {
                         "proposal_id": prop_id,
                         "status": "approved",
-                        "status_badge": "Approved for payroll • Version 1 • Awaiting payroll processing",
-                        "notice": get_message("C04")
+                        "status_text": "Approved and ready for payroll",
+                        "version": version,
+                        "approver": approver_name,
+                        "approved_at": approved_time,
+                        "status_badge": status_badge,
+                        "notice": get_message("C04"),
+                        "scope_label": "Priya Sharma · Apr–Sep 2026"
                     }
                 }
             ],
             "chips": [
-                {"label": "View full month breakdown", "action": "show-calculation", "payload": {"scenario_num": s_num}}
+                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}
             ],
             "state": {
-                "intent": "prepare_hike_proposal",
+                "intent": "approve_proposal",
                 "scenario_num": s_num,
                 "role": role,
                 "surface": surface,
                 "employee_id": context.get("employee_id"),
+                "status": "Approved and ready for payroll",
                 "panel": None
             }
         }
 
     def _handle_edit_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        if role != "HR Admin":
+            return self._build_refusal(role, surface, "Only HR Admin can edit proposals.")
+        s_num = context.get("scenario_num", 1)
+        prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
+        line = context.get("line", "gross_arrears")
+        proposed_value = context.get("proposed_value", 70000)
+        reason = context.get("reason", "Adjusted attendance records for June")
+
+        lifecycle.get_or_create_proposal(prop_id, {
+            "status": "Calculated; needs HR approval",
+            "certainty": "Complete for this scope",
+            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
+        })
+
+        res = lifecycle.edit_proposal(
+            proposal_id=prop_id,
+            actor=user,
+            line=line,
+            proposed_value=proposed_value,
+            reason=reason
+        )
         return {
             "messages": [
                 {"code": "C05", "text": get_message("C05")}
             ],
-            "cards": [],
-            "chips": [],
+            "cards": [
+                {
+                    "id": f"card-edit-{prop_id}",
+                    "type": "proposal_summary",
+                    "title": "Revised Proposal Summary",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "proposal_id": prop_id,
+                        "status": "Revised",
+                        "version": res["version"],
+                        "edited_line": line,
+                        "proposed_value": proposed_value,
+                        "reason": reason,
+                        "notice": get_message("C05")
+                    }
+                }
+            ],
+            "chips": [
+                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}
+            ],
             "state": {
                 "intent": "edit_proposal",
                 "role": role,
                 "surface": surface,
-                "scenario_num": context.get("scenario_num"),
+                "scenario_num": s_num,
+                "version": res["version"],
                 "panel": None
             }
         }
 
     def _handle_reject_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        if role != "HR Admin":
+            return self._build_refusal(role, surface, "Only HR Admin can reject proposals.")
+        s_num = context.get("scenario_num", 1)
+        prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
+        reason = context.get("reason", "Documentation incomplete or unverified.")
+
+        lifecycle.get_or_create_proposal(prop_id, {
+            "status": "Calculated; needs HR approval",
+            "certainty": "Complete for this scope",
+            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
+        })
+
+        res = lifecycle.reject_proposal(proposal_id=prop_id, actor=user, reason=reason)
         return {
             "messages": [
                 {"code": "REJECTED", "text": "The proposal has been rejected."}
             ],
-            "cards": [],
+            "cards": [
+                {
+                    "id": f"card-reject-{prop_id}",
+                    "type": "approval_card",
+                    "title": "Proposal Rejected",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "proposal_id": prop_id,
+                        "status": "rejected",
+                        "status_badge": "Rejected • Not approved for payroll",
+                        "notice": "This proposal has been rejected and will not be applied to payroll."
+                    }
+                }
+            ],
             "chips": [],
             "state": {
                 "intent": "reject_proposal",
                 "role": role,
                 "surface": surface,
-                "scenario_num": context.get("scenario_num"),
+                "scenario_num": s_num,
                 "panel": None
             }
         }
@@ -1385,17 +1531,20 @@ class ChatRouter:
     def _handle_draft_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         emp_id = context.get("employee_id") or user.get("employee_id") or "E05"
         period = context.get("period") or "2026-09"
-        draft = lifecycle.draft_query(
-            user=user,
+        desc = context.get("description") or "Please review my September attendance and LOP deduction."
+        evidence = context.get("evidence") or [
+            {"type": "payslip", "period": period, "source": f"PAY-{emp_id}-{period}"},
+            {"type": "attendance", "period": period, "lop_days": 3, "source": f"ATT-{emp_id}-{period}"}
+        ]
+        res = lifecycle.draft_query(
+            actor=user,
             employee_id=emp_id,
             category="salary",
             months=[period],
-            description="Please review my September attendance and LOP deduction.",
-            evidence=[
-                {"type": "payslip", "period": period, "source": f"PAY-{emp_id}-{period}"},
-                {"type": "attendance", "period": period, "lop_days": 3, "source": f"ATT-{emp_id}-{period}"}
-            ]
+            description=desc,
+            evidence=evidence
         )
+        draft = res["draft"]
         return {
             "messages": [
                 {"code": "C12", "text": get_message("C12")}
@@ -1415,35 +1564,42 @@ class ChatRouter:
             ],
             "chips": [
                 {"label": "Send query with listed evidence", "action": "confirm-send-query", "payload": {"draft": draft}},
-                {"label": "Cancel", "action": "explain-salary", "payload": {}}
+                {"label": "Add to existing query", "action": "append-query", "payload": {"draft": draft}},
+                {"label": "Cancel", "action": "query-status", "payload": {}}
             ],
             "state": {
                 "intent": "draft_query",
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "draft": draft,
                 "panel": None
             }
         }
 
     def _handle_confirm_send_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         draft = context.get("draft")
+        emp_id = user.get("employee_id") or "E05"
         if not draft:
-            emp_id = user.get("employee_id") or "E05"
-            draft = lifecycle.draft_query(
-                user=user,
+            draft_res = lifecycle.draft_query(
+                actor=user,
                 employee_id=emp_id,
                 category="salary",
                 months=["2026-09"],
-                description="Please review my September attendance and LOP deduction.",
+                description=context.get("description", "Please review my September attendance and LOP deduction."),
                 evidence=[]
             )
-        sent_query = lifecycle.confirm_send_query(
-            user=user,
+            draft = draft_res["draft"]
+        elif context.get("description"):
+            draft["description"] = context["description"]
+
+        sent_res = lifecycle.confirm_send_query(
+            actor=user,
             draft=draft,
             add_or_new="new",
             confirmed=True
         )
+        sent_query = sent_res["query"]
         return {
             "messages": [
                 {"code": "C15", "text": get_message("C15")}
@@ -1463,13 +1619,70 @@ class ChatRouter:
             ],
             "chips": [
                 {"label": "Check my query status", "action": "query-status", "payload": {}},
-                {"label": "Ask about my payroll", "action": "explain-salary", "payload": {}}
+                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}}
             ],
             "state": {
                 "intent": "query_status",
                 "role": role,
                 "surface": surface,
                 "employee_id": draft.get("employee_id"),
+                "panel": None
+            }
+        }
+
+    def _handle_append_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        draft = context.get("draft")
+        emp_id = user.get("employee_id") or "E05"
+        if not draft:
+            draft_res = lifecycle.draft_query(
+                actor=user,
+                employee_id=emp_id,
+                category="salary",
+                months=["2026-09"],
+                description=context.get("description", "Additional clarification on September attendance."),
+                evidence=[]
+            )
+            draft = draft_res["draft"]
+
+        queries = lifecycle.get_queries(employee_id=emp_id)
+        target_id = context.get("target_query_id") or (queries[0]["query_id"] if queries else None)
+        if not target_id:
+            return self._handle_confirm_send_query(user, role, surface, context)
+
+        append_res = lifecycle.confirm_send_query(
+            actor=user,
+            draft=draft,
+            add_or_new="add",
+            target_query_id=target_id,
+            confirmed=True
+        )
+        q = append_res["query"]
+        msg_code = "C15" if q["status"] == "Sent" else "C16"
+        return {
+            "messages": [
+                {"code": msg_code, "text": get_message(msg_code)}
+            ],
+            "cards": [
+                {
+                    "id": f"card-appended-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Query Updated",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": q["status"],
+                        "description": q["description"]
+                    }
+                }
+            ],
+            "chips": [
+                {"label": "Check my query status", "action": "query-status", "payload": {}}
+            ],
+            "state": {
+                "intent": "query_status",
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
                 "panel": None
             }
         }
@@ -1514,14 +1727,14 @@ class ChatRouter:
                         "status": st,
                         "category": latest.get("category"),
                         "description": latest.get("description"),
-                        "reply_text": latest.get("reply_text"),
-                        "resolution": latest.get("resolution")
+                        "reply_text": latest.get("reply_text") or latest.get("hr_reply"),
+                        "resolution": latest.get("resolution") or latest.get("hr_reply")
                     }
                 }
             ],
             "chips": [
                 {"label": "Draft a query for HR", "action": "draft-query", "payload": {}},
-                {"label": "Ask about my payroll", "action": "explain-salary", "payload": {}}
+                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}}
             ],
             "state": {
                 "intent": "query_status",
@@ -1561,55 +1774,177 @@ class ChatRouter:
 
     def _handle_take_into_review(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
-        if q_id:
-            lifecycle.take_into_review(q_id, user)
+        if not q_id:
+            queries = lifecycle.get_queries()
+            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+        res = lifecycle.take_into_review(q_id, actor=user)
+        q = res["query"]
         return {
             "messages": [
                 {"code": "C16", "text": get_message("C16")}
             ],
-            "cards": [],
+            "cards": [
+                {
+                    "id": f"card-status-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Payroll Query In Review",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": "In review",
+                        "category": q.get("category"),
+                        "description": q.get("description"),
+                        "reply_text": q.get("hr_reply")
+                    }
+                }
+            ],
+            "chips": [],
+            "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+        }
+
+    def _handle_reply_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        q_id = context.get("query_id")
+        if not q_id:
+            queries = lifecycle.get_queries()
+            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+        reply = context.get("reply_text") or context.get("reply") or "Attendance records reviewed and verified against biometric logs."
+        res = lifecycle.reply_query(q_id, actor=user, reply_text=reply)
+        q = res["query"]
+        return {
+            "messages": [
+                {"code": "C16", "text": get_message("C16")}
+            ],
+            "cards": [
+                {
+                    "id": f"card-status-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Query Reply Recorded",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": q.get("status", "In review"),
+                        "description": q.get("description"),
+                        "reply_text": q.get("hr_reply")
+                    }
+                }
+            ],
             "chips": [],
             "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
         }
 
     def _handle_resolve_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
-        reply = context.get("reply_text", "Attendance reviewed and verified against punch records.")
-        if q_id:
-            lifecycle.resolve_query(q_id, user, reply)
+        if not q_id:
+            queries = lifecycle.get_queries()
+            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+        reply = context.get("reply_text") or "Attendance reviewed and verified against punch records."
+        res = lifecycle.resolve_query(q_id, actor=user, reply_text=reply)
+        q = res["query"]
         return {
             "messages": [
                 {"code": "C23", "text": get_message("C23")}
             ],
-            "cards": [],
+            "cards": [
+                {
+                    "id": f"card-status-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Query Resolved",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": "Resolved",
+                        "description": q.get("description"),
+                        "reply_text": q.get("hr_reply"),
+                        "resolution": q.get("hr_reply")
+                    }
+                }
+            ],
             "chips": [],
             "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
         }
 
     def _handle_dispute_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
-        if q_id:
-            lifecycle.dispute_query(q_id, user, "Employee disputed resolution.")
+        if not q_id:
+            queries = lifecycle.get_queries()
+            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+        reason = context.get("reason", "Employee disputed resolution.")
+        res = lifecycle.dispute_query(q_id, actor=user, reason=reason)
+        q = res["query"]
         return {
             "messages": [
                 {"code": "C16", "text": get_message("C16")}
             ],
-            "cards": [],
+            "cards": [
+                {
+                    "id": f"card-status-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Resolution Disputed",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": "In review",
+                        "description": q.get("description"),
+                        "reply_text": f"Disputed: {reason}"
+                    }
+                }
+            ],
             "chips": [],
             "state": {"intent": "query_status", "role": role, "surface": surface, "panel": None}
         }
 
     def _handle_close_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
-        if q_id:
-            lifecycle.close_query(q_id, user)
+        if not q_id:
+            queries = lifecycle.get_queries()
+            resolved_q = next((q for q in queries if q.get("status") == "Resolved"), None)
+            q_id = resolved_q["query_id"] if resolved_q else (queries[0]["query_id"] if queries else "QUERY-E05-20260901")
+        try:
+            res = lifecycle.close_query(q_id, actor=user)
+            q = res["query"]
+        except Exception:
+            lifecycle.resolve_query(q_id, actor=user, reply_text="Auto-resolved prior to closure.")
+            res = lifecycle.close_query(q_id, actor=user)
+            q = res["query"]
+
         return {
             "messages": [
                 {"code": "C24", "text": get_message("C24")}
             ],
-            "cards": [],
+            "cards": [
+                {
+                    "id": f"card-status-{q['query_id']}",
+                    "type": "query_status",
+                    "title": "Query Closed",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "status": "Closed",
+                        "description": q.get("description"),
+                        "reply_text": q.get("hr_reply")
+                    }
+                }
+            ],
             "chips": [],
             "state": {"intent": "query_status", "role": role, "surface": surface, "panel": None}
+        }
+
+    def _handle_show_calculation(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        s_num = context.get("scenario_num", 1)
+        builder = getattr(self, f"_build_scenario_{s_num}", self._build_scenario_1)
+        resp = builder(user, role, surface)
+        panel_data = resp.get("state", {}).get("panel")
+        return {
+            "messages": [
+                {"code": "C22", "text": get_message("C22")}
+            ],
+            "cards": resp.get("cards", []),
+            "chips": resp.get("chips", []),
+            "state": {
+                **resp.get("state", {}),
+                "open_panel": True,
+                "panel": panel_data
+            }
         }
 
 

@@ -22,7 +22,7 @@ interface ReasonListCardProps {
   onShowCalculation?: () => void;
 }
 
-export const ReasonListCard: React.FC<ReasonListCardProps> = ({ card, onShowCalculation }) => {
+export const ReasonListCard: React.FC<ReasonListCardProps> = ({ card }) => {
   const { net_change, reasons, tds_change } = card.data;
 
   return (
@@ -52,22 +52,10 @@ export const ReasonListCard: React.FC<ReasonListCardProps> = ({ card, onShowCalc
 
         {tds_change !== undefined && tds_change !== null && (
           <div className="hcm-reason-footnote">
-            <span>Sourced TDS change: <strong className="tnum">{formatINR(tds_change)}</strong></span>
+            <span>TDS change: <strong className="tnum">{formatINR(tds_change)}</strong></span>
           </div>
         )}
       </div>
-
-      {onShowCalculation && (
-        <div className="hcm-card-footer-action">
-          <button
-            type="button"
-            className="hcm-button hcm-button-outline hcm-button-sm"
-            onClick={onShowCalculation}
-          >
-            Show calculation proof →
-          </button>
-        </div>
-      )}
     </div>
   );
 };
