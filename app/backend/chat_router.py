@@ -936,6 +936,7 @@ class ChatRouter:
                     "employee_id": "E10",
                     "formulas": [
                         f"Final Net = Gross Payables ({format_inr(r.get('gross_payables', {}).get('value'))}) − Total Deductions ({format_inr(r.get('total_deductions', {}).get('value'))}) = {format_inr(r.get('final_net', {}).get('value'))}",
+                        f"Employee deductions = Employee PF ({format_inr(r.get('total_deductions', {}).get('value'))})",
                         f"Gratuity = 15 × last drawn salary × completed years ÷ 26 = {format_inr(c.get('gratuity', {}).get('amount', {}).get('value'))}",
                         f"Leave encashment = daily wage × unused encashable days = {format_inr(c.get('leave_encashment', {}).get('amount', {}).get('value'))}"
                     ],
@@ -976,7 +977,7 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "components": [
-                            {"name": "Gratuity", "amount": grat_amt, "status": "Ineligible", "note": "Close to minimum service: Continuous service less than statutory 5-year requirement"}
+                            {"name": "Gratuity", "amount": grat_amt, "status": "Ineligible", "note": "Close to minimum service: Continuous service less than 5-year requirement"}
                         ]
                     }
                 },
@@ -1006,7 +1007,7 @@ class ChatRouter:
                 "panel": {
                     "title": "Gratuity Service Eligibility Proof",
                     "formulas": [
-                        "Tenure: Continuous service is less than statutory 5-year threshold",
+                        "Tenure: Continuous service is less than 5-year threshold",
                         f"Gratuity payable = {format_inr(grat_amt)}"
                     ],
                     "rule_citations": [
@@ -1022,7 +1023,8 @@ class ChatRouter:
         r = sc["result"]
         c = r.get("components", {})
         notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
-        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", notice_amt)
+        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
+        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
         return {
             "messages": [
                 {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
@@ -1049,8 +1051,11 @@ class ChatRouter:
                     "data": {
                         "hero_label": "Final Net",
                         "hero_amount": None,
+                        "known_recoveries": recov_subtotal,
+                        "known_recoveries_subtotal": recov_subtotal,
                         "components": [
                             {"name": "Notice Shortfall Recovery", "amount": notice_amt, "status": "Verified"},
+                            {"name": "Salary Advance", "amount": advance_amt, "status": "Verified"},
                             {"name": "Asset Recovery", "amount": None, "status": "Unresolved"}
                         ]
                     }
@@ -1080,7 +1085,7 @@ class ChatRouter:
                 "panel": {
                     "title": "Asset Clearance Status",
                     "formulas": [
-                        f"Notice shortfall recovery & known deductions = {format_inr(recov_subtotal)}",
+                        f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance pending: Company laptop not received",
                         "Final Net: Not available in generated data"
                     ],
@@ -1341,6 +1346,7 @@ class ChatRouter:
         c = r["components"]
         recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
         notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
+        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -1366,9 +1372,11 @@ class ChatRouter:
                     "data": {
                         "hero_label": "Final Net",
                         "hero_amount": None,
+                        "known_recoveries": recov_subtotal,
                         "known_recoveries_subtotal": recov_subtotal,
                         "components": [
                             {"name": "Notice Shortfall Recovery", "amount": notice_amt, "status": "Verified"},
+                            {"name": "Salary Advance", "amount": advance_amt, "status": "Verified"},
                             {"name": "Asset Recovery", "amount": None, "status": "Unresolved"}
                         ]
                     }
@@ -1399,7 +1407,7 @@ class ChatRouter:
                 "panel": {
                     "title": "Settlement Line Review",
                     "formulas": [
-                        f"Notice shortfall recovery & known deductions = {format_inr(recov_subtotal)}",
+                        f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance hold: Laptop status unconfirmed",
                         "Final Net: Not available in generated data"
                     ],

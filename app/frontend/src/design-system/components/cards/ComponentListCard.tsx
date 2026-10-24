@@ -20,6 +20,7 @@ interface ComponentListCardProps {
       gross_payables?: number | null;
       total_deductions?: number | null;
       known_recoveries_subtotal?: number | null;
+      known_recoveries?: number | null;
       components: SettlementComponent[];
       due_date?: string;
     };
@@ -57,9 +58,9 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
               <span>Total Deductions: <strong className="tnum">{formatINR(d.total_deductions)}</strong></span>
             </div>
           )}
-          {d.known_recoveries_subtotal !== undefined && (
+          {(d.known_recoveries !== undefined || d.known_recoveries_subtotal !== undefined) && (
             <div className="hcm-hero-sublabel">
-              <span>Known Recoveries Subtotal: <strong className="tnum">{formatINR(d.known_recoveries_subtotal)}</strong></span>
+              <span>Known recoveries: <strong className="tnum">{formatINR(d.known_recoveries ?? d.known_recoveries_subtotal)}</strong></span>
             </div>
           )}
         </div>

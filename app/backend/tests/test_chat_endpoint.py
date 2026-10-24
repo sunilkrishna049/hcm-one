@@ -12,6 +12,7 @@ from app.backend.main import app
 from app.backend.auth import set_active_demo_user
 from app.backend.lifecycle import lifecycle
 from app.backend.chat_router import ChatRouter
+from app.backend.engine_bridge import bridge
 
 client = TestClient(app)
 
@@ -534,4 +535,113 @@ def test_employee_names_in_cards_and_panel_match_employees_json():
     assert "Ananya Sen" not in formulas_text
     assert "E08 (Vikram Singh)" in formulas_text
     assert "Vikramaditya Verma" not in formulas_text
+
+
+def test_all_components_deductions_and_earnings_map_to_engine_output():
+    """Verify that every component, deduction, and earning label shown in any card or panel
+    maps to a field that exists in that scenario's engine output. Fail on any unknown or invented concept.
+    """
+    router = ChatRouter()
+    lifecycle.reset_demo()
+
+    # Known valid component name mappings to engine component keys
+    COMPONENT_NAME_MAP = {
+        "Earned Salary": "final_month_salary",
+        "Gratuity": "gratuity",
+        "Leave Encashment": "leave_encashment",
+        "Notice Shortfall Recovery": "notice_shortfall_recovery",
+        "Salary Advance": "loan_and_advance_recovery",
+        "Asset Recovery": "asset_recovery"
+    }
+
+    FORBIDDEN_INVENTED_CONCEPTS = [
+        "professional tax",
+        "pt deduction",
+        "Notice shortfall recovery & known deductions"
+    ]
+
+    canonical_scenarios = [
+        (1, 'HR01', "Prepare Priya Sharma's pending back-dated hike."),
+        (2, 'HR01', "Prepare Arjun Rao's pending back-dated hike."),
+        (3, 'HR01', "Prepare Kavya Iyer's pending back-dated hike."),
+        (4, 'HR01', "Prepare bonus proposal for Engineering and Sales."),
+        (5, 'HR01', "Prepare bonus proposal for Meera Nair."),
+        (6, 'HR01', "Prepare settlement proposal for Rahul Verma."),
+        (7, 'HR01', "Prepare settlement proposal for Lakshmi Reddy."),
+        (8, 'HR01', "Prepare settlement proposal for Imran Khan."),
+        (9, 'USER-E05', "Why is my September salary lower than August?"),
+        (10, 'USER-E06', "Why did my TDS increase in September?"),
+        (11, 'USER-E16', "Why did my take-home pay decrease in September when my gross did not change?"),
+        (12, 'HR02', "Show me Priya Sharma's salary breakdown."),
+        (13, 'HR01', "Review settlement calculation for Imran Khan.")
+    ]
+
+    for s_num, user_id, message in canonical_scenarios:
+        res = router.handle_chat(user_id=user_id, message=message, context={'scenario_num': s_num})
+        engine_res = bridge.get_scenario(s_num)["result"]
+
+        # Check for forbidden invented concepts in all cards, chips, and panel
+        serialized = json.dumps(res).lower()
+        for forbidden in FORBIDDEN_INVENTED_CONCEPTS:
+            assert forbidden.lower() not in serialized, (
+                f"Invented concept '{forbidden}' found in response for Scenario {s_num}!"
+            )
+
+        # Check Scenario 7 specifically: ensure "statutory" is removed from close-to-minimum-service note
+        if s_num == 7:
+            for card in res.get("cards", []):
+                for comp in card.get("data", {}).get("components", []):
+                    note = comp.get("note", "")
+                    assert "statutory" not in note.lower(), (
+                        f"Found 'statutory' in close-to-minimum-service note: '{note}'"
+                    )
+
+        # Check Scenarios 8 and 13: check known recoveries and its two parts
+        if s_num in (8, 13):
+            # Check cards have notice shortfall recovery 46667 and salary advance 10000
+            comp_card = next((c for c in res["cards"] if c["type"] == "component_list"), None)
+            assert comp_card is not None
+            comps = {c["name"]: c["amount"] for c in comp_card["data"]["components"]}
+            assert "Notice Shortfall Recovery" in comps
+            assert comps["Notice Shortfall Recovery"] == 46667
+            assert "Salary Advance" in comps
+            assert comps["Salary Advance"] == 10000
+            assert comp_card["data"].get("known_recoveries") == 56667
+
+            # Check panel formula
+            panel_formulas = res.get("state", {}).get("panel", {}).get("formulas", [])
+            formulas_str = " ".join(panel_formulas)
+            assert "Known recoveries = Notice shortfall recovery" in formulas_str
+            assert "Salary advance" in formulas_str
+            assert "56,667" in formulas_str
+
+        # Check Rahul Verma Scenario 6 total deductions of 3,000 are Employee PF only
+        if s_num == 6:
+            assert engine_res["total_deductions"]["value"] == 3000
+            # Ensure panel formula clarifies Employee deductions = Employee PF (3,000)
+            panel_formulas = res.get("state", {}).get("panel", {}).get("formulas", [])
+            pf_deduction_formula = next((f for f in panel_formulas if "Employee deductions" in f), None)
+            assert pf_deduction_formula is not None
+            assert "Employee PF" in pf_deduction_formula
+            assert "3,000" in pf_deduction_formula
+
+        # Check all component_list components map to engine components
+        for card in res.get("cards", []):
+            if card["type"] == "component_list":
+                engine_comps = engine_res.get("components", {})
+                for comp in card.get("data", {}).get("components", []):
+                    c_name = comp["name"]
+                    assert c_name in COMPONENT_NAME_MAP, (
+                        f"Unknown component label '{c_name}' in Scenario {s_num}!"
+                    )
+                    engine_key = COMPONENT_NAME_MAP[c_name]
+                    assert engine_key in engine_comps, (
+                        f"Component '{c_name}' maps to key '{engine_key}' which does not exist in engine output for Scenario {s_num}!"
+                    )
+                    # Amount must match engine output
+                    expected_val = engine_comps[engine_key].get("amount", {}).get("value")
+                    assert comp["amount"] == expected_val, (
+                        f"Amount mismatch for '{c_name}': UI has {comp['amount']}, engine has {expected_val}"
+                    )
+
 
