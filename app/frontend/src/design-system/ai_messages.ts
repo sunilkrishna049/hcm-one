@@ -35,6 +35,7 @@ export const AI_MESSAGES: Record<string, string> = {
   C29: "Your TDS is higher because you declared income from your previous employer for {declared_months}. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice.",
   C30: "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
   C31: "Hi {first_name}. What would you like to do today?",
+  C32: "This is a proposal for the recorded {bonus_type} for {period}.",
 };
 
 export function getAIMessage(code: string, slots?: Record<string, string>): string {

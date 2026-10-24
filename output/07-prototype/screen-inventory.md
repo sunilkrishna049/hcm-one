@@ -33,7 +33,7 @@ General payroll concepts (e.g., *"What is LOP?"*, *"What is PF?"*, *"What is Gra
 
 **Traceability & Compliance:**
 - **Zero Frontend Math:** Every number rendered inside any card or panel originates exclusively from deterministic engine calculations in `data/generated/scenarios/` and is verified by automated tests against the backend API (DEC-033).
-- **Approved AI Copy Only:** The assistant outputs strictly approved copy (C01 to C31) corresponding to authorized role boundaries. No LLM hallucinations, paraphrasing, or conversational filler.
+- **Approved AI Copy Only:** The assistant outputs strictly approved copy (C01 to C32) corresponding to authorized role boundaries. No LLM hallucinations, paraphrasing, or conversational filler.
 - **Explicit Human Governance:** Actions such as approving proposals, editing parameters, and submitting queries require explicit user clicks with distinct disclaimers (e.g., C04 approval disclaimer; approval never resembles payment).
 - **Strict Information Security:** No "Verified" badges. No file paths, screen IDs, rule keys, or sentence codes are visible to users. Query statuses are strictly: `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
 - **Future-Proof Agentic Handoff:** Intent routing maps typed input to demo intents today and is architected so an agentic framework (e.g., CrewAI classifier, retrieval, and response crew) can replace the prototype intent matcher without altering card schemas or conversation contracts.

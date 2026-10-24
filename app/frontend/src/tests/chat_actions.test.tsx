@@ -628,4 +628,93 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
+  it('11. Ambiguous bonus request shows clarifying question card with "Which bonus type do you mean?" and choices', async () => {
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [],
+      cards: [
+        {
+          id: 'card-clarify-bonus',
+          type: 'clarifying_question',
+          title: 'Which bonus type do you mean?',
+          certainty: 'Needs HR decision',
+          data: {
+            question: 'Which bonus type do you mean?',
+            choices: [
+              'Annual performance bonus, FY 2025-26, Engineering',
+              'Q2 Sales incentive, Hyderabad Sales',
+            ],
+            selected_choice: 'Annual performance bonus, FY 2025-26, Engineering',
+          },
+        },
+      ],
+      chips: [
+        { label: 'Annual performance bonus, FY 2025-26, Engineering' },
+        { label: 'Q2 Sales incentive, Hyderabad Sales' },
+      ],
+    });
+
+    render(<ChatHR currentUser="HR01" currentScenario={4} />);
+
+    // Tap "Prepare a bonus proposal" starter chip
+    fireEvent.click(screen.getByText('Prepare a bonus proposal'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Which bonus type do you mean?').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Annual performance bonus, FY 2025-26, Engineering').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Q2 Sales incentive, Hyderabad Sales').length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  it('12. Bonus proposal card displays "Known Eligible Gross" with certainty, and eligible list with E03 (tax incomplete)', async () => {
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [
+        {
+          code: 'C32',
+          text: 'This is a proposal for the recorded Annual performance bonus for FY 2025-26.',
+        },
+      ],
+      cards: [
+        {
+          id: 'card-bonus-s4',
+          type: 'proposal_summary',
+          title: 'Team Bonus Run Summary',
+          certainty: 'Complete for this scope',
+          data: {
+            proposal_type: 'Annual performance bonus (FY 2025-26)',
+            eligible_count: 4,
+            ineligible_count: 1,
+            needs_input_count: 1,
+            known_eligible_gross: 213929,
+            known_eligible_gross_certainty: 'Complete for this scope',
+            eligible: ['E01', 'E03', 'E04', 'E07'],
+            not_eligible: [{ employee_id: 'E08', reason: 'On notice at the time of calculation' }],
+            needs_input: [{ employee_id: 'E09', reason: 'Performance record missing' }],
+            status: 'Needs HR decision',
+          },
+        },
+      ],
+      chips: [],
+    });
+
+    render(<ChatHR currentUser="HR01" currentScenario={4} />);
+
+    const textarea = screen.getByTestId('composer-textarea');
+    fireEvent.change(textarea, { target: { value: 'Annual performance bonus, FY 2025-26, Engineering' } });
+    fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+    await waitFor(() => {
+      // Wording C32 is displayed
+      expect(screen.getByText('This is a proposal for the recorded Annual performance bonus for FY 2025-26.')).toBeInTheDocument();
+      // Label "Known Eligible Gross" is displayed
+      expect(screen.getByText('Known Eligible Gross')).toBeInTheDocument();
+      // Amount ₹2,13,929 is displayed
+      expect(screen.getByText('₹2,13,929')).toBeInTheDocument();
+      // Counts match engine lists
+      expect(screen.getByText('4')).toBeInTheDocument(); // eligible count
+      // Eligible employees list shown with E03 tax incomplete note
+      expect(screen.getByText('(tax incomplete)')).toBeInTheDocument();
+    });
+  });
+
 });
+

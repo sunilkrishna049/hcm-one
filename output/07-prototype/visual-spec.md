@@ -186,7 +186,7 @@ All breakpoints and dimensions are defined as variables in `tokens.css`:
 - **Alignment:** Left-aligned (flex-start) within the chat column.
 - **Header:** Assistant Avatar icon (Teal badge with assistant mark), sender label `"HCM One Assistant"`, and timestamp (`"10:14 AM"`). **No "Verified" badge.**
 - **Text Bubble:** 15 px / 22 px Regular `#0F172A`, surface `#FFFFFF`, border 1 px `#E2E8F0`, padding 16 px.
-- **Copy Rule:** Assistant prose consists **strictly of approved sentences (C01–C31)** used verbatim. No paraphrasing, conversational filler, or unapproved copy.
+- **Copy Rule:** Assistant prose consists **strictly of approved sentences (C01–C32)** used verbatim. No paraphrasing, conversational filler, or unapproved copy.
 - **Sub-elements:** Any accompanying rich cards appear directly below the text bubble inside the assistant turn container (gap: 12 px).
 
 ### 4.3. Suggestion Chips

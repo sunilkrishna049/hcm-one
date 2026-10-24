@@ -74,7 +74,7 @@ These meanings describe the simplified demo and do not establish legal eligibili
 
 No glossary definition assigns a hold, payment date or legal entitlement. Calculation code and verified configuration establish the result for the relevant record. (BR-0.1–BR-0.4; GR-3.2)
 
-## 7. Patterns for A06-03, A06-07, A06-08, A06-10, A06-11, A06-12, A06-13
+## 7. Patterns for A06-03, A06-07, A06-08, A06-10, A06-11, A06-12, A06-14
 
 Purpose, structure and rules below are Proposed. Requirements have High confidence; comprehension is **Assumption, Low, AS-17**. Use the existing certainty model and failures, not self-rated confidence.
 
@@ -83,6 +83,7 @@ Purpose, structure and rules below are Proposed. Requirements have High confiden
 - **Structure:** Name bonus type, period and rule. State code-produced eligibility and the recorded criterion that established it. For joiners or leavers, relay the full amount, eligible days, period days, formula and code-produced prorated amount. For target-based incentives, relay target, achievement, applied slab and source. Offer detailed calculation.
 - **Rules:** Missing performance is not zero achievement. Unclear notice policy or service criterion remains unresolved. Do not apply statutory-bonus rules to performance incentives or invent company policy. Only code supplies numeric inputs and outputs for explanation.
 - **Source IDs:** FR-2.2–FR-2.8, FR-2.12–FR-2.13; BR-5.1–BR-5.5; GR-3.1–GR-3.3; UXP-01–UXP-02; PS-06; EVD-49–EVD-51; EG-21.
+- **Approved wording for bonus proposal lead (C32):** "This is a proposal for the recorded {bonus type} for {period}."
 
 ### A06-07: Salary change explanation lead
 - **Purpose:** State the bottom-line take-home change immediately before presenting causal cards and detailed breakdown, per UXP-03.
@@ -117,7 +118,7 @@ Purpose, structure and rules below are Proposed. Requirements have High confiden
 
 Suggested status wording: "Your query is Sent. HR can access it for review." "Your query is In review. HR has taken it for review." "HR recorded a resolution. Here is the recorded reply. You can dispute the resolution if it does not answer your issue." "Your query is Closed. Its history is retained. A new issue can be drafted separately." These messages do not claim a future response or payroll correction. (FR-6.9–FR-6.13; states Section 4)
  
-### A06-13: Start and welcome state
+### A06-14: Start and welcome state
 - **Purpose:** Present an empty start experience when the app opens or after login switching, greeting the user respectfully before any request is initiated. Nothing is loaded or sent automatically.
 - **Approved wording (C31):** "Hi {first name}. What would you like to do today?" followed by C01 ("I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm.").
 - **Starter suggestions:** Role-matched starter suggestion chips (3 to 4 chips) enabling the user to start a conversation with a single tap:

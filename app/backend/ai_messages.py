@@ -34,6 +34,7 @@ AI_MESSAGES = {
     "C29": "Your TDS is higher because you declared income from your previous employer for {declared_months}. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice.",
     "C30": "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
     "C31": "Hi {first_name}. What would you like to do today?",
+    "C32": "This is a proposal for the recorded {bonus_type} for {period}.",
 }
 
 
@@ -42,6 +43,8 @@ def get_message(code: str, **kwargs) -> str:
     if kwargs:
         if "first name" in kwargs and "first_name" not in kwargs:
             kwargs["first_name"] = kwargs["first name"]
+        if "bonus type" in kwargs and "bonus_type" not in kwargs:
+            kwargs["bonus_type"] = kwargs["bonus type"]
         try:
             return template.format(**kwargs)
         except KeyError:

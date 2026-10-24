@@ -203,6 +203,13 @@ class ChatRouter:
                 return self._handle_close_query(user, role, surface, context)
             elif act in ("show-calculation", "show calculation", "show calculation proof", "view full month breakdown"):
                 return self._handle_show_calculation(user, role, surface, context)
+            elif act == "apply-selection":
+                choice = (context.get("choice") or "").lower()
+                if "annual" in choice or "engineering" in choice:
+                    return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
+                elif "sales" in choice or "hyderabad" in choice:
+                    return self._build_scenario_4(user, role, surface, bonus_type_key="quarterly_sales_incentive")
+                return self._build_bonus_clarifying_question(role, surface)
             elif act.startswith("faq-"):
                 faq_topic = act.replace("faq-", "")
                 return self._handle_faq_query(faq_topic, role, surface)
@@ -259,17 +266,22 @@ class ChatRouter:
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_3(user, role, surface)
 
-        # Scenario 4 (Team bonus)
-        if "bonus" in lower_msg and ("team" in lower_msg or "annual" in lower_msg or "sales" in lower_msg or "calculate" in lower_msg or "run" in lower_msg or "proposal" in lower_msg):
-            if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
-            return self._build_scenario_4(user, role, surface)
-
         # Scenario 5 (Meera Nair missing rating)
         if "meera" in lower_msg or "nair" in lower_msg or ("bonus" in lower_msg and "rating" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_5(user, role, surface)
+
+        # Bonus proposals (Ambiguous disambiguation vs specific runs)
+        if "bonus" in lower_msg or "incentive" in lower_msg:
+            if role != "HR Admin":
+                return self._build_refusal(role, surface, "Access denied")
+            if "annual" in lower_msg or "engineering" in lower_msg:
+                return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
+            elif "sales" in lower_msg or "hyderabad" in lower_msg or "incentive" in lower_msg:
+                return self._build_scenario_4(user, role, surface, bonus_type_key="quarterly_sales_incentive")
+            elif "team" in lower_msg or "proposal" in lower_msg or "run" in lower_msg or "calculate" in lower_msg or "prepare" in lower_msg or lower_msg.strip() == "bonus":
+                return self._build_bonus_clarifying_question(role, surface)
 
         # Scenario 6 (Rahul Verma settlement)
         if "rahul" in lower_msg or "verma" in lower_msg or ("settlement" in lower_msg and "gratuity" in lower_msg):
@@ -639,36 +651,108 @@ class ChatRouter:
             }
         }
 
-    def _build_scenario_4(self, user: dict, role: str, surface: str) -> dict:
+    def _build_bonus_clarifying_question(self, role: str, surface: str) -> dict:
+        return {
+            "messages": [],
+            "cards": [
+                {
+                    "id": "card-clarify-bonus",
+                    "type": "clarifying_question",
+                    "title": "Which bonus type do you mean?",
+                    "certainty": "Needs HR decision",
+                    "data": {
+                        "question": "Which bonus type do you mean?",
+                        "choices": [
+                            "Annual performance bonus, FY 2025-26, Engineering",
+                            "Q2 Sales incentive, Hyderabad Sales"
+                        ],
+                        "selected_choice": "Annual performance bonus, FY 2025-26, Engineering"
+                    }
+                }
+            ],
+            "chips": [
+                {"label": "Annual performance bonus, FY 2025-26, Engineering"},
+                {"label": "Q2 Sales incentive, Hyderabad Sales"}
+            ],
+            "state": {
+                "intent": "clarifying_question",
+                "role": role,
+                "surface": surface,
+                "scenario_num": None,
+                "employee_id": None,
+                "panel": None
+            }
+        }
+
+    def _build_scenario_4(self, user: dict, role: str, surface: str, bonus_type_key: str = "annual_performance_bonus") -> dict:
         sc = bridge.get_scenario(4)
         r = sc["result"]
-        annual = r["bonus_requests"][0]
-        gross_total = annual["known_eligible_gross"]["value"]
 
-        ann_req = next((req for req in sc["result"]["bonus_requests"] if req.get("bonus_type") == "annual_performance_bonus"), {})
-        emp_map = {e["employee_id"]: e for e in ann_req.get("employees", [])}
-        e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
-        e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
-        e04_amt = emp_map.get("E04", {}).get("amount", {}).get("value")
-        e07_amt = emp_map.get("E07", {}).get("amount", {}).get("value")
-        e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value", 0)
+        req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == bonus_type_key), r["bonus_requests"][0])
+        gross_total = req["known_eligible_gross"]["value"]
+        gross_certainty = req["known_eligible_gross"].get("certainty", "Complete for this scope")
+
+        # Copy engine's own counts and lists directly (no counting in router or frontend)
+        agg = req.get("aggregates", {})
+        eligible_count = agg.get("eligible_count", {}).get("value")
+        ineligible_count = agg.get("not_eligible_count", {}).get("value")
+        needs_input_count = agg.get("needs_input_count", {}).get("value")
+
+        eligible_list = req.get("eligible", [])
+        not_eligible_list = req.get("not_eligible", [])
+        needs_input_list = req.get("needs_input", [])
+
+        if bonus_type_key == "quarterly_sales_incentive":
+            display_bonus_type = "Q2 Sales incentive"
+            display_period = req.get("period", "Q2 2026-27")
+            card_title = "Q2 Sales Incentive Summary"
+            emp_formulas = [
+                f"{e['employee_id']}: Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
+                for e in req.get("employees", [])
+            ]
+        else:
+            display_bonus_type = "Annual performance bonus"
+            display_period = req.get("period", "FY 2025-26")
+            card_title = "Team Bonus Run Summary"
+            emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
+            e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
+            e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
+            e04_amt = emp_map.get("E04", {}).get("amount", {}).get("value")
+            e07_amt = emp_map.get("E07", {}).get("amount", {}).get("value")
+            e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value", 0)
+            emp_formulas = [
+                f"E01 (Priya Sharma): Annual bonus {format_inr(e01_amt)}",
+                f"E03 (Kavya Iyer): Annual bonus {format_inr(e03_amt)} (tax incomplete)",
+                f"E04 (Rohan Joshi): Sales bonus {format_inr(e04_amt)}",
+                f"E07 (Ananya Sen): Joiner proration {format_inr(e07_amt)}",
+                f"E08 (Vikramaditya Verma): Notice exclusion: {format_inr(e08_amt)} (Ineligible)",
+                "E09 (Meera Nair): Missing performance rating (Needs input)"
+            ]
+
+        # Approved sentence C32: "This is a proposal for the recorded {bonus type} for {period}."
+        c32_text = get_message("C32", bonus_type=display_bonus_type, period=display_period)
 
         return {
             "messages": [
-                {"code": "C03", "text": get_message("C03")}
+                {"code": "C32", "text": c32_text}
             ],
             "cards": [
                 {
                     "id": "card-bonus-s4",
                     "type": "proposal_summary",
-                    "title": "Team Bonus Run Summary",
-                    "certainty": r.get("certainty", "Needs HR decision"),
+                    "title": card_title,
+                    "certainty": gross_certainty,
                     "data": {
-                        "proposal_type": "Annual & Sales Bonus Run",
-                        "eligible_count": 3,
-                        "ineligible_count": 1,
-                        "needs_input_count": 1,
+                        "proposal_type": f"{display_bonus_type} ({display_period})",
+                        "eligible_count": eligible_count,
+                        "ineligible_count": ineligible_count,
+                        "needs_input_count": needs_input_count,
+                        "known_eligible_gross": gross_total,
                         "gross_eligible_total": gross_total,
+                        "known_eligible_gross_certainty": gross_certainty,
+                        "eligible": eligible_list,
+                        "not_eligible": not_eligible_list,
+                        "needs_input": needs_input_list,
                         "status": "Needs HR decision"
                     }
                 },
@@ -678,11 +762,11 @@ class ChatRouter:
                     "title": "HR Authorization",
                     "certainty": "Needs HR decision",
                     "data": {
-                        "scope_label": "Team Bonus Run • 5 employees evaluated",
+                        "scope_label": f"{display_bonus_type} • {len(req.get('employees', []))} employees evaluated",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-4"
+                        "proposal_id": f"PROP-SCENARIO-4"
                     }
                 }
             ],
@@ -698,14 +782,7 @@ class ChatRouter:
                 "employee_id": None,
                 "panel": {
                     "title": "Bonus Eligibility & Scope Roster",
-                    "formulas": [
-                        f"E01 (Priya Sharma): Annual bonus {format_inr(e01_amt)}",
-                        f"E03 (Kavya Iyer): Annual bonus {format_inr(e03_amt)}",
-                        f"E04 (Rohan Joshi): Sales bonus {format_inr(e04_amt)}",
-                        f"E07 (Ananya Sen): Joiner proration {format_inr(e07_amt)}",
-                        f"E08 (Vikramaditya Verma): Notice exclusion: {format_inr(e08_amt)} (Ineligible)",
-                        "E09 (Meera Nair): Missing performance rating (Needs input)"
-                    ],
+                    "formulas": emp_formulas,
                     "rule_citations": [
                         "Bonus proration rule: Joiners pro-rated by active days in performance year",
                         "Notice exclusion: Employees serving resignation notice excluded from bonus payout",
@@ -777,9 +854,7 @@ class ChatRouter:
         r = sc["result"]
         c = r["components"]
         return {
-            "messages": [
-                {"code": "C03", "text": get_message("C03")}
-            ],
+            "messages": [],
             "cards": [
                 {
                     "id": "card-settlement-s6",
@@ -862,9 +937,7 @@ class ChatRouter:
         c = r["components"]
         grat_amt = c.get("gratuity", {}).get("amount", {}).get("value", 0)
         return {
-            "messages": [
-                {"code": "C03", "text": get_message("C03")}
-            ],
+            "messages": [],
             "cards": [
                 {
                     "id": "card-settlement-s7",

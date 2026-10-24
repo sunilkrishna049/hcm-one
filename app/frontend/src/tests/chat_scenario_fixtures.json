@@ -106,7 +106,7 @@
         "title": "HR Authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Priya Sharma (E01) \u2022 6 affected months (2026-04 to 2026-09)",
+          "scope_label": "Priya Sharma (E01) • 6 affected months (2026-04 to 2026-09)",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -201,15 +201,15 @@
           }
         ],
         "formulas": [
-          "Earned salary = monthly salary \u00d7 paid days \u00f7 calendar days",
-          "Monthly arrears = revised earned gross \u2212 old earned gross",
-          "Net Arrears = Gross Arrears (\u20b971,200) \u2212 Employee PF Change (\u20b90) \u2212 Estimated TDS Impact (\u20b93,724) = \u20b967,476"
+          "Earned salary = monthly salary × paid days ÷ calendar days",
+          "Monthly arrears = revised earned gross − old earned gross",
+          "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
         ],
         "rule_citations": [
           "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
           "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
           "Income tax regime: New tax regime FY 2026-27",
-          "Standard deduction: \u20b975,000",
+          "Standard deduction: ₹75,000",
           "Health and education cess: 4%",
           "Rules version: Northwind demo rules v1"
         ]
@@ -261,7 +261,7 @@
         "title": "HR Authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Arjun Rao (E02) \u2022 September 2026",
+          "scope_label": "Arjun Rao (E02) • September 2026",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -293,12 +293,12 @@
         "employee_name": "Arjun Rao",
         "employee_id": "E02",
         "formulas": [
-          "Segment 1 (1\u201316 Sep): Wage ceiling \u20b915,000. Pro-rated ceiling: \u20b915,000 \u00d7 16 \u00f7 30 = \u20b98,000",
-          "Segment 2 (17\u201330 Sep): Wage ceiling \u20b925,000. Pro-rated ceiling: \u20b925,000 \u00d7 14 \u00f7 30 = \u20b911,666.67",
-          "Total PF change across dual segments = \u20b9101"
+          "Segment 1 (1–16 Sep): Wage ceiling ₹15,000. Pro-rated ceiling: ₹15,000 × 16 ÷ 30 = ₹8,000",
+          "Segment 2 (17–30 Sep): Wage ceiling ₹25,000. Pro-rated ceiling: ₹25,000 × 14 ÷ 30 = ₹11,666.67",
+          "Total PF change across dual segments = ₹101"
         ],
         "rule_citations": [
-          "PF wage ceiling: \u20b915,000 until 16 Sep 2026; \u20b925,000 from 17 Sep 2026",
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
           "Employee PF contribution rate: 12% of PF wage",
           "Mid-month ceiling change: Pro-rated across dated calendar segments",
           "Rules version: Northwind demo rules v1"
@@ -375,8 +375,8 @@
         "employee_id": "E03",
         "formulas": [
           "2026-07: Attendance missing: Not available in generated data",
-          "2026-08: Monthly diff = \u20b94,800",
-          "2026-09: Monthly diff = \u20b94,800"
+          "2026-08: Monthly diff = ₹4,800",
+          "2026-09: Monthly diff = ₹4,800"
         ],
         "rule_citations": [
           "Calendar-month divisor: Paid days equal eligible days up to last working day minus LOP",
@@ -388,8 +388,8 @@
   "4": {
     "messages": [
       {
-        "code": "C03",
-        "text": "This is a proposal for the recorded affected months."
+        "code": "C32",
+        "text": "This is a proposal for the recorded Annual performance bonus for FY 2025-26."
       }
     ],
     "cards": [
@@ -397,14 +397,34 @@
         "id": "card-bonus-s4",
         "type": "proposal_summary",
         "title": "Team Bonus Run Summary",
-        "certainty": "Incomplete",
+        "certainty": "Complete for this scope",
         "data": {
-          "proposal_type": "Annual & Sales Bonus Run",
-          "eligible_count": 3,
+          "proposal_type": "Annual performance bonus (FY 2025-26)",
+          "eligible_count": 4,
           "ineligible_count": 1,
           "needs_input_count": 1,
           "gross_eligible_total": 213929,
-          "status": "Needs HR decision"
+          "status": "Needs HR decision",
+          "known_eligible_gross": 213929,
+          "known_eligible_gross_certainty": "Complete for this scope",
+          "eligible": [
+            "E01",
+            "E03",
+            "E04",
+            "E07"
+          ],
+          "not_eligible": [
+            {
+              "employee_id": "E08",
+              "reason": "On notice at the time of calculation"
+            }
+          ],
+          "needs_input": [
+            {
+              "employee_id": "E09",
+              "reason": "Performance record missing"
+            }
+          ]
         }
       },
       {
@@ -413,7 +433,7 @@
         "title": "HR Authorization",
         "certainty": "Needs HR decision",
         "data": {
-          "scope_label": "Team Bonus Run \u2022 5 employees evaluated",
+          "scope_label": "Annual performance bonus • 6 employees evaluated",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -450,11 +470,11 @@
       "panel": {
         "title": "Bonus Eligibility & Scope Roster",
         "formulas": [
-          "E01 (Priya Sharma): Annual bonus \u20b91,08,000",
-          "E03 (Kavya Iyer): Annual bonus \u20b936,000",
-          "E04 (Rohan Joshi): Sales bonus \u20b960,000",
-          "E07 (Ananya Sen): Joiner proration \u20b99,929",
-          "E08 (Vikramaditya Verma): Notice exclusion: \u20b90 (Ineligible)",
+          "E01 (Priya Sharma): Annual bonus ₹1,08,000",
+          "E03 (Kavya Iyer): Annual bonus ₹36,000 (tax incomplete)",
+          "E04 (Rohan Joshi): Sales bonus ₹60,000",
+          "E07 (Ananya Sen): Joiner proration ₹9,929",
+          "E08 (Vikramaditya Verma): Notice exclusion: ₹0 (Ineligible)",
           "E09 (Meera Nair): Missing performance rating (Needs input)"
         ],
         "rule_citations": [
@@ -528,12 +548,7 @@
     }
   },
   "6": {
-    "messages": [
-      {
-        "code": "C03",
-        "text": "This is a proposal for the recorded affected months."
-      }
-    ],
+    "messages": [],
     "cards": [
       {
         "id": "card-settlement-s6",
@@ -589,7 +604,7 @@
         "title": "HR Authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Rahul Verma (E10) \u2022 Exit Settlement",
+          "scope_label": "Rahul Verma (E10) • Exit Settlement",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -628,9 +643,9 @@
         "employee_name": "Rahul Verma",
         "employee_id": "E10",
         "formulas": [
-          "Final Net = Gross Payables (\u20b93,35,256) \u2212 Total Deductions (\u20b91,975) = \u20b93,32,256",
-          "Gratuity = 15 \u00d7 last drawn salary \u00d7 completed years \u00f7 26 = \u20b92,01,923",
-          "Leave encashment = daily wage \u00d7 unused encashable days = \u20b91,26,559"
+          "Final Net = Gross Payables (₹3,35,256) − Total Deductions (₹1,975) = ₹3,32,256",
+          "Gratuity = 15 × last drawn salary × completed years ÷ 26 = ₹2,01,923",
+          "Leave encashment = daily wage × unused encashable days = ₹1,26,559"
         ],
         "rule_citations": [
           "Gratuity Act: 15 days wages per completed year of continuous service exceeding 5 years",
@@ -642,12 +657,7 @@
     }
   },
   "7": {
-    "messages": [
-      {
-        "code": "C03",
-        "text": "This is a proposal for the recorded affected months."
-      }
-    ],
+    "messages": [],
     "cards": [
       {
         "id": "card-settlement-s7",
@@ -714,7 +724,7 @@
         "title": "Gratuity Service Eligibility Proof",
         "formulas": [
           "Tenure: 4 years, 8 months, 24 days (less than statutory 5-year threshold)",
-          "Gratuity payable = \u20b90"
+          "Gratuity payable = ₹0"
         ],
         "rule_citations": [
           "Payment of Gratuity Act: Minimum 5 continuous years required",
@@ -800,7 +810,7 @@
       "panel": {
         "title": "Asset Clearance Status",
         "formulas": [
-          "Notice shortfall recovery = \u20b956,667",
+          "Notice shortfall recovery = ₹56,667",
           "Asset clearance pending: Company laptop not received",
           "Final Net: Not available in generated data"
         ],
@@ -815,7 +825,7 @@
     "messages": [
       {
         "code": "C30",
-        "text": "Your September take-home is \u20b95,420 lower than August. The main recorded reasons are below."
+        "text": "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."
       },
       {
         "code": "C27",
@@ -904,13 +914,13 @@
       "panel": {
         "title": "September Pay Breakdown",
         "formulas": [
-          "Take-home pay = earned gross \u2212 total employee deductions = \u20b945,000 \u2212 \u20b92,220 = \u20b942,780 (change: \u2212\u20b95,420)",
-          "Loss of pay deduction = monthly gross \u00d7 unpaid days \u00f7 calendar days = \u20b950,000 \u00d7 3 \u00f7 30 = \u20b95,000",
-          "PF deduction: Increased from \u20b91,800 to \u20b92,220 (+\u20b9420) due to ceiling change on 17 Sep"
+          "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
+          "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
+          "PF deduction: Increased from ₹1,800 to ₹2,220 (+₹420) due to ceiling change on 17 Sep"
         ],
         "rule_citations": [
           "Calendar-month divisor: Paid days equal calendar days minus LOP",
-          "PF wage ceiling: \u20b915,000 until 16 Sep 2026; \u20b925,000 from 17 Sep 2026",
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
           "Rules version: Northwind demo rules v1"
         ]
       }
@@ -920,7 +930,7 @@
     "messages": [
       {
         "code": "C30",
-        "text": "Your September take-home is \u20b913,014 lower than August. The main recorded reasons are below."
+        "text": "Your September take-home is ₹13,014 lower than August. The main recorded reasons are below."
       },
       {
         "code": "C29",
@@ -1004,9 +1014,9 @@
       "panel": {
         "title": "Tax Calculation Proof",
         "formulas": [
-          "Declared previous employer gross income = \u20b94,50,000",
-          "Tax already deducted by previous employer = \u20b915,000",
-          "Projected yearly income increased, remaining tax to distribute = \u20b987,180"
+          "Declared previous employer gross income = ₹4,50,000",
+          "Tax already deducted by previous employer = ₹15,000",
+          "Projected yearly income increased, remaining tax to distribute = ₹87,180"
         ],
         "rule_citations": [
           "Income Tax Act Section 192: Previous employer earnings declared under Form 12B integrated into annualized TDS",
@@ -1020,7 +1030,7 @@
     "messages": [
       {
         "code": "C30",
-        "text": "Your September take-home is \u20b9420 lower than August. The main recorded reasons are below."
+        "text": "Your September take-home is ₹420 lower than August. The main recorded reasons are below."
       },
       {
         "code": "C26",
@@ -1091,13 +1101,13 @@
       "panel": {
         "title": "Earnings & Deduction Proof",
         "formulas": [
-          "Basic pay: Unchanged at \u20b920,000",
-          "Special allowance: Unchanged at \u20b920,000",
-          "Gross earnings: Unchanged at \u20b940,000",
-          "Take-home pay = earned gross \u2212 total employee deductions = \u20b940,000 \u2212 \u20b92,220 = \u20b937,780 (change: \u2212\u20b9420)"
+          "Basic pay: Unchanged at ₹20,000",
+          "Special allowance: Unchanged at ₹20,000",
+          "Gross earnings: Unchanged at ₹40,000",
+          "Take-home pay = earned gross − total employee deductions = ₹40,000 − ₹2,220 = ₹37,780 (change: −₹420)"
         ],
         "rule_citations": [
-          "PF wage ceiling: \u20b915,000 until 16 Sep 2026; \u20b925,000 from 17 Sep 2026",
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
           "Employee PF contribution rate: 12% of PF wage",
           "Rules version: Northwind demo rules v1"
         ]
@@ -1228,7 +1238,7 @@
       "panel": {
         "title": "Settlement Line Review",
         "formulas": [
-          "Notice shortfall recovery = \u20b956,667",
+          "Notice shortfall recovery = ₹56,667",
           "Asset clearance hold: Laptop status unconfirmed",
           "Final Net: Not available in generated data"
         ],

@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatINR, formatHumanDate } from '../../../utils/format';
+import { CertaintyLabel } from '../CertaintyLabel';
 
 interface ProposalSummaryCardProps {
   card: {
@@ -21,6 +22,11 @@ interface ProposalSummaryCardProps {
       ineligible_count?: number;
       needs_input_count?: number;
       gross_eligible_total?: number;
+      known_eligible_gross?: number;
+      known_eligible_gross_certainty?: string;
+      eligible?: string[];
+      not_eligible?: Array<{ employee_id: string; reason: string }>;
+      needs_input?: Array<{ employee_id: string; reason: string }>;
       rating?: string | null;
       bonus_amount?: number | null;
       due_date?: string;
@@ -84,25 +90,80 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
         )}
 
         {/* Team bonus summary grid if available */}
-        {d.gross_eligible_total !== undefined && (
-          <div className="hcm-key-value-grid">
-            <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Eligible Employees</span>
-              <strong className="hcm-kv-value tnum">{d.eligible_count}</strong>
+        {(d.gross_eligible_total !== undefined || d.known_eligible_gross !== undefined) && (
+          <>
+            <div className="hcm-key-value-grid">
+              <div className="hcm-kv-item">
+                <span className="hcm-kv-label">Eligible Employees</span>
+                <strong className="hcm-kv-value tnum">{d.eligible_count}</strong>
+              </div>
+              <div className="hcm-kv-item">
+                <span className="hcm-kv-label">Ineligible Employees</span>
+                <span className="hcm-kv-value tnum">{d.ineligible_count}</span>
+              </div>
+              <div className="hcm-kv-item">
+                <span className="hcm-kv-label">Pending Inputs</span>
+                <span className="hcm-kv-value tnum">{d.needs_input_count}</span>
+              </div>
+              <div className="hcm-kv-item">
+                <span className="hcm-kv-label">Known Eligible Gross</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <strong className="hcm-kv-value tnum">{formatINR(d.known_eligible_gross ?? d.gross_eligible_total)}</strong>
+                  {(d.known_eligible_gross_certainty || card.certainty) && (
+                    <CertaintyLabel certainty={d.known_eligible_gross_certainty || card.certainty} />
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Ineligible Employees</span>
-              <span className="hcm-kv-value tnum">{d.ineligible_count}</span>
-            </div>
-            <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Pending Inputs</span>
-              <span className="hcm-kv-value tnum">{d.needs_input_count}</span>
-            </div>
-            <div className="hcm-kv-item">
-              <span className="hcm-kv-label">Total Eligible Pool</span>
-              <strong className="hcm-kv-value tnum">{formatINR(d.gross_eligible_total)}</strong>
-            </div>
-          </div>
+
+            {/* Engine's own eligible, not-eligible and needs-input lists copied exactly */}
+            {d.eligible && d.eligible.length > 0 && (
+              <div className="hcm-bonus-scope-lists" style={{ marginTop: 'var(--space-3)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-3)' }}>
+                <div style={{ fontSize: '13px', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Eligible ({d.eligible.length}): </span>
+                  <span>
+                    {d.eligible.map((id: string, idx: number) => (
+                      <span key={id}>
+                        {idx > 0 && ', '}
+                        <strong className="tnum">{id}</strong>
+                        {id === 'E03' && (
+                          <span style={{ color: 'var(--color-status-warning-text)', marginLeft: '4px', fontSize: '12px' }}>(tax incomplete)</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+                {d.not_eligible && d.not_eligible.length > 0 && (
+                  <div style={{ fontSize: '13px', marginBottom: 'var(--space-2)' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Not eligible ({d.not_eligible.length}): </span>
+                    <span>
+                      {d.not_eligible.map((item: any, idx: number) => (
+                        <span key={idx}>
+                          {idx > 0 && ', '}
+                          <strong className="tnum">{typeof item === 'string' ? item : item.employee_id}</strong>
+                          {typeof item === 'object' && item.reason && ` (${item.reason})`}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                )}
+                {d.needs_input && d.needs_input.length > 0 && (
+                  <div style={{ fontSize: '13px' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Needs input ({d.needs_input.length}): </span>
+                    <span>
+                      {d.needs_input.map((item: any, idx: number) => (
+                        <span key={idx}>
+                          {idx > 0 && ', '}
+                          <strong className="tnum">{typeof item === 'string' ? item : item.employee_id}</strong>
+                          {typeof item === 'object' && item.reason && ` (${item.reason})`}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Missing input or individual bonus summary */}

@@ -71,6 +71,10 @@ def test_scenario_03_chat():
     assert cards["number_cards"]["data"]["september_diff"] == 4800
 
 
+import json
+from pathlib import Path
+
+
 def test_scenario_04_chat():
     res = client.post("/api/chat", json={
         "user_id": "HR01",
@@ -81,7 +85,125 @@ def test_scenario_04_chat():
     assert data["state"]["scenario_num"] == 4
     cards = {c["type"]: c for c in data["cards"]}
     assert cards["proposal_summary"]["data"]["gross_eligible_total"] == 213929
-    assert cards["proposal_summary"]["data"]["eligible_count"] == 3
+    assert cards["proposal_summary"]["data"]["known_eligible_gross"] == 213929
+    assert cards["proposal_summary"]["data"]["eligible_count"] == 4
+    assert cards["proposal_summary"]["data"]["ineligible_count"] == 1
+    assert cards["proposal_summary"]["data"]["needs_input_count"] == 1
+    assert cards["proposal_summary"]["data"]["known_eligible_gross_certainty"] == "Complete for this scope"
+    assert data["messages"][0]["code"] == "C32"
+    assert "This is a proposal for the recorded Annual performance bonus for FY 2025-26." in data["messages"][0]["text"]
+
+
+def test_ambiguous_bonus_request_clarifying_question():
+    """Ambiguous bonus request shows clarifying question card with approved question and choices."""
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Prepare a bonus proposal"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["state"]["intent"] == "clarifying_question"
+    cards = {c["type"]: c for c in data["cards"]}
+    assert "clarifying_question" in cards
+    clarify_card = cards["clarifying_question"]
+    assert clarify_card["data"]["question"] == "Which bonus type do you mean?"
+    expected_choices = [
+        "Annual performance bonus, FY 2025-26, Engineering",
+        "Q2 Sales incentive, Hyderabad Sales"
+    ]
+    assert clarify_card["data"]["choices"] == expected_choices
+    # Verify no assumption was made
+    assert data["state"]["scenario_num"] is None
+
+
+def test_bonus_selection_dispatches_proposal():
+    """Selecting a bonus type from the choices routes to that specific proposal with C32."""
+    # Selecting annual bonus returns annual proposal with C32
+    res_ann = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Annual performance bonus, FY 2025-26, Engineering"
+    })
+    assert res_ann.status_code == 200
+    ann_data = res_ann.json()
+    assert ann_data["state"]["scenario_num"] == 4
+    assert ann_data["messages"][0]["code"] == "C32"
+    assert ann_data["messages"][0]["text"] == "This is a proposal for the recorded Annual performance bonus for FY 2025-26."
+
+    # Selecting sales incentive returns sales proposal with C32
+    res_sales = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Q2 Sales incentive, Hyderabad Sales"
+    })
+    assert res_sales.status_code == 200
+    sales_data = res_sales.json()
+    assert sales_data["messages"][0]["code"] == "C32"
+    assert sales_data["messages"][0]["text"] == "This is a proposal for the recorded Q2 Sales incentive for Q2 2026-27."
+
+
+def test_no_c03_in_bonus_or_settlement_replies():
+    """Do not use C03 for bonus or settlement replies."""
+    # Bonus replies must not use C03
+    for msg in [
+        "Calculate Annual and Sales bonus runs",
+        "Annual performance bonus, FY 2025-26, Engineering",
+        "Q2 Sales incentive, Hyderabad Sales"
+    ]:
+        res = client.post("/api/chat", json={"user_id": "HR01", "message": msg})
+        data = res.json()
+        assert not any(m.get("code") == "C03" for m in data.get("messages", [])), f"C03 found in bonus reply for: {msg}"
+
+    # Settlement replies (scenarios 6, 7, 8, 13) must not use C03
+    for s_msg in [
+        "Prepare full and final settlement for Rahul Verma (E10)",
+        "Review settlement for Lakshmi Reddy (E11)",
+        "Review exit recovery for Imran Khan (E12)",
+        "Review settlement breakdown for Imran Khan (E12)"
+    ]:
+        res = client.post("/api/chat", json={"user_id": "HR01", "message": s_msg})
+        data = res.json()
+        assert not any(m.get("code") == "C03" for m in data.get("messages", [])), f"C03 found in settlement reply for: {s_msg}"
+
+
+def test_displayed_bonus_counts_match_engine_lists():
+    """Backend test that fails if a displayed count does not match the number of employees in the matching engine list."""
+    sc_path = Path(__file__).resolve().parents[3] / "data" / "generated" / "scenarios" / "scenario-04.json"
+    sc_data = json.loads(sc_path.read_text(encoding="utf-8"))
+    ann_req = next((r for r in sc_data["result"]["bonus_requests"] if r.get("bonus_type") == "annual_performance_bonus"), {})
+
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Calculate Annual and Sales bonus runs"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    cards = {c["type"]: c for c in data["cards"]}
+    summary_data = cards["proposal_summary"]["data"]
+
+    # Displayed counts
+    displayed_eligible_count = summary_data["eligible_count"]
+    displayed_ineligible_count = summary_data["ineligible_count"]
+    displayed_needs_input_count = summary_data["needs_input_count"]
+
+    # Matching engine lists
+    engine_eligible_list = ann_req.get("eligible", [])
+    engine_not_eligible_list = ann_req.get("not_eligible", [])
+    engine_needs_input_list = ann_req.get("needs_input", [])
+
+    # Exact equality checks: count MUST equal list length
+    assert displayed_eligible_count == len(engine_eligible_list), (
+        f"Displayed eligible_count ({displayed_eligible_count}) does not match engine list length ({len(engine_eligible_list)})"
+    )
+    assert displayed_ineligible_count == len(engine_not_eligible_list), (
+        f"Displayed ineligible_count ({displayed_ineligible_count}) does not match engine list length ({len(engine_not_eligible_list)})"
+    )
+    assert displayed_needs_input_count == len(engine_needs_input_list), (
+        f"Displayed needs_input_count ({displayed_needs_input_count}) does not match engine list length ({len(engine_needs_input_list)})"
+    )
+
+    # Ensure E03 is in the eligible list and has gross amount in the pool
+    assert "E03" in engine_eligible_list
+    assert summary_data["known_eligible_gross"] == ann_req["known_eligible_gross"]["value"]
+
 
 
 def test_scenario_05_chat():
