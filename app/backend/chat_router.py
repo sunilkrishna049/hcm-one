@@ -3,6 +3,8 @@ Follows app/backend/chat_contract.md and output/07-prototype/screen-specs.md.
 Zero dynamic LLM calls. All payroll figures come from engine_bridge (data/generated/scenarios/).
 """
 from datetime import datetime, timezone
+import json
+from pathlib import Path
 import re
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
@@ -12,6 +14,19 @@ from .auth import USERS, check_employee_access
 from .engine_bridge import bridge
 from .faq_matcher import faq_matcher
 from .lifecycle import lifecycle
+
+RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
+_RULES_CACHE: Dict[str, dict] = {}
+
+
+def get_rule_file(filename: str) -> dict:
+    if filename not in _RULES_CACHE:
+        p = RULES_DIR / filename
+        if p.exists():
+            _RULES_CACHE[filename] = json.loads(p.read_text(encoding="utf-8"))
+        else:
+            _RULES_CACHE[filename] = {}
+    return _RULES_CACHE[filename]
 
 
 def format_inr(amount: Optional[float | int]) -> str:
@@ -319,6 +334,25 @@ class ChatRouter:
         prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 132000)
         hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
         eff_date = disp.get("effective_date", {}).get("value", "2026-04-01")
+
+        pf_rules = get_rule_file("pf-rules.json")
+        tax_rules = get_rule_file("tax-rules.json")
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
+        old_eff_to = pf_rules.get("wage_ceiling_before_change_inr", {}).get("effective_to", "2026-09-16")
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
+        new_eff_from = pf_rules.get("wage_ceiling_from_change_inr", {}).get("effective_from", "2026-09-17")
+        rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
+
+        old_date_str = datetime.strptime(old_eff_to, "%Y-%m-%d").strftime("%d %b %Y").lstrip("0") if old_eff_to else "16 Sep 2026"
+        new_date_str = datetime.strptime(new_eff_from, "%Y-%m-%d").strftime("%d %b %Y").lstrip("0") if new_eff_from else "17 Sep 2026"
+
+        pf_change_val = t["pf_change"]["employee"]["value"]
+        pf_sentence = (
+            f"PF change is ₹{pf_change_val} because monthly basic pay exceeds the statutory PF wage ceiling "
+            f"(₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str}; {rules_ver}), "
+            f"keeping contributions capped before and after the revision."
+        )
+
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -356,7 +390,7 @@ class ChatRouter:
                         "recurring_salary_tds_impact": t["recurring_salary_tds_impact"]["value"],
                         "payment_month": r.get("estimated_payment_month", "2026-10"),
                         "estimate_flag": r.get("flags", ["Estimated TDS if approved and paid in October 2026 payroll"])[0],
-                        "pf_rule": "PF change is ₹0 because monthly basic pay exceeds the statutory PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026; Northwind demo rules v1), keeping contributions capped before and after the revision."
+                        "pf_rule": pf_sentence
                     }
                 },
                 {
@@ -425,17 +459,17 @@ class ChatRouter:
                     "formulas": [
                         "Earned salary = monthly salary × paid days ÷ calendar days",
                         "Monthly arrears = revised earned gross − old earned gross",
-                        "PF ceiling rule: PF change is ₹0 because monthly basic pay exceeds the statutory PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026; Northwind demo rules v1).",
-                        "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
+                        f"PF ceiling rule: PF change is ₹{pf_change_val} because monthly basic pay exceeds the statutory PF wage ceiling (₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str}; {rules_ver}).",
+                        f"Net Arrears = Gross Arrears ({format_inr(t['gross_arrears']['value'])}) − Employee PF Change ({format_inr(t['pf_change']['employee']['value'])}) − Estimated TDS Impact ({format_inr(t['tds_impact']['value'])}) = {format_inr(t['net_arrears']['value'])}"
                     ],
                     "rule_citations": [
-                        "PF wage ceiling: ₹15,000 until 16 Sep 2026, then ₹21,000 from 17 Sep 2026 (Northwind demo rules v1)",
+                        f"PF wage ceiling: ₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str} ({rules_ver})",
                         "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
                         "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
-                        "Income tax regime: New tax regime Tax year 2026-27",
-                        "Standard deduction: ₹75,000",
-                        "Health and education cess: 4%",
-                        "Rules version: Northwind demo rules v1"
+                        f"Income tax regime: New tax regime Tax year {tax_rules.get('tax_year', {}).get('value', {}).get('year', '2026-27')}",
+                        f"Standard deduction: {format_inr(tax_rules.get('standard_deduction_inr', {}).get('value', 75000))}",
+                        f"Health and education cess: {tax_rules.get('health_and_education_cess', {}).get('value', {}).get('rate_percent', 4)}%",
+                        f"Rules version: {rules_ver}"
                     ],
                     "note": "Calculated with simplified demo rules. Not for real payroll."
                 }
@@ -515,15 +549,15 @@ class ChatRouter:
                     "employee_name": "Arjun Rao",
                     "employee_id": "E02",
                     "formulas": [
-                        "Segment 1 (1–16 Sep): Wage ceiling ₹15,000. Pro-rated ceiling: ₹15,000 × 16 ÷ 30 = ₹8,000",
-                        "Segment 2 (17–30 Sep): Wage ceiling ₹25,000. Pro-rated ceiling: ₹25,000 × 14 ÷ 30 = ₹11,666.67",
-                        "Total PF change across dual segments = ₹101"
+                        f"Segment 1 (1–16 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value', 15000):,} (16 of 30 calendar days)",
+                        f"Segment 2 (17–30 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value', 25000):,} (14 of 30 calendar days)",
+                        f"Total PF change across dual segments = {format_inr(t['pf_change']['employee']['value'])}"
                     ],
                     "rule_citations": [
-                        "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
-                        "Employee PF contribution rate: 12% of PF wage",
+                        f"PF wage ceiling: ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value', 15000):,} until 16 Sep 2026; ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value', 25000):,} from 17 Sep 2026",
+                        f"Employee PF contribution rate: {get_rule_file('pf-rules.json').get('employee_contribution_rate_percent', {}).get('value', 12)}% of PF wage",
                         "Mid-month ceiling change: Pro-rated across dated calendar segments",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('pf-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -594,12 +628,12 @@ class ChatRouter:
                     "employee_id": "E03",
                     "formulas": [
                         "2026-07: Attendance missing: Not available in generated data",
-                        "2026-08: Monthly diff = ₹4,800",
-                        "2026-09: Monthly diff = ₹4,800"
+                        f"2026-08: Monthly diff = {format_inr(aug_diff)}",
+                        f"2026-09: Monthly diff = {format_inr(sep_diff)}"
                     ],
                     "rule_citations": [
                         "Calendar-month divisor: Paid days equal eligible days up to last working day minus LOP",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('settlement-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -610,6 +644,15 @@ class ChatRouter:
         r = sc["result"]
         annual = r["bonus_requests"][0]
         gross_total = annual["known_eligible_gross"]["value"]
+
+        ann_req = next((req for req in sc["result"]["bonus_requests"] if req.get("bonus_type") == "annual_performance_bonus"), {})
+        emp_map = {e["employee_id"]: e for e in ann_req.get("employees", [])}
+        e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
+        e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
+        e04_amt = emp_map.get("E04", {}).get("amount", {}).get("value")
+        e07_amt = emp_map.get("E07", {}).get("amount", {}).get("value")
+        e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value", 0)
+
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -656,17 +699,17 @@ class ChatRouter:
                 "panel": {
                     "title": "Bonus Eligibility & Scope Roster",
                     "formulas": [
-                        "E01 (Priya Sharma): Annual bonus ₹1,08,000",
-                        "E03 (Kavya Iyer): Annual bonus ₹36,000",
-                        "E04 (Rohan Joshi): Sales bonus ₹60,000",
-                        "E07 (Ananya Sen): Joiner proration ₹9,929",
-                        "E08 (Vikramaditya Verma): Notice exclusion: ₹0 (Ineligible)",
+                        f"E01 (Priya Sharma): Annual bonus {format_inr(e01_amt)}",
+                        f"E03 (Kavya Iyer): Annual bonus {format_inr(e03_amt)}",
+                        f"E04 (Rohan Joshi): Sales bonus {format_inr(e04_amt)}",
+                        f"E07 (Ananya Sen): Joiner proration {format_inr(e07_amt)}",
+                        f"E08 (Vikramaditya Verma): Notice exclusion: {format_inr(e08_amt)} (Ineligible)",
                         "E09 (Meera Nair): Missing performance rating (Needs input)"
                     ],
                     "rule_citations": [
                         "Bonus proration rule: Joiners pro-rated by active days in performance year",
                         "Notice exclusion: Employees serving resignation notice excluded from bonus payout",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('bonus-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -799,15 +842,15 @@ class ChatRouter:
                     "employee_name": "Rahul Verma",
                     "employee_id": "E10",
                     "formulas": [
-                        "Final Net = Gross Payables (₹3,35,256) − Total Deductions (₹1,975) = ₹3,32,256",
-                        "Gratuity = 15 × last drawn salary × completed years ÷ 26 = ₹2,01,923",
-                        "Leave encashment = daily wage × unused encashable days = ₹1,26,559"
+                        f"Final Net = Gross Payables ({format_inr(r.get('gross_payables', {}).get('value'))}) − Total Deductions ({format_inr(r.get('total_deductions', {}).get('value'))}) = {format_inr(r.get('final_net', {}).get('value'))}",
+                        f"Gratuity = 15 × last drawn salary × completed years ÷ 26 = {format_inr(c.get('gratuity', {}).get('amount', {}).get('value'))}",
+                        f"Leave encashment = daily wage × unused encashable days = {format_inr(c.get('leave_encashment', {}).get('amount', {}).get('value'))}"
                     ],
                     "rule_citations": [
                         "Gratuity Act: 15 days wages per completed year of continuous service exceeding 5 years",
                         "Leave encashment formula: Daily rate calculated with 30-day divisor",
                         "Settlement due date rule: Target disbursement deadline 2026-11-03",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('settlement-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -817,6 +860,7 @@ class ChatRouter:
         sc = bridge.get_scenario(7)
         r = sc["result"]
         c = r["components"]
+        grat_amt = c.get("gratuity", {}).get("amount", {}).get("value", 0)
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -841,7 +885,7 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "components": [
-                            {"name": "Gratuity", "amount": c["gratuity"]["amount"]["value"], "status": "Ineligible", "note": "Close to minimum service: 4 years, 8 months, 24 days"}
+                            {"name": "Gratuity", "amount": grat_amt, "status": "Ineligible", "note": "Close to minimum service: Continuous service less than statutory 5-year requirement"}
                         ]
                     }
                 },
@@ -871,12 +915,12 @@ class ChatRouter:
                 "panel": {
                     "title": "Gratuity Service Eligibility Proof",
                     "formulas": [
-                        "Tenure: 4 years, 8 months, 24 days (less than statutory 5-year threshold)",
-                        "Gratuity payable = ₹0"
+                        "Tenure: Continuous service is less than statutory 5-year threshold",
+                        f"Gratuity payable = {format_inr(grat_amt)}"
                     ],
                     "rule_citations": [
                         "Payment of Gratuity Act: Minimum 5 continuous years required",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('gratuity-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -886,7 +930,8 @@ class ChatRouter:
         sc = bridge.get_scenario(8)
         r = sc["result"]
         c = r.get("components", {})
-        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 56667)
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
+        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", notice_amt)
         return {
             "messages": [
                 {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
@@ -944,13 +989,13 @@ class ChatRouter:
                 "panel": {
                     "title": "Asset Clearance Status",
                     "formulas": [
-                        "Notice shortfall recovery = ₹56,667",
+                        f"Notice shortfall recovery & known deductions = {format_inr(recov_subtotal)}",
                         "Asset clearance pending: Company laptop not received",
                         "Final Net: Not available in generated data"
                     ],
                     "rule_citations": [
                         "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('settlement-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }
@@ -966,9 +1011,23 @@ class ChatRouter:
         lop_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -5000
         pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -420
         tds_chg = r.get("tds_change", {}).get("value", 0)
+
+        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value", 45000)
+        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value", 2220)
+        before_gross = r.get("before", {}).get("earnings", {}).get("gross", {}).get("value", 50000)
+        before_pf = r.get("before", {}).get("pf", {}).get("value", 1800)
+        after_pf = r.get("after", {}).get("pf", {}).get("value", 2220)
+        pf_diff = r.get("employee_pf_change", {}).get("value", 420)
+        gross_diff = abs(r.get("gross_change", {}).get("value", 5000))
+
+        pf_rules = get_rule_file("pf-rules.json")
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
+        rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
+
         return {
             "messages": [
-                {"code": "C30", "text": "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."},
+                {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
                 {"code": "C27", "text": get_message("C27")}
             ],
             "cards": [
@@ -1015,14 +1074,14 @@ class ChatRouter:
                 "panel": {
                     "title": "September Pay Breakdown",
                     "formulas": [
-                        "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
-                        "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
-                        "PF deduction: Increased from ₹1,800 to ₹2,220 (+₹420) due to statutory ceiling change on 17 Sep"
+                        f"Take-home pay = earned gross − total employee deductions = {format_inr(after_gross)} − {format_inr(after_tot_ded)} = {format_inr(after_net)} (change: {format_inr(net_change)})",
+                        f"Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = {format_inr(before_gross)} × 3 ÷ 30 = {format_inr(gross_diff)}",
+                        f"PF deduction: Increased from {format_inr(before_pf)} to {format_inr(after_pf)} (+{format_inr(pf_diff)}) due to statutory ceiling change on 17 Sep"
                     ],
                     "rule_citations": [
                         "Calendar-month divisor: Paid days equal calendar days minus LOP",
-                        "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
-                        "Rules version: Northwind demo rules v1"
+                        f"PF wage ceiling: ₹{old_ceiling:,} until 16 Sep 2026; ₹{new_ceiling:,} from 17 Sep 2026",
+                        f"Rules version: {rules_ver}"
                     ]
                 }
             }
@@ -1033,12 +1092,23 @@ class ChatRouter:
         r = sc["result"]
         after_tds = r["after"]["tds"]["amount"]["value"]
         tds_increase = r["tds_change"]["value"]
+        net_change = abs(r.get("net_change", {}).get("value", 13014))
         reasons_list = r.get("reasons", [])
         prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -12454
         pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -560
+
+        disp = sc.get("display_inputs", {})
+        prev_gross = disp.get("previous_employer_declared_gross", {}).get("value")
+        prev_tds = disp.get("previous_employer_tds", {}).get("value")
+        rem_tax = disp.get("remaining_yearly_tax", {}).get("value")
+
+        tax_rules = get_rule_file("tax-rules.json")
+        rules_ver = tax_rules.get("rules_version", "Northwind demo rules v1")
+        tax_year = tax_rules.get("tax_year", {}).get("value", {}).get("year", "2026-27")
+
         return {
             "messages": [
-                {"code": "C30", "text": "Your September take-home is ₹13,014 lower than August. The main recorded reasons are below."},
+                {"code": "C30", "text": f"Your September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."},
                 {"code": "C29", "text": "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."},
                 {"code": "C27", "text": get_message("C27")}
             ],
@@ -1081,14 +1151,14 @@ class ChatRouter:
                 "panel": {
                     "title": "Tax Calculation Proof",
                     "formulas": [
-                        "Declared previous employer gross income = ₹4,50,000",
-                        "Tax already deducted by previous employer = ₹15,000",
-                        "Projected yearly income increased, remaining tax to distribute = ₹87,180"
+                        f"Declared previous employer gross income = {format_inr(prev_gross)}",
+                        f"Tax already deducted by previous employer = {format_inr(prev_tds)}",
+                        f"Projected yearly income increased, remaining tax to distribute = {format_inr(rem_tax)}"
                     ],
                     "rule_citations": [
                         "Income Tax Act Section 192: Previous employer earnings declared under Form 12B integrated into annualized TDS",
-                        "Income tax regime: New tax regime Tax year 2026-27",
-                        "Rules version: Northwind demo rules v1"
+                        f"Income tax regime: New tax regime Tax year {tax_year}",
+                        f"Rules version: {rules_ver}"
                     ]
                 }
             }
@@ -1100,9 +1170,23 @@ class ChatRouter:
         net_change = r.get("net_change", {}).get("value", -420)
         reasons_list = r.get("reasons", [])
         pf_amt = reasons_list[0].get("effect_amount", {}).get("value", -420) if reasons_list else -420
+
+        after_lines = r.get("after", {}).get("earnings", {}).get("lines", {})
+        basic_val = after_lines.get("basic", {}).get("value", 22500)
+        special_val = after_lines.get("special_allowance", {}).get("value", 11250)
+        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value", 45000)
+        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value", 2220)
+        after_net = r.get("after", {}).get("net_pay", {}).get("value", 42780)
+
+        pf_rules = get_rule_file("pf-rules.json")
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
+        pf_rate = pf_rules.get("employee_contribution_rate_percent", {}).get("value", 12)
+        rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
+
         return {
             "messages": [
-                {"code": "C30", "text": "Your September take-home is ₹420 lower than August. The main recorded reasons are below."},
+                {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
                 {"code": "C26", "text": get_message("C26")},
                 {"code": "C27", "text": get_message("C27")}
             ],
@@ -1143,15 +1227,15 @@ class ChatRouter:
                 "panel": {
                     "title": "Earnings & Deduction Proof",
                     "formulas": [
-                        "Basic pay: Unchanged at ₹20,000",
-                        "Special allowance: Unchanged at ₹20,000",
-                        "Gross earnings: Unchanged at ₹40,000",
-                        "Take-home pay = earned gross − total employee deductions = ₹40,000 − ₹2,220 = ₹37,780 (change: −₹420)"
+                        f"Basic pay: Unchanged at {format_inr(basic_val)}",
+                        f"Special allowance: Unchanged at {format_inr(special_val)}",
+                        f"Gross earnings: Unchanged at {format_inr(after_gross)}",
+                        f"Take-home pay = earned gross − total employee deductions = {format_inr(after_gross)} − {format_inr(after_tot_ded)} = {format_inr(after_net)} (change: {format_inr(net_change)})"
                     ],
                     "rule_citations": [
-                        "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
-                        "Employee PF contribution rate: 12% of PF wage",
-                        "Rules version: Northwind demo rules v1"
+                        f"PF wage ceiling: ₹{old_ceiling:,} until 16 Sep 2026; ₹{new_ceiling:,} from 17 Sep 2026",
+                        f"Employee PF contribution rate: {pf_rate}% of PF wage",
+                        f"Rules version: {rules_ver}"
                     ]
                 }
             }
@@ -1165,7 +1249,7 @@ class ChatRouter:
         r = sc["result"]
         c = r["components"]
         recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
-        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 56667)
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -1224,13 +1308,13 @@ class ChatRouter:
                 "panel": {
                     "title": "Settlement Line Review",
                     "formulas": [
-                        "Notice shortfall recovery = ₹56,667",
+                        f"Notice shortfall recovery & known deductions = {format_inr(recov_subtotal)}",
                         "Asset clearance hold: Laptop status unconfirmed",
                         "Final Net: Not available in generated data"
                     ],
                     "rule_citations": [
                         "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
-                        "Rules version: Northwind demo rules v1"
+                        f"Rules version: {get_rule_file('settlement-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
                 }
             }

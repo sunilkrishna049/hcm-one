@@ -82,9 +82,11 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Approved and ready for payroll/i)).toBeInTheDocument();
-      expect(screen.getByText(/Version 1/i)).toBeInTheDocument();
-      expect(screen.getByText(/HR01/i)).toBeInTheDocument();
+      const badge = screen.getByTestId('approval-status-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent(/Approved and ready for payroll/i);
+      expect(badge).toHaveTextContent(/Version 1/i);
+      expect(badge).toHaveTextContent(/Anita Desai/i);
     });
   });
 

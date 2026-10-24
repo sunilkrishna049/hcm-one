@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatHumanDate } from '../../../utils/format';
+import { getUserDisplayName } from '../../../utils/userDisplay';
 
 interface ApprovalCardProps {
   card: {
@@ -37,11 +38,13 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   const isRejected = d.status === 'rejected';
 
   // Format clean scope display: "You're approving: Priya Sharma · Apr–Sep 2026"
-  const rawScope = d.scope_label || "Priya Sharma · Apr–Sep 2026";
+  const rawScope = d.scope_label || '';
   const cleanScope = rawScope.replace(/^Authorized Scope:\s*/i, '');
-  const scopeDisplay = cleanScope.startsWith("You're approving:")
-    ? cleanScope
-    : `You're approving: ${cleanScope}`;
+  const scopeDisplay = cleanScope
+    ? (cleanScope.startsWith("You're approving:") ? cleanScope : `You're approving: ${cleanScope}`)
+    : '';
+
+  const approverName = d.approver ? getUserDisplayName(d.approver) : 'Anita Desai';
 
   // Heading: plain heading without dev labels
   const heading = card.title === 'HR Authorization' || !card.title ? 'Approval' : card.title;
@@ -56,9 +59,11 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
       </div>
 
       <div className="hcm-card-body">
-        <div className="hcm-approval-scope">
-          <strong>{scopeDisplay}</strong>
-        </div>
+        {scopeDisplay && (
+          <div className="hcm-approval-scope">
+            <strong>{scopeDisplay}</strong>
+          </div>
+        )}
 
         {/* Mandatory C04 Governance Notice */}
         <div className="hcm-approval-notice">
@@ -72,7 +77,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               ✓ Approved and ready for payroll
             </div>
             <div style={{ fontSize: '12px', opacity: 0.9 }}>
-              Version {d.version ?? 1} • Approver: {d.approver || 'HR Admin'} • {d.approved_at ? formatHumanDate(d.approved_at) : 'Just now'}
+              Version {d.version ?? 1} • Approver: {approverName} • {d.approved_at ? formatHumanDate(d.approved_at) : 'Just now'}
             </div>
           </div>
         )}
