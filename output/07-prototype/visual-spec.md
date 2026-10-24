@@ -186,7 +186,7 @@ All breakpoints and dimensions are defined as variables in `tokens.css`:
 - **Alignment:** Left-aligned (flex-start) within the chat column.
 - **Header:** Assistant Avatar icon (Teal badge with assistant mark), sender label `"HCM One Assistant"`, and timestamp (`"10:14 AM"`). **No "Verified" badge.**
 - **Text Bubble:** 15 px / 22 px Regular `#0F172A`, surface `#FFFFFF`, border 1 px `#E2E8F0`, padding 16 px.
-- **Copy Rule:** Assistant prose consists **strictly of approved sentences (C01–C29)** used verbatim. No paraphrasing, conversational filler, or unapproved copy.
+- **Copy Rule:** Assistant prose consists **strictly of approved sentences (C01–C31)** used verbatim. No paraphrasing, conversational filler, or unapproved copy.
 - **Sub-elements:** Any accompanying rich cards appear directly below the text bubble inside the assistant turn container (gap: 12 px).
 
 ### 4.3. Suggestion Chips
@@ -208,6 +208,17 @@ All breakpoints and dimensions are defined as variables in `tokens.css`:
   - Send Button: 38 px by 38 px, deep teal with accessible icon label.
 - **Demo Fallback Behavior:** If the user types an unmapped demo query, the assistant responds with approved fallback copy:
   > *"I cannot answer that question in this demo. You can ask about recorded salary and tax changes, full and final settlements, bonus eligibility, or choose a topic below:"*
+
+### 4.5. Empty Welcome State & "New chat" Action (DEC-040)
+- **Empty Start:** App opens to an empty chat; nothing loads or sends automatically.
+- **Welcome Greeting:** Renders C31 greeting bubble (*"Hi {first name}. What would you like to do today?"*) followed immediately by C01 bubble (*"I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results..."*).
+- **Role-Matched Starter Chips:** Rendered in the chips area above the composer:
+  - *HR Admin:* "Prepare Priya Sharma's pending back-dated hike", "Prepare a bonus proposal", "Review payroll queries"
+  - *Employee:* "Why is my take-home lower this month?", "Why did my TDS change?", "What is LOP?", "Track my query"
+  Tapping a chip dispatches it as the user's first message.
+- **"New chat" Header Action:** Button in the top header (with `<Plus>` icon and text label) styled with `min-height: 36px` on desktop and `>= 44px` touch target on mobile. Clears conversation turns and returns to the welcome state without resetting approvals or queries.
+- **Pre-typing Scenario Picker:** Choosing a scenario from the demo bar pre-populates the composer textarea with that scenario's opening question without auto-sending, allowing the user to review and press Enter.
+- **Visual Design:** Fully integrated into the high-contrast dark theme (`--color-surface` `#111827`, `--color-text-primary` `#F8FAFC`, `--brand-accent` `#14B8A6`).
   followed by relevant suggestion chips.
 
 ### 4.5. Side Panel (`PANEL-HR`) — Desktop Review Drawer

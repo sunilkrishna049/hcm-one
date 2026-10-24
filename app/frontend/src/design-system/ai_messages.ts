@@ -33,10 +33,17 @@ export const AI_MESSAGES: Record<string, string> = {
   C27: "Would you like the earnings and deductions breakdown?",
   C28: "The available payroll records do not explain this difference. I can help draft a query for HR.",
   C29: "Your TDS is higher because you declared income from your previous employer for {declared_months}. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice.",
+  C30: "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
+  C31: "Hi {first_name}. What would you like to do today?",
 };
 
 export function getAIMessage(code: string, slots?: Record<string, string>): string {
   const template = AI_MESSAGES[code] || "";
   if (!slots) return template;
-  return template.replace(/\{(\w+)\}/g, (_, key) => slots[key] ?? `{${key}}`);
+  return template.replace(/\{([\w\s]+)\}/g, (_, key) => {
+    const trimmed = key.trim();
+    const underscoreKey = trimmed.replace(/\s+/g, '_');
+    return slots[trimmed] ?? slots[underscoreKey] ?? `{${key}}`;
+  });
 }
+

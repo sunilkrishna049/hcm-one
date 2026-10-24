@@ -260,7 +260,7 @@ class ChatRouter:
             return self._build_scenario_3(user, role, surface)
 
         # Scenario 4 (Team bonus)
-        if "bonus" in lower_msg and ("team" in lower_msg or "annual" in lower_msg or "sales" in lower_msg or "calculate" in lower_msg or "run" in lower_msg):
+        if "bonus" in lower_msg and ("team" in lower_msg or "annual" in lower_msg or "sales" in lower_msg or "calculate" in lower_msg or "run" in lower_msg or "proposal" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_4(user, role, surface)
@@ -300,7 +300,7 @@ class ChatRouter:
             return self._build_scenario_11(user, role, surface)
 
         # Scenario 10 (Siddharth Jain / TDS increase)
-        if "siddharth" in lower_msg or "e06" in lower_msg or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg)):
+        if "siddharth" in lower_msg or "e06" in lower_msg or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)):
             return self._build_scenario_10(user, role, surface)
 
         # Scenario 9 (Neha Gupta / September salary drop)
@@ -310,9 +310,9 @@ class ChatRouter:
         # Query Flows
         if "draft" in lower_msg and "query" in lower_msg:
             return self._handle_draft_query(user, role, surface, context)
-        if "status" in lower_msg and "query" in lower_msg:
+        if ("status" in lower_msg or "track" in lower_msg) and ("query" in lower_msg or "queries" in lower_msg):
             return self._handle_query_status(user, role, surface, context)
-        if "review" in lower_msg and "query" in lower_msg:
+        if "review" in lower_msg and ("query" in lower_msg or "queries" in lower_msg):
             return self._handle_hr_query_review(user, role, surface, context)
 
         # Fallback to FAQ keyword match

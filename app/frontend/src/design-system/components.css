@@ -612,9 +612,47 @@
 .hcm-chat-header-meta {
   display: flex;
   align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.hcm-new-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 12px;
+  min-height: 36px;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-hover, #1E293B);
+  border: 1px solid var(--color-border, #1F2937);
+  border-radius: var(--radius-md, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.hcm-new-chat-btn:hover {
+  color: var(--color-text-primary, #F8FAFC);
+  background-color: var(--color-surface-elevated, #334155);
+  border-color: var(--color-border-hover, #374151);
+}
+
+.hcm-chat-user-badge {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 767px) {
+  .hcm-new-chat-btn {
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
 }
 
 .hcm-chat-feed-scroll,

@@ -5,25 +5,24 @@ import { AssistantTurn } from './AssistantTurn';
 import { SuggestionChips, type ChipItem } from './SuggestionChips';
 import { Composer } from './Composer';
 import { SheetEMP, type SheetEMPData } from './SheetEMP';
-import { User } from 'lucide-react';
+import { User, Plus } from 'lucide-react';
 import { getUserDisplayName } from '../../../utils/userDisplay';
 import { formatLocalTime } from '../../../utils/format';
+import {
+  type ChatMessageTurn,
+  EMP_STARTER_CHIPS,
+  createWelcomeTurn,
+} from '../../../utils/welcomeTurn';
 
-export interface ChatMessageTurn {
-  id: string;
-  type: 'user' | 'assistant';
-  text?: string;
-  messages?: Array<{ code: string; text: string }>;
-  cards?: any[];
-  chips?: ChipItem[];
-  state?: any;
-  time?: string;
-}
+export type { ChatMessageTurn };
+export { EMP_STARTER_CHIPS, createWelcomeTurn };
 
 interface ChatEMPProps {
   currentUser: string;
-  currentScenario: number;
+  currentScenario?: number;
   initialMessage?: string;
+  prefilledText?: string;
+  onNewChat?: () => void;
 }
 
 function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
@@ -51,13 +50,14 @@ function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
 
 export const ChatEMP: React.FC<ChatEMPProps> = ({
   currentUser,
-  currentScenario,
-  initialMessage,
+  currentScenario = 9,
+  prefilledText,
+  onNewChat,
 }) => {
-  const [turns, setTurns] = useState<ChatMessageTurn[]>([]);
+  const [turns, setTurns] = useState<ChatMessageTurn[]>(() => [createWelcomeTurn(currentUser)]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [sheetData, setSheetData] = useState<SheetEMPData | null>(null);
-  const [activeChips, setActiveChips] = useState<ChipItem[]>([]);
+  const [activeChips, setActiveChips] = useState<ChipItem[]>(EMP_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
   const feedEndRef = useRef<HTMLDivElement>(null);
 
@@ -71,69 +71,23 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
     scrollToBottom();
   }, [turns]);
 
-  // Load opening turn when scenario or initialMessage changes
+  // When user switches login, reset to empty welcome state for that user
   useEffect(() => {
-    let isCancelled = false;
-    const loadScenarioTurn = async () => {
-      setIsLoading(true);
-      setTurns([]);
-      setActiveChips([]);
-      setIsSheetOpen(false);
+    setTurns([createWelcomeTurn(currentUser)]);
+    setActiveChips(EMP_STARTER_CHIPS);
+    setIsSheetOpen(false);
+    setSheetData(null);
+  }, [currentUser]);
 
-      const msg = initialMessage || 'Why is my September salary lower than August?';
-      const userTurn: ChatMessageTurn = {
-        id: `user-${Date.now()}`,
-        type: 'user',
-        text: msg,
-        time: formatLocalTime(new Date()),
-      };
-
-      try {
-        const res = await api.chat({
-          userId: currentUser,
-          message: msg,
-          context: { scenario_num: currentScenario },
-        });
-
-        if (isCancelled) return;
-
-        if ((res as any)?.error) {
-          const errTurn = buildErrorTurn(undefined, (res as any).error);
-          setTurns([userTurn, errTurn]);
-          return;
-        }
-
-        const assistantTurn: ChatMessageTurn = {
-          id: `asst-${Date.now()}`,
-          type: 'assistant',
-          messages: res.messages || [],
-          cards: res.cards || [],
-          chips: res.chips || [],
-          state: res.state || {},
-          time: formatLocalTime(new Date()),
-        };
-
-        setTurns([userTurn, assistantTurn]);
-        setActiveChips(res.chips || []);
-        if (res.state?.panel) {
-          setSheetData(res.state.panel);
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          console.error('Chat error:', err);
-          const errTurn = buildErrorTurn(undefined, err);
-          setTurns([userTurn, errTurn]);
-        }
-      } finally {
-        if (!isCancelled) setIsLoading(false);
-      }
-    };
-
-    loadScenarioTurn();
-    return () => {
-      isCancelled = true;
-    };
-  }, [currentScenario, currentUser, initialMessage]);
+  const handleNewChat = () => {
+    setIsSheetOpen(false);
+    setSheetData(null);
+    setTurns([createWelcomeTurn(currentUser)]);
+    setActiveChips(EMP_STARTER_CHIPS);
+    if (onNewChat) {
+      onNewChat();
+    }
+  };
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -217,7 +171,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         setSheetData(res.state.panel);
       }
     } catch (err) {
-      console.error('Failed to execute action:', err);
+      console.error(`Action ${actionName} failed:`, err);
       const errTurn = buildErrorTurn(actionName, err);
       setTurns((prev) => [...prev, errTurn]);
     } finally {
@@ -226,7 +180,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   };
 
   const handleChipSelect = (chip: ChipItem) => {
-    if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show tax calculation') {
+    if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof') {
       setIsSheetOpen(true);
       return;
     }
@@ -236,6 +190,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       handleSendMessage(chip.label);
     }
   };
+
 
   return (
     <div className="hcm-chat-layout hcm-chat-emp-container" data-testid="chat-emp">
@@ -247,8 +202,20 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
             <span className="hcm-chat-header-badge">Employee Assistant</span>
           </div>
           <div className="hcm-chat-header-meta">
-            <User size={14} color="var(--color-brand-accent)" />
-            <span>{getUserDisplayName(currentUser)}</span>
+            <button
+              type="button"
+              className="hcm-btn-secondary hcm-new-chat-btn"
+              onClick={handleNewChat}
+              data-testid="new-chat-btn"
+              aria-label="Start new chat"
+            >
+              <Plus size={14} />
+              <span>New chat</span>
+            </button>
+            <div className="hcm-chat-user-badge">
+              <User size={14} color="var(--color-brand-accent)" />
+              <span>{getUserDisplayName(currentUser)}</span>
+            </div>
           </div>
         </header>
 
@@ -300,6 +267,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           onSendMessage={handleSendMessage}
           disabled={isLoading}
           placeholder="Ask a question about your salary..."
+          prefilledText={prefilledText}
         />
       </main>
 

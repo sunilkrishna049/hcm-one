@@ -4,7 +4,7 @@
 
 Every displayed number, period, count and identifier is bound to the exact generated data in Section 8. The prototype must not calculate, round, split or infer any payroll value. Monospace font is reserved strictly for technical IDs (Query IDs, record references). Financial amounts use Inter with tabular figures (`tnum`).
 
-Assistant wording uses only the approved sentences C01–C30 in Section 7, used verbatim. Named slots are filled exclusively from authorized actual records. Headings and labels are interface content, not new AI causal sentences.
+Assistant wording uses only the approved sentences C01–C31 in Section 7, used verbatim. Named slots are filled exclusively from authorized actual records. Headings and labels are interface content, not new AI causal sentences.
 
 No internal labels (screen IDs, sentence codes, file paths or JSON pointers) are visible to users. No "Verified" badges are shown. Query statuses are strictly: `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
 
@@ -405,7 +405,7 @@ followed by relevant suggestion chips. The prototype never hallucinates, estimat
 The prototype is structured so a future CrewAI agentic crew can replace demo pattern matching without changing cards or UI bindings:
 1. **Classifier Agent:** Parses natural language query, detects user role (`HR Admin` vs `Employee`), extracts intent, and performs initial RBAC routing.
 2. **Retrieval Agent:** Queries the Payroll FAQ Knowledge Source (`data/faq/`) and deterministic calculation engine (`engine/payroll/`) for verified numbers, formulas, and rule IDs.
-3. **Response Drafting Agent:** Selects the required approved sentence (C01–C30) and populates rich card schemas with deterministic values.
+3. **Response Drafting Agent:** Selects the required approved sentence (C01–C31) and populates rich card schemas with deterministic values.
 4. **Governance / Guard Agent:** Verifies epistemic certainty labels, ensures zero frontend math, blocks cross-employee data leaks, and confirms that approval never resembles payment.
 
 ---
@@ -624,6 +624,12 @@ The slot requires the accepted declaration’s declared month range. Neither /di
 > Your {later month} take-home is {net change amount} {lower or higher} than {earlier month}. The main recorded reasons are below.
 
 Source: [conversation-design.md](../06-ai-interaction/conversation-design.md), Section 7, A06-07; Example B; Approved DEC-035.
+
+### C31
+
+> Hi {first name}. What would you like to do today?
+
+Source: [conversation-design.md](../06-ai-interaction/conversation-design.md), Section 7, A06-13; Approved by Project owner; DEC-040.
 
 ## 8. Exact generated data bindings
 

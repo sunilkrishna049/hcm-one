@@ -3,12 +3,15 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
+import { App } from '../App';
 import { api } from '../services/api';
 
 vi.mock('../services/api', () => ({
   api: {
     chat: vi.fn(),
+    resetDemo: vi.fn().mockResolvedValue({ status: 'ok' }),
   },
+  setCurrentUserId: vi.fn(),
 }));
 
 describe('Chat Action Click Tests (React Testing Library)', () => {
@@ -40,6 +43,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
 
     await waitFor(() => {
       expect(screen.getByText('Approve proposal for payroll')).toBeInTheDocument();
@@ -121,6 +125,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
 
     await waitFor(() => {
       expect(screen.getByText('Edit with reason')).toBeInTheDocument();
@@ -171,6 +176,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
 
     await waitFor(() => {
       expect(screen.getByText('Reject proposal')).toBeInTheDocument();
@@ -235,6 +241,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText('Review payroll queries'));
 
     await waitFor(() => {
       expect(screen.getByText('Take into review')).toBeInTheDocument();
@@ -325,6 +332,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
+    fireEvent.click(screen.getByText('Why is my take-home lower this month?'));
 
     await waitFor(() => {
       expect(screen.getByText('Send query with listed evidence to HR')).toBeInTheDocument();
@@ -420,6 +428,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
 
     await waitFor(() => {
       expect(screen.getByTestId('suggestion-chip-0')).toBeInTheDocument();
@@ -437,6 +446,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     (api.chat as any).mockRejectedValueOnce(new Error('Network error or server down'));
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
 
     await waitFor(() => {
       // Must not fail silently: displays approved sentence C09
@@ -445,4 +455,177 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
       ).toBeInTheDocument();
     });
   });
+});
+
+describe('New Chat Start Experience Tests (DEC-040)', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('7. Empty welcome state on open: shows C31 greeting with user first name followed by C01, no auto-load', () => {
+    // 7a. HR Admin open
+    const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
+
+    // Shows C31 with first name "Anita"
+    expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+    // Followed by C01
+    expect(
+      screen.getByText(
+        "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm."
+      )
+    ).toBeInTheDocument();
+    // No api call on mount
+    expect(api.chat).not.toHaveBeenCalled();
+
+    unmount();
+
+    // 7b. Employee open (USER-E05 Neha Gupta)
+    render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
+
+    expect(screen.getByText('Hi Neha. What would you like to do today?')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm."
+      )
+    ).toBeInTheDocument();
+    expect(api.chat).not.toHaveBeenCalled();
+  });
+
+  it('8. Role-specific starter chips match role and tapping sends message', async () => {
+    // 8a. HR starter chips
+    const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
+
+    expect(screen.getByText("Prepare Priya Sharma's pending back-dated hike")).toBeInTheDocument();
+    expect(screen.getByText('Prepare a bonus proposal')).toBeInTheDocument();
+    expect(screen.getByText('Review payroll queries')).toBeInTheDocument();
+    expect(screen.queryByText('Why is my take-home lower this month?')).toBeNull();
+
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C03', text: 'This is a proposal for the recorded affected months.' }],
+      cards: [],
+      chips: [],
+    });
+
+    // Tapping a chip sends it as first message
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
+
+    await waitFor(() => {
+      expect(api.chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'HR01',
+          message: "Prepare Priya Sharma's pending back-dated hike",
+        })
+      );
+    });
+
+    unmount();
+
+    // 8b. Employee starter chips
+    render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
+
+    expect(screen.getByText('Why is my take-home lower this month?')).toBeInTheDocument();
+    expect(screen.getByText('Why did my TDS change?')).toBeInTheDocument();
+    expect(screen.getByText('What is LOP?')).toBeInTheDocument();
+    expect(screen.getByText('Track my query')).toBeInTheDocument();
+    expect(screen.queryByText("Prepare Priya Sharma's pending back-dated hike")).toBeNull();
+
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C30', text: 'Your September take-home is lower than August.' }],
+      cards: [],
+      chips: [],
+    });
+
+    fireEvent.click(screen.getByText('Why is my take-home lower this month?'));
+
+    await waitFor(() => {
+      expect(api.chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'USER-E05',
+          message: 'Why is my take-home lower this month?',
+        })
+      );
+    });
+  });
+
+  it('9. "New chat" button in header clears only the conversation and returns to welcome state', async () => {
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C03', text: 'This is a proposal for the recorded affected months.' }],
+      cards: [
+        {
+          id: 'card-proposal',
+          type: 'proposal_summary',
+          title: 'Proposal Summary',
+          data: {
+            employee_name: 'Priya Sharma',
+            old_gross: 120000,
+            revised_gross: 132000,
+          },
+        },
+      ],
+      chips: [],
+    });
+
+    render(<ChatHR currentUser="HR01" currentScenario={1} />);
+
+    // Send a message first
+    fireEvent.click(screen.getByText("Prepare Priya Sharma's pending back-dated hike"));
+
+    await waitFor(() => {
+      expect(screen.getByText('Proposal Summary')).toBeInTheDocument();
+    });
+
+    // Click "New chat" in header
+    const newChatBtn = screen.getByTestId('new-chat-btn');
+    expect(newChatBtn).toBeInTheDocument();
+    fireEvent.click(newChatBtn);
+
+    // Clears conversation and returns to welcome state
+    await waitFor(() => {
+      expect(screen.queryByText('Proposal Summary')).toBeNull();
+      expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+      expect(screen.getByText("Prepare Priya Sharma's pending back-dated hike")).toBeInTheDocument();
+    });
+
+    // Does NOT call resetDemo
+    expect(api.resetDemo).not.toHaveBeenCalled();
+  });
+
+  it('10. Scenario picker pre-types question in composer without auto-sending', async () => {
+    render(<App />);
+
+    // App opens to empty new chat for default HR01
+    expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+    expect(api.chat).not.toHaveBeenCalled();
+
+    // Select scenario 2: Arjun Rao
+    const scenarioSelect = screen.getByTestId('scenario-select');
+    fireEvent.change(scenarioSelect, { target: { value: '2' } });
+
+    // Pre-types scenario 2 question in composer without auto-sending
+    await waitFor(() => {
+      const composerTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(composerTextarea.value).toBe("Prepare Arjun Rao's pending back-dated hike.");
+    });
+    expect(api.chat).not.toHaveBeenCalled();
+
+    // Now press Send or Enter to dispatch
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C03', text: 'Arjun Rao proposal ready.' }],
+      cards: [],
+      chips: [],
+    });
+
+    const sendBtn = screen.getByTestId('composer-send-btn');
+    fireEvent.click(sendBtn);
+
+    await waitFor(() => {
+      expect(api.chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'HR01',
+          message: "Prepare Arjun Rao's pending back-dated hike.",
+        })
+      );
+    });
+  });
+
 });

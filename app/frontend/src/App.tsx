@@ -24,7 +24,8 @@ export const SCENARIO_OPENING_MESSAGES: Record<number, string> = {
 export function App() {
   const [currentUser, setCurrentUser] = useState<string>('HR01');
   const [currentScenario, setCurrentScenario] = useState<number>(1);
-  const [initialMessage, setInitialMessage] = useState<string>(SCENARIO_OPENING_MESSAGES[1]);
+  const [prefilledText, setPrefilledText] = useState<string>('');
+  const [chatKey, setChatKey] = useState<number>(0);
   const [isResetting, setIsResetting] = useState(false);
 
   const currentUserObj = DEMO_USERS.find((u) => u.id === currentUser);
@@ -33,6 +34,8 @@ export function App() {
   const handleUserChange = (userId: string) => {
     setCurrentUser(userId);
     setCurrentUserId(userId);
+    setPrefilledText('');
+    setChatKey((k) => k + 1);
   };
 
   const handleScenarioChange = (scenarioNum: number) => {
@@ -41,19 +44,29 @@ export function App() {
     const targetUser = scenarioMeta?.defaultUser || 'HR01';
     setCurrentUser(targetUser);
     setCurrentUserId(targetUser);
-    setInitialMessage(SCENARIO_OPENING_MESSAGES[scenarioNum] || '');
+    setPrefilledText(SCENARIO_OPENING_MESSAGES[scenarioNum] || '');
+    setChatKey((k) => k + 1);
   };
 
   const handleResetDemo = async () => {
     setIsResetting(true);
     try {
       await api.resetDemo();
-      handleScenarioChange(1);
+      setCurrentScenario(1);
+      setCurrentUser('HR01');
+      setCurrentUserId('HR01');
+      setPrefilledText('');
+      setChatKey((k) => k + 1);
     } catch (e: any) {
       console.error('Reset error:', e);
     } finally {
       setIsResetting(false);
     }
+  };
+
+  const handleNewChat = () => {
+    setPrefilledText('');
+    setChatKey((k) => k + 1);
   };
 
   return (
@@ -72,15 +85,19 @@ export function App() {
       <main style={{ flex: 1 }}>
         {isHR ? (
           <ChatHR
+            key={chatKey}
             currentUser={currentUser}
             currentScenario={currentScenario}
-            initialMessage={initialMessage}
+            prefilledText={prefilledText}
+            onNewChat={handleNewChat}
           />
         ) : (
           <ChatEMP
+            key={chatKey}
             currentUser={currentUser}
             currentScenario={currentScenario}
-            initialMessage={initialMessage}
+            prefilledText={prefilledText}
+            onNewChat={handleNewChat}
           />
         )}
       </main>
@@ -92,3 +109,4 @@ export function App() {
 }
 
 export default App;
+

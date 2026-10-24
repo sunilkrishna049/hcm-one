@@ -5,25 +5,24 @@ import { AssistantTurn } from './AssistantTurn';
 import { SuggestionChips, type ChipItem } from './SuggestionChips';
 import { Composer } from './Composer';
 import { PanelHR, type PanelHRData } from './PanelHR';
-import { Shield } from 'lucide-react';
+import { Shield, Plus } from 'lucide-react';
 import { getUserDisplayName } from '../../../utils/userDisplay';
 import { formatLocalTime } from '../../../utils/format';
+import {
+  type ChatMessageTurn,
+  HR_STARTER_CHIPS,
+  createWelcomeTurn,
+} from '../../../utils/welcomeTurn';
 
-export interface ChatMessageTurn {
-  id: string;
-  type: 'user' | 'assistant';
-  text?: string;
-  messages?: Array<{ code: string; text: string }>;
-  cards?: any[];
-  chips?: ChipItem[];
-  state?: any;
-  time?: string;
-}
+export type { ChatMessageTurn };
+export { HR_STARTER_CHIPS, createWelcomeTurn };
 
 interface ChatHRProps {
   currentUser: string;
-  currentScenario: number;
+  currentScenario?: number;
   initialMessage?: string;
+  prefilledText?: string;
+  onNewChat?: () => void;
 }
 
 function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
@@ -51,13 +50,14 @@ function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
 
 export const ChatHR: React.FC<ChatHRProps> = ({
   currentUser,
-  currentScenario,
-  initialMessage,
+  currentScenario = 1,
+  prefilledText,
+  onNewChat,
 }) => {
-  const [turns, setTurns] = useState<ChatMessageTurn[]>([]);
+  const [turns, setTurns] = useState<ChatMessageTurn[]>(() => [createWelcomeTurn(currentUser)]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelData, setPanelData] = useState<PanelHRData | null>(null);
-  const [activeChips, setActiveChips] = useState<ChipItem[]>([]);
+  const [activeChips, setActiveChips] = useState<ChipItem[]>(HR_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
   const feedEndRef = useRef<HTMLDivElement>(null);
 
@@ -71,69 +71,23 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     scrollToBottom();
   }, [turns]);
 
-  // Load opening turn when scenario or initialMessage changes
+  // When user switches login, reset to empty welcome state for that user
   useEffect(() => {
-    let isCancelled = false;
-    const loadScenarioTurn = async () => {
-      setIsLoading(true);
-      setTurns([]);
-      setActiveChips([]);
-      setIsPanelOpen(false);
+    setTurns([createWelcomeTurn(currentUser)]);
+    setActiveChips(HR_STARTER_CHIPS);
+    setIsPanelOpen(false);
+    setPanelData(null);
+  }, [currentUser]);
 
-      const msg = initialMessage || 'Prepare hike proposal';
-      const userTurn: ChatMessageTurn = {
-        id: `user-${Date.now()}`,
-        type: 'user',
-        text: msg,
-        time: formatLocalTime(new Date()),
-      };
-
-      try {
-        const res = await api.chat({
-          userId: currentUser,
-          message: msg,
-          context: { scenario_num: currentScenario },
-        });
-
-        if (isCancelled) return;
-
-        if ((res as any)?.error) {
-          const errTurn = buildErrorTurn(undefined, (res as any).error);
-          setTurns([userTurn, errTurn]);
-          return;
-        }
-
-        const assistantTurn: ChatMessageTurn = {
-          id: `asst-${Date.now()}`,
-          type: 'assistant',
-          messages: res.messages || [],
-          cards: res.cards || [],
-          chips: res.chips || [],
-          state: res.state || {},
-          time: formatLocalTime(new Date()),
-        };
-
-        setTurns([userTurn, assistantTurn]);
-        setActiveChips(res.chips || []);
-        if (res.state?.panel) {
-          setPanelData(res.state.panel);
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          console.error('Chat error:', err);
-          const errTurn = buildErrorTurn(undefined, err);
-          setTurns([userTurn, errTurn]);
-        }
-      } finally {
-        if (!isCancelled) setIsLoading(false);
-      }
-    };
-
-    loadScenarioTurn();
-    return () => {
-      isCancelled = true;
-    };
-  }, [currentScenario, currentUser, initialMessage]);
+  const handleNewChat = () => {
+    setIsPanelOpen(false);
+    setPanelData(null);
+    setTurns([createWelcomeTurn(currentUser)]);
+    setActiveChips(HR_STARTER_CHIPS);
+    if (onNewChat) {
+      onNewChat();
+    }
+  };
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -201,53 +155,63 @@ export const ChatHR: React.FC<ChatHRProps> = ({
         return;
       }
 
+      // If user approved, edited, or rejected a proposal, replace action buttons on earlier cards
+      // with recorded state and disable them so active Approve/Edit/Reject are not shown twice.
+      if (['approve', 'edit', 'reject'].includes(actionName)) {
+        setTurns((prev) =>
+          prev.map((t) => {
+            if (t.type !== 'assistant' || !t.cards) return t;
+            const updatedCards = t.cards.map((c) => {
+              if (c.type === 'approval_card') {
+                const isCurrentApproved = actionName === 'approve';
+                const isCurrentRejected = actionName === 'reject';
+                const isCurrentEdited = actionName === 'edit';
+                return {
+                  ...c,
+                  data: {
+                    ...c.data,
+                    actions: [],
+                    disabled: true,
+                    disabled_label: isCurrentApproved
+                      ? 'Proposal approved. Action buttons disabled.'
+                      : isCurrentRejected
+                      ? 'Proposal rejected. Action buttons disabled.'
+                      : isCurrentEdited
+                      ? 'Proposal revised. Action buttons disabled.'
+                      : 'Action recorded.',
+                  },
+                };
+              }
+              return c;
+            });
+            return { ...t, cards: updatedCards };
+          })
+        );
+      }
+
+      // After approval, do not repeat C04 sentence. Show only the approved state card.
+      let filteredMessages = res.messages || [];
+      if (actionName === 'approve') {
+        filteredMessages = filteredMessages.filter((m: any) => m.code !== 'C04');
+      }
+
       const assistantTurn: ChatMessageTurn = {
         id: `asst-${Date.now()}`,
         type: 'assistant',
-        messages: res.messages || [],
+        messages: filteredMessages,
         cards: res.cards || [],
         chips: res.chips || [],
         state: res.state || {},
         time: formatLocalTime(new Date()),
       };
 
-      let disabledLabel: string | undefined;
-      if (['approve', 'approve-proposal', 'approve_proposal'].includes(actionName)) {
-        disabledLabel = 'Proposal approved. Action buttons disabled.';
-      } else if (['reject', 'reject-proposal', 'reject_proposal'].includes(actionName)) {
-        disabledLabel = 'Proposal rejected. Action buttons disabled.';
-      } else if (['edit', 'edit-proposal', 'edit_proposal'].includes(actionName)) {
-        disabledLabel = 'Proposal revised. Action buttons disabled.';
-      }
-
-      setTurns((prev) => {
-        let updated = prev;
-        if (disabledLabel) {
-          updated = prev.map((turn) => ({
-            ...turn,
-            cards: turn.cards?.map((card) => {
-              if (card.type === 'approval_card') {
-                return {
-                  ...card,
-                  data: {
-                    ...card.data,
-                    disabled: true,
-                    disabled_label: disabledLabel,
-                  },
-                };
-              }
-              return card;
-            }),
-          }));
-        }
-        return [...updated, assistantTurn];
-      });
+      setTurns((prev) => [...prev, assistantTurn]);
       setActiveChips(res.chips || []);
       if (res.state?.panel) {
         setPanelData(res.state.panel);
       }
     } catch (err) {
-      console.error('Failed to execute action:', err);
+      console.error(`Action ${actionName} failed:`, err);
       const errTurn = buildErrorTurn(actionName, err);
       setTurns((prev) => [...prev, errTurn]);
     } finally {
@@ -267,6 +231,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     }
   };
 
+
   return (
     <div className="hcm-chat-hr-layout" data-testid="chat-hr">
       {/* Main Conversation Workspace */}
@@ -277,8 +242,20 @@ export const ChatHR: React.FC<ChatHRProps> = ({
             <h1 className="hcm-chat-header-title">HCM One HR Workspace</h1>
           </div>
           <div className="hcm-chat-header-meta">
-            <Shield size={14} color="var(--brand-accent)" />
-            <span>{getUserDisplayName(currentUser, true)}</span>
+            <button
+              type="button"
+              className="hcm-btn-secondary hcm-new-chat-btn"
+              onClick={handleNewChat}
+              data-testid="new-chat-btn"
+              aria-label="Start new chat"
+            >
+              <Plus size={14} />
+              <span>New chat</span>
+            </button>
+            <div className="hcm-chat-user-badge">
+              <Shield size={14} color="var(--brand-accent)" />
+              <span>{getUserDisplayName(currentUser, true)}</span>
+            </div>
           </div>
         </div>
 
@@ -337,6 +314,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
           disabled={isLoading}
           placeholder="Ask a question or enter a payroll request..."
           isMobile={false}
+          prefilledText={prefilledText}
         />
       </main>
 

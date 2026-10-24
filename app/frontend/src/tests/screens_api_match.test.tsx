@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
@@ -9,6 +9,14 @@ import { ChatEMP } from '../design-system/components/chat/ChatEMP';
 import fixturesData from './chat_scenario_fixtures.json';
 
 const fixtures: Record<string, any> = fixturesData;
+
+function sendChatMessage(text: string) {
+  const textarea = screen.getByTestId('composer-textarea');
+  const sendBtn = screen.getByTestId('composer-send-btn');
+  fireEvent.change(textarea, { target: { value: text } });
+  fireEvent.click(sendBtn);
+}
+
 
 // Helper to load scenario JSON directly from data/generated/scenarios/
 function loadScenarioData(scenarioNum: number) {
@@ -107,9 +115,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR01"
         currentScenario={1}
-        initialMessage="Prepare Priya Sharma's pending back-dated hike."
       />
     );
+    sendChatMessage("Prepare Priya Sharma's pending back-dated hike.");
 
     await waitFor(() => {
       expect(screen.getByText('Expected net arrears')).toBeInTheDocument();
@@ -137,9 +145,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR01"
         currentScenario={2}
-        initialMessage="Prepare Arjun Rao's pending back-dated hike."
       />
     );
+    sendChatMessage("Prepare Arjun Rao's pending back-dated hike.");
 
     await waitFor(() => {
       expect(screen.getByText('Expected net arrears')).toBeInTheDocument();
@@ -158,9 +166,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR01"
         currentScenario={3}
-        initialMessage="Prepare Kavya Iyer's pending back-dated hike."
       />
     );
+    sendChatMessage("Prepare Kavya Iyer's pending back-dated hike.");
 
     await waitFor(() => {
       expect(screen.getByText('Known Monthly Differences')).toBeInTheDocument();
@@ -186,9 +194,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR01"
         currentScenario={6}
-        initialMessage="Prepare settlement proposal for Rahul Verma."
       />
     );
+    sendChatMessage("Prepare settlement proposal for Rahul Verma.");
 
     await waitFor(() => {
       expect(screen.getByText('Final net settlement')).toBeInTheDocument();
@@ -210,9 +218,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatEMP
         currentUser="USER-E05"
         currentScenario={9}
-        initialMessage="Why is my September salary lower than August?"
       />
     );
+    sendChatMessage("Why is my September salary lower than August?");
 
     await waitFor(() => {
       expect(screen.getByText('September Take-Home')).toBeInTheDocument();
@@ -238,9 +246,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatEMP
         currentUser="USER-E06"
         currentScenario={10}
-        initialMessage="Why did my TDS increase in September?"
       />
     );
+    sendChatMessage("Why did my TDS increase in September?");
 
     await waitFor(() => {
       expect(screen.getByText('September TDS Deduction')).toBeInTheDocument();
@@ -260,9 +268,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatEMP
         currentUser="USER-E16"
         currentScenario={11}
-        initialMessage="Why did my take-home pay decrease in September when my gross did not change?"
       />
     );
+    sendChatMessage("Why did my take-home pay decrease in September when my gross did not change?");
 
     await waitFor(() => {
       expect(screen.getByText('Take-Home Net Change')).toBeInTheDocument();
@@ -277,9 +285,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR02"
         currentScenario={12}
-        initialMessage="Show me Priya Sharma's salary breakdown."
       />
     );
+    sendChatMessage("Show me Priya Sharma's salary breakdown.");
 
     await waitFor(() => {
       expect(screen.getByText('Permission Denied')).toBeInTheDocument();
@@ -302,9 +310,9 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       <ChatHR
         currentUser="HR01"
         currentScenario={13}
-        initialMessage="Review settlement calculation for Imran Khan."
       />
     );
+    sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
       expect(screen.getByText('Settlement Breakdown (Unresolved Component)')).toBeInTheDocument();
@@ -338,7 +346,6 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
           <ChatHR
             currentUser={sNum === 12 ? 'HR02' : 'HR01'}
             currentScenario={sNum}
-            initialMessage="Test"
           />
         );
       } else {
@@ -347,10 +354,10 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
           <ChatEMP
             currentUser={empUser}
             currentScenario={sNum}
-            initialMessage="Test"
           />
         );
       }
+      sendChatMessage("Test");
 
       await waitFor(() => {
         expect(renderedResult.container).toBeInTheDocument();

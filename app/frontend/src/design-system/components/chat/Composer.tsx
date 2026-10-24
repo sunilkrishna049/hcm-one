@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 
 interface ComposerProps {
@@ -6,6 +6,7 @@ interface ComposerProps {
   placeholder?: string;
   disabled?: boolean;
   isMobile?: boolean;
+  prefilledText?: string;
 }
 
 export const Composer: React.FC<ComposerProps> = ({
@@ -13,9 +14,23 @@ export const Composer: React.FC<ComposerProps> = ({
   placeholder = 'Ask a question about payroll or salary...',
   disabled = false,
   isMobile = false,
+  prefilledText,
 }) => {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(prefilledText || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (prefilledText !== undefined) {
+      setText(prefilledText);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        if (prefilledText) {
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+        }
+      }
+    }
+  }, [prefilledText]);
+
 
   const handleSend = () => {
     const trimmed = text.trim();

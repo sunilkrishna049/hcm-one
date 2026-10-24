@@ -76,6 +76,7 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
           <label htmlFor="scenario-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Scenario:</label>
           <select
             id="scenario-select"
+            data-testid="scenario-select"
             value={currentScenario}
             onChange={(e) => onScenarioChange(Number(e.target.value))}
             style={{ fontWeight: 500 }}
@@ -95,6 +96,7 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
           <label htmlFor="user-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Logged in as:</label>
           <select
             id="user-select"
+            data-testid="user-select"
             value={currentUser}
             onChange={(e) => onUserChange(e.target.value)}
           >

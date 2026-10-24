@@ -20,14 +20,25 @@ Proposed for Gate G07. In accordance with the Project owner's direction, HCM One
 
 General payroll concepts (e.g., *"What is LOP?"*, *"What is PF?"*, *"What is Gratuity?"*) are answered directly in the chat using a structured **Payroll FAQ Knowledge Source** formatted to the course dataset schema (`id`, `category`, `question`, `answer`, `link_text`, `url`), with answers sourced strictly from the approved payroll glossary in `output/06-ai-interaction/conversation-design.md`.
 
+**Empty Start & Welcome State (DEC-040):**
+- **Empty Start on Open & Login Switch:** When the application opens or after switching users, it displays a clean, empty new chat. Nothing is loaded, calculated, or sent automatically.
+- **Welcome Greeting:** Greets the user using approved sentence C31: *"Hi {first name}. What would you like to do today?"* followed immediately by approved sentence C01 (*"I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results..."*).
+- **Role-Matched Starter Suggestions:** 3 to 4 quick starter chips tailored to the active role:
+  - *HR Admin:* "Prepare Priya Sharma's pending back-dated hike", "Prepare a bonus proposal", "Review payroll queries".
+  - *Employee:* "Why is my take-home lower this month?", "Why did my TDS change?", "What is LOP?", "Track my query".
+  Tapping a chip sends it as the user's first message.
+- **"New chat" Header Action:** Located in the chat workspace header, clicking "New chat" clears the active conversation and restores the welcome state and starter suggestions without altering approvals, queries, or demo data.
+- **Scenario Picker Pre-typing:** Selecting a scenario logs in the appropriate user and pre-fills the message composer with that scenario's opening question without auto-sending. The user can review and press Enter to send.
+- **"Reset demo":** Located in the top demo bar, resets all demo data (approvals, queries) and opens an empty new chat.
+
 **Traceability & Compliance:**
 - **Zero Frontend Math:** Every number rendered inside any card or panel originates exclusively from deterministic engine calculations in `data/generated/scenarios/` and is verified by automated tests against the backend API (DEC-033).
-- **Approved AI Copy Only:** The assistant outputs strictly approved copy (C01 to C29) corresponding to authorized role boundaries. No LLM hallucinations, paraphrasing, or conversational filler.
+- **Approved AI Copy Only:** The assistant outputs strictly approved copy (C01 to C31) corresponding to authorized role boundaries. No LLM hallucinations, paraphrasing, or conversational filler.
 - **Explicit Human Governance:** Actions such as approving proposals, editing parameters, and submitting queries require explicit user clicks with distinct disclaimers (e.g., C04 approval disclaimer; approval never resembles payment).
 - **Strict Information Security:** No "Verified" badges. No file paths, screen IDs, rule keys, or sentence codes are visible to users. Query statuses are strictly: `Draft`, `Sent`, `In review`, `Resolved`, `Closed`.
 - **Future-Proof Agentic Handoff:** Intent routing maps typed input to demo intents today and is architected so an agentic framework (e.g., CrewAI classifier, retrieval, and response crew) can replace the prototype intent matcher without altering card schemas or conversation contracts.
 
-Sources: [current BRD v1.2](../../input/requirements/Payroll_brd_v1.2.md), Sections 3, 5–9; [approved user flows](../05-architecture/user-flows.md); [approved edge cases and states](../05-architecture/edge-cases-states.md); [AI interaction artifacts](../06-ai-interaction/); [design decision log](../../project-memory/design-decisions.md), DEC-007 through DEC-039.
+Sources: [current BRD v1.2](../../input/requirements/Payroll_brd_v1.2.md), Sections 3, 5–9; [approved user flows](../05-architecture/user-flows.md); [approved edge cases and states](../05-architecture/edge-cases-states.md); [AI interaction artifacts](../06-ai-interaction/); [design decision log](../../project-memory/design-decisions.md), DEC-007 through DEC-040.
 
 ---
 

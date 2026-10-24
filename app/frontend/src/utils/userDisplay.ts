@@ -28,3 +28,10 @@ export function getUserDisplayName(userId: string, includeRole = false): string 
   if (!info) return userId;
   return includeRole ? `${info.name} · ${info.role}` : info.name;
 }
+
+export function getUserFirstName(userId: string): string {
+  const info = USER_NAME_MAP[userId];
+  const fullName = info ? info.name : userId;
+  return fullName.split(' ')[0] || fullName;
+}
+

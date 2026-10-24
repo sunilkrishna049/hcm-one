@@ -10,7 +10,15 @@ import fixturesData from './chat_scenario_fixtures.json';
 
 const fixtures: Record<string, any> = fixturesData;
 
+function sendChatMessage(text: string) {
+  const textarea = screen.getByTestId('composer-textarea');
+  const sendBtn = screen.getByTestId('composer-send-btn');
+  fireEvent.change(textarea, { target: { value: text } });
+  fireEvent.click(sendBtn);
+}
+
 function setViewport(width: number, height: number = 900) {
+
   Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: width });
   Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: height });
   window.dispatchEvent(new Event('resize'));
@@ -105,9 +113,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatHR
         currentUser="HR01"
         currentScenario={1}
-        initialMessage="Prepare Priya Sharma's pending back-dated hike."
       />
     );
+    sendChatMessage("Prepare Priya Sharma's pending back-dated hike.");
 
     // Verify exact numbers on cards
     await waitFor(() => {
@@ -159,9 +167,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatHR
         currentUser="HR01"
         currentScenario={1}
-        initialMessage="Prepare Priya Sharma's pending back-dated hike."
       />
     );
+    sendChatMessage("Prepare Priya Sharma's pending back-dated hike.");
 
     // Verify numbers present on mobile
     await waitFor(() => {
@@ -196,9 +204,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatEMP
         currentUser="USER-E01"
         currentScenario={9}
-        initialMessage="Why is my September salary lower than August?"
       />
     );
+    sendChatMessage("Why is my September salary lower than August?");
 
     // Verify no fixed phone frame element exists
     expect(document.querySelector('.hcm-chat-emp-frame')).not.toBeInTheDocument();
@@ -236,9 +244,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatEMP
         currentUser="USER-E01"
         currentScenario={9}
-        initialMessage="Why is my September salary lower than August?"
       />
     );
+    sendChatMessage("Why is my September salary lower than August?");
 
     await waitFor(() => {
       expect(screen.getByText('September Take-Home')).toBeInTheDocument();
@@ -267,9 +275,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatHR
         currentUser="HR01"
         currentScenario={13}
-        initialMessage="Review settlement calculation for Imran Khan."
       />
     );
+    sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
       expect(screen.getByText('Settlement Ledger Lines')).toBeInTheDocument();
@@ -299,9 +307,9 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
       <ChatHR
         currentUser="HR01"
         currentScenario={13}
-        initialMessage="Review settlement calculation for Imran Khan."
       />
     );
+    sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
       expect(screen.getByText('Settlement Ledger Lines')).toBeInTheDocument();

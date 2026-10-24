@@ -74,7 +74,7 @@ These meanings describe the simplified demo and do not establish legal eligibili
 
 No glossary definition assigns a hold, payment date or legal entitlement. Calculation code and verified configuration establish the result for the relevant record. (BR-0.1–BR-0.4; GR-3.2)
 
-## 7. Patterns for A06-03, A06-07, A06-08, A06-10, A06-11, A06-12
+## 7. Patterns for A06-03, A06-07, A06-08, A06-10, A06-11, A06-12, A06-13
 
 Purpose, structure and rules below are Proposed. Requirements have High confidence; comprehension is **Assumption, Low, AS-17**. Use the existing certainty model and failures, not self-rated confidence.
 
@@ -116,6 +116,14 @@ Purpose, structure and rules below are Proposed. Requirements have High confiden
 - **Source IDs:** FR-6.6–FR-6.13; GR-1.3, GR-2.2–GR-2.4, GR-4.3, GR-7.1; UXP-04, UXP-06–UXP-07; PS-05; DEC-012; states Section 4, EC-13–EC-16; AS-15.
 
 Suggested status wording: "Your query is Sent. HR can access it for review." "Your query is In review. HR has taken it for review." "HR recorded a resolution. Here is the recorded reply. You can dispute the resolution if it does not answer your issue." "Your query is Closed. Its history is retained. A new issue can be drafted separately." These messages do not claim a future response or payroll correction. (FR-6.9–FR-6.13; states Section 4)
+ 
+### A06-13: Start and welcome state
+- **Purpose:** Present an empty start experience when the app opens or after login switching, greeting the user respectfully before any request is initiated. Nothing is loaded or sent automatically.
+- **Approved wording (C31):** "Hi {first name}. What would you like to do today?" followed by C01 ("I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm.").
+- **Starter suggestions:** Role-matched starter suggestion chips (3 to 4 chips) enabling the user to start a conversation with a single tap:
+  - HR: "Prepare Priya Sharma's pending back-dated hike", "Prepare a bonus proposal", "Review payroll queries".
+  - Employee: "Why is my take-home lower this month?", "Why did my TDS change?", "What is LOP?", "Track my query".
+- **Source IDs:** Approved by Project owner; DEC-040.
 
 ## 8. Example conversations (5)
 

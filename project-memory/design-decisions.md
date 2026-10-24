@@ -395,6 +395,12 @@
 - Status: Approved
 - Approved by: Project owner
 
-
-
-
+- ID: DEC-040
+- Date: 2026-10-24
+- Decision: The app opens to an empty new chat with a greeting and role-based starter suggestions. Nothing loads until the user asks. New chat clears the conversation only; Reset demo resets demo data.
+- Options considered: (a) Automatically send scenario or initial message on load and user change, (b) Empty start experience showing welcome greeting C31 and C01 with role-specific starter suggestion chips. Choosing a scenario pre-types the opening question without auto-sending. "New chat" button in the chat header clears the conversation and returns to the welcome state without altering demo data, while "Reset demo" resets demo data and opens a new chat.
+- Reason: Project owner decision. Empowers the user to initiate the conversational interaction rather than being presented with pre-loaded state. Matches modern chat expectations, eliminates accidental or unrequested API invocations on login/scenario switch, and clearly decouples conversation clearing from demo state resetting.
+- Evidence or source: Project owner instruction, 2026-10-24; [conversation-design.md](../output/06-ai-interaction/conversation-design.md); [screen-specs.md](../output/07-prototype/screen-specs.md); [screen-inventory.md](../output/07-prototype/screen-inventory.md); [visual-spec.md](../output/07-prototype/visual-spec.md); [ChatHR.tsx](../app/frontend/src/design-system/components/chat/ChatHR.tsx); [ChatEMP.tsx](../app/frontend/src/design-system/components/chat/ChatEMP.tsx); [App.tsx](../app/frontend/src/App.tsx).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
