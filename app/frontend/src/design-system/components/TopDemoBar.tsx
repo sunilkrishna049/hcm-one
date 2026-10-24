@@ -33,7 +33,7 @@ export interface ScenarioOption {
 
 export const SCENARIOS: ScenarioOption[] = [
   { id: 1, title: '1. Hike with LOP (Priya Sharma E01)', defaultUser: 'HR01', screenType: 'desktop', description: 'Back-dated hike with unpaid leave (loss of pay) across multiple months.', employeeId: 'E01' },
-  { id: 2, title: '2. Hike across PF ceiling change (Arjun Rao E02)', defaultUser: 'HR01', screenType: 'desktop', description: 'Back-dated hike spanning statutory PF ceiling change on 2026-09-17.', employeeId: 'E02' },
+  { id: 2, title: '2. Hike across PF ceiling change (Arjun Rao E02)', defaultUser: 'HR01', screenType: 'desktop', description: 'Back-dated hike spanning PF ceiling change on 2026-09-17.', employeeId: 'E02' },
   { id: 3, title: '3. Hike with missing attendance (Kavya Iyer E03)', defaultUser: 'HR01', screenType: 'desktop', description: 'Back-dated hike where July attendance record is missing.', employeeId: 'E03' },
   { id: 4, title: '4. Team bonus with joiner & notice cases', defaultUser: 'HR01', screenType: 'desktop', description: 'Bonus run covering annual performance bonus and quarterly sales incentive.' },
   { id: 5, title: '5. Missing performance rating (Meera Nair E09)', defaultUser: 'HR01', screenType: 'desktop', description: 'Bonus proposal where E09 performance rating is not recorded.', employeeId: 'E09' },

@@ -851,7 +851,7 @@
             },
             {
               "cause": "PF ceiling change",
-              "detail": "Revised statutory ceiling from 17 Sep",
+              "detail": "Revised ceiling from 17 Sep",
               "amount": -420
             }
           ],
@@ -906,7 +906,7 @@
         "formulas": [
           "Take-home pay = earned gross \u2212 total employee deductions = \u20b945,000 \u2212 \u20b92,220 = \u20b942,780 (change: \u2212\u20b95,420)",
           "Loss of pay deduction = monthly gross \u00d7 unpaid days \u00f7 calendar days = \u20b950,000 \u00d7 3 \u00f7 30 = \u20b95,000",
-          "PF deduction: Increased from \u20b91,800 to \u20b92,220 (+\u20b9420) due to statutory ceiling change on 17 Sep"
+          "PF deduction: Increased from \u20b91,800 to \u20b92,220 (+\u20b9420) due to ceiling change on 17 Sep"
         ],
         "rule_citations": [
           "Calendar-month divisor: Paid days equal calendar days minus LOP",
@@ -957,7 +957,7 @@
             },
             {
               "cause": "PF ceiling change",
-              "detail": "Revised statutory ceiling from 17 Sep",
+              "detail": "Revised ceiling from 17 Sep",
               "amount": -560
             }
           ]
@@ -1052,7 +1052,7 @@
           "reasons": [
             {
               "cause": "PF ceiling change",
-              "detail": "Revised statutory ceiling from 17 Sep",
+              "detail": "Revised ceiling from 17 Sep",
               "amount": -420
             }
           ]

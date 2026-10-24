@@ -129,3 +129,27 @@ export function formatShortMonth(monthStr: string | null | undefined): string {
   }
   return monthStr;
 }
+
+/**
+ * Format timestamp into viewer's local time with timezone abbreviation.
+ * Example output: "24 Oct 2026, 8:56 pm IST"
+ */
+export function formatLocalTime(dateInput?: Date | string | null): string {
+  if (!dateInput) return "";
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(date.getTime())) {
+    return String(dateInput);
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  });
+
+  return formatter.format(date);
+}

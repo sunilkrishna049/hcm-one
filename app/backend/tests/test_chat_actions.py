@@ -57,8 +57,12 @@ def test_approve_proposal_flow():
     assert "Version 1" in appr_card["data"]["status_badge"]
     assert "Anita Desai" in appr_card["data"]["status_badge"]
 
-    # Verify C04 message
-    assert any(m["code"] == "C04" for m in data["messages"])
+    # Verify C04 message is not repeated in assistant messages
+    assert len(data["messages"]) == 0
+    # Verify no certainty label on approval card
+    assert appr_card.get("certainty") is None
+    # Verify past tense scope label
+    assert "Approved:" in appr_card["data"]["scope_label"]
     # Verify no payment resemblance
     badge = appr_card["data"]["status_badge"].lower()
     assert "paid" not in badge

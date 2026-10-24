@@ -13,7 +13,7 @@ vi.mock('../services/api', () => ({
 
 describe('Chat Action Click Tests (React Testing Library)', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('1. Clicking "Approve proposal for payroll" dispatches approve action and renders approved state', async () => {
@@ -45,24 +45,22 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
       expect(screen.getByText('Approve proposal for payroll')).toBeInTheDocument();
     });
 
-    // Mock approval response
+    // Mock approval response matching polished backend contract
     (api.chat as any).mockResolvedValueOnce({
-      messages: [{ code: 'C04', text: 'Approving records this version and the selected scope as ready for payroll.' }],
+      messages: [],
       cards: [
         {
           id: 'card-approval-approved-1',
           type: 'approval_card',
           title: 'Approval',
-          certainty: 'Complete for this scope',
           data: {
-            scope_label: 'Priya Sharma · Apr–Sep 2026',
-            notice: 'Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.',
+            scope_label: 'Approved: Priya Sharma · Apr–Sep 2026',
             actions: [],
             status: 'approved',
             proposal_id: 'PROP-SCENARIO-1',
             version: 1,
             approver: 'HR01',
-            approved_at: '2026-10-24 12:00:00',
+            approved_at: '2026-10-24T12:00:00Z',
           },
         },
       ],
@@ -82,15 +80,27 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
     });
 
     await waitFor(() => {
-      const badge = screen.getByTestId('approval-status-badge');
-      expect(badge).toBeInTheDocument();
-      expect(badge).toHaveTextContent(/Approved and ready for payroll/i);
-      expect(badge).toHaveTextContent(/Version 1/i);
-      expect(badge).toHaveTextContent(/Anita Desai/i);
+      // 1. Proves buttons are gone after approval
+      expect(screen.queryByRole('button', { name: /Approve proposal for payroll/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Edit with reason/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Reject proposal/i })).toBeNull();
+
+      // 2. Proves recorded state is displayed
+      const badges = screen.getAllByTestId('approval-status-badge');
+      expect(badges.length).toBeGreaterThan(0);
+      expect(badges[0]).toHaveTextContent(/Approved and ready for payroll/i);
+      expect(badges[0]).toHaveTextContent(/Version 1/i);
+
+      // 3. Proves past-tense approved card wording
+      expect(screen.getByText(/Approved: Priya Sharma · Apr–Sep 2026/i)).toBeInTheDocument();
+
+      // 4. Proves C04 sentence is not repeated after approval
+      expect(screen.queryByText(/Approving records this version and the selected scope as ready for payroll/i)).toBeNull();
     });
   });
 
-  it('2. Clicking "Edit with reason" and "Reject proposal" dispatch edit and reject actions', async () => {
+  it('2. Clicking "Edit with reason" and "Reject proposal" dispatch edit and reject actions and disable buttons', async () => {
+    // 2a. Test Edit action
     (api.chat as any).mockResolvedValueOnce({
       messages: [{ code: 'C03', text: 'This is a proposal for the recorded affected months.' }],
       cards: [
@@ -98,7 +108,6 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
           id: 'card-approval-s1',
           type: 'approval_card',
           title: 'Approval',
-          certainty: 'Complete for this scope',
           data: {
             scope_label: 'Priya Sharma · Apr–Sep 2026',
             notice: 'Notice text',
@@ -111,7 +120,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
       state: { scenario_num: 1, role: 'HR' },
     });
 
-    render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
 
     await waitFor(() => {
       expect(screen.getByText('Edit with reason')).toBeInTheDocument();
@@ -134,11 +143,54 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
         })
       );
       expect(screen.getByText('Your edit will create a revised proposal.')).toBeInTheDocument();
+      // Proves buttons are disabled after editing
+      expect(screen.getByTestId('approval-disabled-note')).toHaveTextContent(/Proposal revised. Action buttons disabled./i);
+      expect(screen.queryByRole('button', { name: /Edit with reason/i })).toBeNull();
+    });
+
+    unmount();
+
+    // 2b. Test Reject action
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C03', text: 'This is a proposal for the recorded affected months.' }],
+      cards: [
+        {
+          id: 'card-approval-s1',
+          type: 'approval_card',
+          title: 'Approval',
+          data: {
+            scope_label: 'Priya Sharma · Apr–Sep 2026',
+            notice: 'Notice text',
+            actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+            status: 'pending',
+          },
+        },
+      ],
+      chips: [],
+      state: { scenario_num: 1, role: 'HR' },
+    });
+
+    render(<ChatHR currentUser="HR01" currentScenario={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Reject proposal')).toBeInTheDocument();
     });
 
     (api.chat as any).mockResolvedValueOnce({
       messages: [{ code: 'REJECTED', text: 'Proposal rejected.' }],
-      cards: [],
+      cards: [
+        {
+          id: 'card-reject-PROP-1',
+          type: 'approval_card',
+          title: 'Proposal Rejected',
+          data: {
+            proposal_id: 'PROP-1',
+            status: 'rejected',
+            status_badge: 'Rejected • Not approved for payroll',
+            notice: 'This proposal has been rejected and will not be applied to payroll.',
+          },
+        },
+      ],
       chips: [],
       state: {},
     });
@@ -152,6 +204,9 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
           action: 'reject',
         })
       );
+      expect(screen.getByText('Proposal rejected.')).toBeInTheDocument();
+      expect(screen.getByTestId('approval-disabled-note')).toHaveTextContent(/Proposal rejected. Action buttons disabled./i);
+      expect(screen.queryByRole('button', { name: /Reject proposal/i })).toBeNull();
     });
   });
 

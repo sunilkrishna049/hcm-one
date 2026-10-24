@@ -7,6 +7,7 @@ import { Composer } from './Composer';
 import { PanelHR, type PanelHRData } from './PanelHR';
 import { Shield } from 'lucide-react';
 import { getUserDisplayName } from '../../../utils/userDisplay';
+import { formatLocalTime } from '../../../utils/format';
 
 export interface ChatMessageTurn {
   id: string;
@@ -44,7 +45,7 @@ function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
     messages: [{ code, text }],
     cards: [],
     chips: [],
-    time: 'Just now',
+    time: formatLocalTime(new Date()),
   };
 }
 
@@ -84,7 +85,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
         id: `user-${Date.now()}`,
         type: 'user',
         text: msg,
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
       try {
@@ -109,7 +110,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
           cards: res.cards || [],
           chips: res.chips || [],
           state: res.state || {},
-          time: 'Just now',
+          time: formatLocalTime(new Date()),
         };
 
         setTurns([userTurn, assistantTurn]);
@@ -141,7 +142,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       id: `user-${Date.now()}`,
       type: 'user',
       text: text.trim(),
-      time: 'Just now',
+      time: formatLocalTime(new Date()),
     };
     setTurns((prev) => [...prev, userTurn]);
     setIsLoading(true);
@@ -166,7 +167,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
         cards: res.cards || [],
         chips: res.chips || [],
         state: res.state || {},
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
       setTurns((prev) => [...prev, assistantTurn]);
@@ -207,10 +208,40 @@ export const ChatHR: React.FC<ChatHRProps> = ({
         cards: res.cards || [],
         chips: res.chips || [],
         state: res.state || {},
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
-      setTurns((prev) => [...prev, assistantTurn]);
+      let disabledLabel: string | undefined;
+      if (['approve', 'approve-proposal', 'approve_proposal'].includes(actionName)) {
+        disabledLabel = 'Proposal approved. Action buttons disabled.';
+      } else if (['reject', 'reject-proposal', 'reject_proposal'].includes(actionName)) {
+        disabledLabel = 'Proposal rejected. Action buttons disabled.';
+      } else if (['edit', 'edit-proposal', 'edit_proposal'].includes(actionName)) {
+        disabledLabel = 'Proposal revised. Action buttons disabled.';
+      }
+
+      setTurns((prev) => {
+        let updated = prev;
+        if (disabledLabel) {
+          updated = prev.map((turn) => ({
+            ...turn,
+            cards: turn.cards?.map((card) => {
+              if (card.type === 'approval_card') {
+                return {
+                  ...card,
+                  data: {
+                    ...card.data,
+                    disabled: true,
+                    disabled_label: disabledLabel,
+                  },
+                };
+              }
+              return card;
+            }),
+          }));
+        }
+        return [...updated, assistantTurn];
+      });
       setActiveChips(res.chips || []);
       if (res.state?.panel) {
         setPanelData(res.state.panel);

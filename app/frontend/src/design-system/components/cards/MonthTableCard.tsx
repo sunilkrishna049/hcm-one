@@ -46,7 +46,7 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
               <th scope="col">Month</th>
               <th scope="col" style={{ textAlign: 'right' }}>Old Gross</th>
               <th scope="col" style={{ textAlign: 'right' }}>Revised Gross</th>
-              <th scope="col" style={{ textAlign: 'right' }}>Arrears Diff</th>
+              <th scope="col" style={{ textAlign: 'right' }}>Arrears</th>
               <th scope="col" style={{ textAlign: 'right' }}>Monthly TDS</th>
             </tr>
           </thead>
@@ -66,7 +66,7 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
                   </td>
                   <td className="tnum" data-label="Old Gross" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
                   <td className="tnum" data-label="Revised Gross" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
-                  <td className="tnum" data-label="Arrears Diff" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
+                  <td className="tnum" data-label="Arrears" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
                     {formatINR(m.diff)}
                   </td>
                   <td className="tnum" data-label="Monthly TDS" style={{ textAlign: 'right' }}>

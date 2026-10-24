@@ -348,7 +348,7 @@ class ChatRouter:
 
         pf_change_val = t["pf_change"]["employee"]["value"]
         pf_sentence = (
-            f"PF change is ₹{pf_change_val} because monthly basic pay exceeds the statutory PF wage ceiling "
+            f"PF change is ₹{pf_change_val} because monthly basic pay exceeds the PF wage ceiling "
             f"(₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str}; {rules_ver}), "
             f"keeping contributions capped before and after the revision."
         )
@@ -459,7 +459,7 @@ class ChatRouter:
                     "formulas": [
                         "Earned salary = monthly salary × paid days ÷ calendar days",
                         "Monthly arrears = revised earned gross − old earned gross",
-                        f"PF ceiling rule: PF change is ₹{pf_change_val} because monthly basic pay exceeds the statutory PF wage ceiling (₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str}; {rules_ver}).",
+                        f"PF ceiling rule: PF change is ₹{pf_change_val} because monthly basic pay exceeds the PF wage ceiling (₹{old_ceiling:,} until {old_date_str}, then ₹{new_ceiling:,} from {new_date_str}; {rules_ver}).",
                         f"Net Arrears = Gross Arrears ({format_inr(t['gross_arrears']['value'])}) − Employee PF Change ({format_inr(t['pf_change']['employee']['value'])}) − Estimated TDS Impact ({format_inr(t['tds_impact']['value'])}) = {format_inr(t['net_arrears']['value'])}"
                     ],
                     "rule_citations": [
@@ -1053,7 +1053,7 @@ class ChatRouter:
                         "net_change": net_change,
                         "reasons": [
                             {"cause": "Loss of Pay (LOP)", "detail": "3 days unpaid leave", "amount": lop_amt},
-                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
+                            {"cause": "PF ceiling change", "detail": "Revised ceiling from 17 Sep", "amount": pf_amt}
                         ],
                         "tds_change": tds_chg
                     }
@@ -1076,7 +1076,7 @@ class ChatRouter:
                     "formulas": [
                         f"Take-home pay = earned gross − total employee deductions = {format_inr(after_gross)} − {format_inr(after_tot_ded)} = {format_inr(after_net)} (change: {format_inr(net_change)})",
                         f"Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = {format_inr(before_gross)} × 3 ÷ 30 = {format_inr(gross_diff)}",
-                        f"PF deduction: Increased from {format_inr(before_pf)} to {format_inr(after_pf)} (+{format_inr(pf_diff)}) due to statutory ceiling change on 17 Sep"
+                        f"PF deduction: Increased from {format_inr(before_pf)} to {format_inr(after_pf)} (+{format_inr(pf_diff)}) due to ceiling change on 17 Sep"
                     ],
                     "rule_citations": [
                         "Calendar-month divisor: Paid days equal calendar days minus LOP",
@@ -1132,7 +1132,7 @@ class ChatRouter:
                     "data": {
                         "reasons": [
                             {"cause": "Prior employer declaration", "detail": "Declared income added to yearly projection", "amount": prior_tds_amt},
-                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
+                            {"cause": "PF ceiling change", "detail": "Revised ceiling from 17 Sep", "amount": pf_amt}
                         ]
                     }
                 }
@@ -1209,7 +1209,7 @@ class ChatRouter:
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "reasons": [
-                            {"cause": "PF ceiling change", "detail": "Revised statutory ceiling from 17 Sep", "amount": pf_amt}
+                            {"cause": "PF ceiling change", "detail": "Revised ceiling from 17 Sep", "amount": pf_amt}
                         ]
                     }
                 }
@@ -1411,7 +1411,6 @@ class ChatRouter:
                     "id": f"card-faq-{faq_entry['id']}",
                     "type": "faq_answer",
                     "title": faq_entry.get("question", "FAQ Answer"),
-                    "certainty": "Complete for this scope",
                     "data": {
                         "id": faq_entry["id"],
                         "category": faq_entry["category"],
@@ -1474,19 +1473,32 @@ class ChatRouter:
             raise he
 
         approver_name = user.get("name", "Anita Desai")
-        approved_time = datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC")
-        status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name} at {approved_time}"
+        approved_time = datetime.now(timezone.utc).isoformat()
+        status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name}"
+
+        scope_base = "Priya Sharma · Apr–Sep 2026"
+        if s_num == 2:
+            scope_base = "Arjun Rao · Apr–Sep 2026"
+        elif s_num == 3:
+            scope_base = "Sneha Kulkarni · Apr–Sep 2026"
+        elif s_num == 4:
+            scope_base = "Vikram Malhotra · Apr–Sep 2026"
+        elif s_num == 5:
+            scope_base = "Ananya Sen · Apr–Sep 2026"
+        elif s_num == 6:
+            scope_base = "Rahul Verma · Settlement"
+        elif s_num == 7:
+            scope_base = "Lakshmi Reddy · Settlement"
+        elif s_num == 8:
+            scope_base = "Amit Patel · Settlement"
 
         return {
-            "messages": [
-                {"code": "C04", "text": get_message("C04")}
-            ],
+            "messages": [],
             "cards": [
                 {
                     "id": "card-approval-success",
                     "type": "approval_card",
                     "title": "Approval",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "proposal_id": prop_id,
                         "status": "approved",
@@ -1495,8 +1507,7 @@ class ChatRouter:
                         "approver": approver_name,
                         "approved_at": approved_time,
                         "status_badge": status_badge,
-                        "notice": get_message("C04"),
-                        "scope_label": "Priya Sharma · Apr–Sep 2026"
+                        "scope_label": f"Approved: {scope_base}"
                     }
                 }
             ],
@@ -1593,7 +1604,6 @@ class ChatRouter:
                     "id": f"card-reject-{prop_id}",
                     "type": "approval_card",
                     "title": "Proposal Rejected",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "proposal_id": prop_id,
                         "status": "rejected",
@@ -1638,7 +1648,6 @@ class ChatRouter:
                     "id": "card-query-draft",
                     "type": "query_draft",
                     "title": "Review Query Draft",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "draft": draft,
                         "notice": get_message("C12"),
@@ -1693,7 +1702,6 @@ class ChatRouter:
                     "id": "card-send-conf",
                     "type": "send_confirmation",
                     "title": "Query Sent",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": sent_query["query_id"],
                         "status": "Sent",
@@ -1751,7 +1759,6 @@ class ChatRouter:
                     "id": f"card-appended-{q['query_id']}",
                     "type": "query_status",
                     "title": "Query Updated",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": q["status"],
@@ -1805,7 +1812,6 @@ class ChatRouter:
                     "id": f"card-status-{latest['query_id']}",
                     "type": "query_status",
                     "title": "Payroll Query Status",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": latest["query_id"],
                         "status": st,
@@ -1840,7 +1846,6 @@ class ChatRouter:
                     "id": "card-hr-queries",
                     "type": "query_status",
                     "title": "Pending Queries",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "queries": queries
                     }
@@ -1872,7 +1877,6 @@ class ChatRouter:
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
                     "title": "Payroll Query In Review",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "In review",
@@ -1903,7 +1907,6 @@ class ChatRouter:
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
                     "title": "Query Reply Recorded",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": q.get("status", "In review"),
@@ -1933,7 +1936,6 @@ class ChatRouter:
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
                     "title": "Query Resolved",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "Resolved",
@@ -1964,7 +1966,6 @@ class ChatRouter:
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
                     "title": "Resolution Disputed",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "In review",
@@ -2000,7 +2001,6 @@ class ChatRouter:
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
                     "title": "Query Closed",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "Closed",

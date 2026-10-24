@@ -7,6 +7,7 @@ import { Composer } from './Composer';
 import { SheetEMP, type SheetEMPData } from './SheetEMP';
 import { User } from 'lucide-react';
 import { getUserDisplayName } from '../../../utils/userDisplay';
+import { formatLocalTime } from '../../../utils/format';
 
 export interface ChatMessageTurn {
   id: string;
@@ -44,7 +45,7 @@ function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
     messages: [{ code, text }],
     cards: [],
     chips: [],
-    time: 'Just now',
+    time: formatLocalTime(new Date()),
   };
 }
 
@@ -84,7 +85,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         id: `user-${Date.now()}`,
         type: 'user',
         text: msg,
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
       try {
@@ -109,7 +110,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           cards: res.cards || [],
           chips: res.chips || [],
           state: res.state || {},
-          time: 'Just now',
+          time: formatLocalTime(new Date()),
         };
 
         setTurns([userTurn, assistantTurn]);
@@ -141,7 +142,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       id: `user-${Date.now()}`,
       type: 'user',
       text: text.trim(),
-      time: 'Just now',
+      time: formatLocalTime(new Date()),
     };
     setTurns((prev) => [...prev, userTurn]);
     setIsLoading(true);
@@ -166,7 +167,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         cards: res.cards || [],
         chips: res.chips || [],
         state: res.state || {},
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
       setTurns((prev) => [...prev, assistantTurn]);
@@ -207,7 +208,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         cards: res.cards || [],
         chips: res.chips || [],
         state: res.state || {},
-        time: 'Just now',
+        time: formatLocalTime(new Date()),
       };
 
       setTurns((prev) => [...prev, assistantTurn]);

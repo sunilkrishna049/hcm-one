@@ -36,22 +36,20 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
           return Promise.resolve(
             new Response(
               JSON.stringify({
-                messages: [{ code: 'C04', text: 'Approving records this version and the selected scope as ready for payroll.' }],
+                messages: [],
                 cards: [
                   {
                     id: 'card-approval-approved-1',
                     type: 'approval_card',
                     title: 'Approval',
-                    certainty: 'Complete for this scope',
                     data: {
-                      scope_label: 'Priya Sharma · Apr–Sep 2026',
-                      notice: 'Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.',
+                      scope_label: 'Approved: Priya Sharma · Apr–Sep 2026',
                       actions: [],
                       status: 'approved',
                       proposal_id: 'PROP-SCENARIO-1',
                       version: 1,
                       approver: 'HR01',
-                      approved_at: '2026-10-24 12:00:00',
+                      approved_at: '2026-10-24T12:00:00Z',
                     },
                   },
                 ],

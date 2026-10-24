@@ -57,7 +57,7 @@ SCENARIOS_META = [
         "scenario_num": 2,
         "scenario_id": "scenario-02",
         "title": "Hike across PF ceiling change",
-        "description": "Employee whose back-dated hike spans a statutory PF wage ceiling change on 2026-09-17",
+        "description": "Employee whose back-dated hike spans a PF wage ceiling change on 2026-09-17",
         "role": "HR Admin",
         "screen_id": "SCR-02",
         "employee_id": "E02",

@@ -10,15 +10,15 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: var(--size-min-interactive);
-  padding: 0 var(--space-4);
+  min-height: var(--button-height-desktop);
+  padding: var(--button-padding-y) var(--button-padding-x);
   font-family: var(--font-sans);
   font-size: var(--font-size-table);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-button);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: all 0.15s ease;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -33,10 +33,13 @@
 .hcm-button-primary {
   background-color: var(--color-brand-accent);
   color: var(--color-brand-text-on-accent);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .hcm-button-primary:hover:not(:disabled) {
   background-color: var(--color-brand-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .hcm-button-secondary {
@@ -67,7 +70,7 @@
 }
 
 .hcm-button-danger:hover:not(:disabled) {
-  background-color: rgba(248, 113, 113, 0.2);
+  background-color: var(--color-status-error-hover);
 }
 
 .hcm-button-ghost {
@@ -422,7 +425,7 @@
 
 /* --- Radix Dialog / Drawer Styles --- */
 .hcm-dialog-overlay {
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--color-backdrop-overlay);
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -652,7 +655,7 @@
 }
 
 .hcm-user-bubble {
-  background-color: var(--color-bubble-user-bg, #1E293B);
+  background-color: var(--color-bubble-user-bg);
   border: 1px solid var(--color-divider);
   border-radius: 16px 16px 4px 16px;
   padding: var(--space-3) var(--space-4);
@@ -662,7 +665,7 @@
 .hcm-user-bubble-text {
   font-size: 15px;
   line-height: 22px;
-  color: var(--color-bubble-user-text, #F8FAFC);
+  color: var(--color-bubble-user-text);
   margin: 0;
   white-space: pre-wrap;
 }
@@ -710,7 +713,7 @@
 }
 
 .hcm-assistant-bubble {
-  background-color: var(--color-bubble-assistant-bg, #161F30);
+  background-color: var(--color-bubble-assistant-bg);
   border: 1px solid var(--color-divider);
   border-radius: 4px 16px 16px 16px;
   padding: var(--space-3) var(--space-4);
@@ -818,11 +821,11 @@
 }
 
 .hcm-composer-send-btn {
-  background-color: var(--color-brand-button-bg, #0F766E);
-  color: var(--color-brand-text-on-accent, #FFFFFF);
+  background-color: var(--color-brand-button-bg);
+  color: var(--color-brand-text-on-accent);
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -833,7 +836,7 @@
 }
 
 .hcm-composer-send-btn:hover:not(:disabled) {
-  background-color: var(--color-brand-button-hover, #115E59);
+  background-color: var(--color-brand-button-hover);
 }
 
 .hcm-composer-send-btn:disabled {
@@ -845,7 +848,7 @@
 /* --- Side Panel (PANEL-HR) & Bottom Sheet (SHEET-EMP) Shared Styles --- */
 .hcm-panel-backdrop,
 .hcm-sheet-overlay {
-  background-color: rgba(11, 15, 25, 0.7);
+  background-color: var(--color-backdrop-overlay);
   position: fixed;
   inset: 0;
   z-index: 45;
@@ -1263,6 +1266,7 @@
   }
 
   /* Touch targets >= 44px */
+  .hcm-button,
   .hcm-btn-approve,
   .hcm-btn-edit,
   .hcm-btn-reject,
@@ -1270,7 +1274,17 @@
   .hcm-btn-secondary,
   .hcm-panel-close-btn,
   .hcm-sheet-close-btn {
-    min-height: var(--size-touch-target-min, 44px);
+    min-height: var(--button-height-mobile, 44px);
+  }
+
+  .hcm-approval-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hcm-approval-actions .hcm-button {
+    width: 100%;
+    min-height: var(--button-height-mobile, 44px);
   }
 
   .hcm-suggestion-chip {
@@ -1359,9 +1373,9 @@
 }
 
 .hcm-badge-sent {
-  background-color: rgba(96, 165, 250, 0.12);
-  color: #60A5FA;
-  border-color: rgba(96, 165, 250, 0.3);
+  background-color: var(--color-status-sent-surface);
+  color: var(--color-status-sent-text);
+  border-color: var(--color-status-sent-border);
 }
 
 .hcm-badge-in_review {

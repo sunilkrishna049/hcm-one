@@ -323,11 +323,11 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
       const allowedNumbers = extractNumbersFromObject(sc);
       extractNumbersFromObject(fixture, allowedNumbers);
 
-      // Add allowed non-payroll UI numbers: year, month numbers, scenario ids, versions
+      // Add allowed non-payroll UI numbers: year, month numbers, scenario ids, versions, calendar dates, clock hours/minutes
       const standardAllowed = new Set([
         2025, 2026, 2027, // years
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, // dates, scenarios, indices
-        27, 28, 30, 31, // days in month
+        ...Array.from({ length: 31 }, (_, i) => i + 1), // dates / days 1..31
+        ...Array.from({ length: 60 }, (_, i) => i), // clock hours / minutes 0..59
         100, // percentage max
         390, 1440, // frame widths
       ]);

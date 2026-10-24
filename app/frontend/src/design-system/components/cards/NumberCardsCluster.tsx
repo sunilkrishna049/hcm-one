@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatINR } from '../../../utils/format';
+import { Info } from 'lucide-react';
 
 interface NumberCardsClusterProps {
   card: {
@@ -78,7 +79,8 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
           )}
 
           {d.earnings_status && (
-            <div className="hcm-info-banner">
+            <div className="hcm-info-banner" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Info size={14} style={{ flexShrink: 0, color: 'var(--color-brand-accent)' }} />
               <span>{d.earnings_status}</span>
             </div>
           )}
@@ -103,10 +105,11 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
         </div>
       )}
 
-      {/* PF Ceiling Plain Explanation (Requirement 13) */}
+      {/* PF Ceiling Plain Explanation */}
       {pfNote && (
-        <div className="hcm-card-flag-note" style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
-          <span>ℹ {pfNote}</span>
+        <div className="hcm-card-flag-note" style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
+          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-brand-accent)' }} />
+          <span>{pfNote}</span>
         </div>
       )}
 
@@ -114,11 +117,11 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
       {(d.august_diff !== undefined || d.september_diff !== undefined) && (
         <div className="hcm-secondary-grid">
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">August Arrears Diff</span>
+            <span className="hcm-stat-label">August Arrears</span>
             <span className="hcm-stat-value tnum">{formatINR(d.august_diff)}</span>
           </div>
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">September Arrears Diff</span>
+            <span className="hcm-stat-label">September Arrears</span>
             <span className="hcm-stat-value tnum">{formatINR(d.september_diff)}</span>
           </div>
         </div>
@@ -126,8 +129,9 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
 
       {/* Footnote flag if present */}
       {d.estimate_flag && (
-        <div className="hcm-card-flag-note" style={{ marginTop: '8px' }}>
-          <span>ℹ {d.estimate_flag}</span>
+        <div className="hcm-card-flag-note" style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '8px' }}>
+          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-brand-accent)' }} />
+          <span>{d.estimate_flag}</span>
         </div>
       )}
     </div>

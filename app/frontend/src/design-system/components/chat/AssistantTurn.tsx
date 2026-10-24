@@ -2,6 +2,7 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { CardRenderer } from '../cards/CardRenderer';
 import { CertaintyLabel } from '../CertaintyLabel';
+import { formatLocalTime } from '../../../utils/format';
 
 interface AssistantMessage {
   code: string;
@@ -29,7 +30,7 @@ interface AssistantTurnProps {
 export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   messages,
   cards = [],
-  time = 'Just now',
+  time,
   onShowCalculation,
   onApprove,
   onEdit,
@@ -43,8 +44,14 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   onCloseQuery,
   onActionClick,
 }) => {
-  // Epistemic certainty shown once per assistant reply
-  const turnCertainty = cards.find((c) => c.certainty)?.certainty;
+  // Epistemic certainty shown once per assistant reply:
+  // Certainty labels appear only on replies that show calculated amounts.
+  const hasCalculatedAmounts = cards.some((c) =>
+    ['number_hero', 'number_cards', 'month_table', 'component_list', 'reason_list', 'proposal_summary'].includes(c.type)
+  );
+  const turnCertainty = hasCalculatedAmounts ? cards.find((c) => c.certainty)?.certainty : undefined;
+
+  const displayTime = time || formatLocalTime(new Date());
 
   // Ordering: Lead sentences (e.g. C30) first, then cards, then C27 follow-up offer
   const leadMessages = messages.filter((m) => m.code !== 'C27');
@@ -58,7 +65,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
             <Sparkles size={14} />
           </div>
           <span className="hcm-assistant-sender-tag">HCM One Assistant</span>
-          <span className="hcm-message-timestamp">{time}</span>
+          <span className="hcm-message-timestamp">{displayTime}</span>
         </div>
         {turnCertainty && (
           <CertaintyLabel certainty={turnCertainty} className="hcm-turn-certainty" />
