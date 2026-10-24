@@ -139,7 +139,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     expect(screen.getByText('Month-by-Month Proof')).toBeInTheDocument();
 
     // Check table data-labels and month cell
-    expect(screen.getByText('04')).toBeInTheDocument();
+    expect(screen.getByText('Apr')).toBeInTheDocument();
 
     // Close panel
     const closeBtn = screen.getByTestId('panel-close-btn');

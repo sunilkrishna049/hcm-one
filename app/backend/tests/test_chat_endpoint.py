@@ -2,12 +2,16 @@
 Verifies all 13 BRD v1.2 scenarios, 5 FAQ questions, prompt injection, cross-employee data protection,
 out of scope queries, and unknown text fallback per STEP 1.
 """
+import json
+from pathlib import Path
+import re
 import pytest
 from fastapi.testclient import TestClient
 
 from app.backend.main import app
 from app.backend.auth import set_active_demo_user
 from app.backend.lifecycle import lifecycle
+from app.backend.chat_router import ChatRouter
 
 client = TestClient(app)
 
@@ -401,3 +405,133 @@ def test_unknown_text_fallback():
     assert data["messages"][0]["code"] == "FALLBACK"
     assert "cannot answer that question in this demo" in data["messages"][0]["text"]
     assert len(data["chips"]) > 0
+
+
+def test_chat_scenario_fixtures_freshness():
+    """Fixture freshness test: fails if chat_scenario_fixtures.json differs from the live router output for any scenario."""
+    fixtures_path = Path(__file__).resolve().parents[3] / "app" / "frontend" / "src" / "tests" / "chat_scenario_fixtures.json"
+    assert fixtures_path.exists(), f"Fixtures file missing at {fixtures_path}"
+
+    with open(fixtures_path, "r", encoding="utf-8") as f:
+        saved_fixtures = json.load(f)
+
+    lifecycle.reset_demo()
+    router = ChatRouter()
+
+    canonical_scenarios = [
+        (1, 'HR01', "Prepare Priya Sharma's pending back-dated hike."),
+        (2, 'HR01', "Prepare Arjun Rao's pending back-dated hike."),
+        (3, 'HR01', "Prepare Kavya Iyer's pending back-dated hike."),
+        (4, 'HR01', "Prepare bonus proposal for Engineering and Sales."),
+        (5, 'HR01', "Prepare bonus proposal for Meera Nair."),
+        (6, 'HR01', "Prepare settlement proposal for Rahul Verma."),
+        (7, 'HR01', "Prepare settlement proposal for Lakshmi Reddy."),
+        (8, 'HR01', "Prepare settlement proposal for Imran Khan."),
+        (9, 'USER-E05', "Why is my September salary lower than August?"),
+        (10, 'USER-E06', "Why did my TDS increase in September?"),
+        (11, 'USER-E16', "Why did my take-home pay decrease in September when my gross did not change?"),
+        (12, 'HR02', "Show me Priya Sharma's salary breakdown."),
+        (13, 'HR01', "Review settlement calculation for Imran Khan.")
+    ]
+
+    for s_num, user_id, message in canonical_scenarios:
+        key = str(s_num)
+        assert key in saved_fixtures, f"Scenario {key} missing from chat_scenario_fixtures.json"
+
+        live_res = router.handle_chat(user_id=user_id, message=message, context={'scenario_num': s_num})
+        saved_res = saved_fixtures[key]
+
+        assert live_res == saved_res, (
+            f"Fixture freshness mismatch for Scenario {s_num}!\n"
+            f"Run 'python scratch/export_fixtures.py' to regenerate fixtures."
+        )
+
+
+def test_employee_names_in_cards_and_panel_match_employees_json():
+    """Verify that every employee name shown in any card or side panel matches employees.json for that ID."""
+    employees_path = Path(__file__).resolve().parents[3] / "data" / "mock" / "employees.json"
+    assert employees_path.exists(), f"employees.json missing at {employees_path}"
+
+    with open(employees_path, "r", encoding="utf-8") as f:
+        employees_list = json.load(f)
+    emp_map = {e["employee_id"]: e["name"] for e in employees_list}
+
+    # Specifically check E04 and E07 per requirement
+    assert emp_map.get("E04") == "Rohan Mehta"
+    assert emp_map.get("E07") == "Sneha Kulkarni"
+
+    lifecycle.reset_demo()
+    router = ChatRouter()
+
+    canonical_scenarios = [
+        (1, 'HR01', "Prepare Priya Sharma's pending back-dated hike."),
+        (2, 'HR01', "Prepare Arjun Rao's pending back-dated hike."),
+        (3, 'HR01', "Prepare Kavya Iyer's pending back-dated hike."),
+        (4, 'HR01', "Prepare bonus proposal for Engineering and Sales."),
+        (5, 'HR01', "Prepare bonus proposal for Meera Nair."),
+        (6, 'HR01', "Prepare settlement proposal for Rahul Verma."),
+        (7, 'HR01', "Prepare settlement proposal for Lakshmi Reddy."),
+        (8, 'HR01', "Prepare settlement proposal for Imran Khan."),
+        (9, 'USER-E05', "Why is my September salary lower than August?"),
+        (10, 'USER-E06', "Why did my TDS increase in September?"),
+        (11, 'USER-E16', "Why did my take-home pay decrease in September when my gross did not change?"),
+        (12, 'HR02', "Show me Priya Sharma's salary breakdown."),
+        (13, 'HR01', "Review settlement calculation for Imran Khan.")
+    ]
+
+    for s_num, user_id, message in canonical_scenarios:
+        res = router.handle_chat(user_id=user_id, message=message, context={'scenario_num': s_num})
+
+        # Check all cards
+        for card in res.get("cards", []):
+            d = card.get("data", {})
+
+            # Check single employee_id & employee_name
+            if "employee_id" in d and "employee_name" in d:
+                eid = d["employee_id"]
+                name = d["employee_name"]
+                if eid in emp_map:
+                    assert name == emp_map[eid], (
+                        f"Card {card['id']} in Scenario {s_num}: name '{name}' does not match '{emp_map[eid]}' for {eid}"
+                    )
+
+            # Check employee_names dictionary (e.g. bonus card)
+            if "employee_names" in d:
+                for eid, name in d["employee_names"].items():
+                    if eid in emp_map:
+                        assert name == emp_map[eid], (
+                            f"Card {card['id']} in Scenario {s_num}: employee_names['{eid}'] is '{name}', expected '{emp_map[eid]}'"
+                        )
+
+        # Check side panel formulas
+        panel = res.get("state", {}).get("panel")
+        if panel and "formulas" in panel:
+            for formula in panel["formulas"]:
+                # Match formulas like "E04 (Rohan Mehta): ..."
+                match = re.search(r"\b(E\d\d)\s*\(([^)]+)\)", formula)
+                if match:
+                    eid = match.group(1)
+                    name = match.group(2).strip()
+                    clean_name = name.split("(")[0].strip()
+                    if eid in emp_map:
+                        assert clean_name == emp_map[eid], (
+                            f"Panel formula '{formula}' in Scenario {s_num}: name '{clean_name}' does not match '{emp_map[eid]}' for {eid}"
+                        )
+
+    # Specific Scenario 4 checks for bonus card and side panel
+    res_s4 = router.handle_chat(user_id="HR01", message="Prepare bonus proposal for Engineering and Sales.", context={'scenario_num': 4})
+    bonus_card = next(c for c in res_s4["cards"] if c["id"] == "card-bonus-s4")
+    card_names = bonus_card["data"]["employee_names"]
+    assert card_names["E04"] == "Rohan Mehta"
+    assert card_names["E07"] == "Sneha Kulkarni"
+    assert card_names["E08"] == "Vikram Singh"
+
+    formulas_s4 = res_s4["state"]["panel"]["formulas"]
+    formulas_text = "\n".join(formulas_s4)
+    assert "E04 (Rohan Mehta)" in formulas_text
+    assert "Rohan Joshi" not in formulas_text
+    assert "E07 (Sneha Kulkarni)" in formulas_text
+    assert "Ananya Sen" not in formulas_text
+    assert "E08 (Vikram Singh)" in formulas_text
+    assert "Vikramaditya Verma" not in formulas_text
+

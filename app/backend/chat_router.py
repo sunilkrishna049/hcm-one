@@ -18,6 +18,20 @@ from .lifecycle import lifecycle
 RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
 _RULES_CACHE: Dict[str, dict] = {}
 
+EMPLOYEES_PATH = Path(__file__).resolve().parents[2] / "data" / "mock" / "employees.json"
+try:
+    if EMPLOYEES_PATH.exists():
+        _emp_data = json.loads(EMPLOYEES_PATH.read_text(encoding="utf-8"))
+        EMPLOYEE_NAMES: Dict[str, str] = {e["employee_id"]: e["name"] for e in _emp_data}
+    else:
+        EMPLOYEE_NAMES = {}
+except Exception:
+    EMPLOYEE_NAMES = {}
+
+
+def get_employee_name(employee_id: str) -> str:
+    return EMPLOYEE_NAMES.get(employee_id, employee_id)
+
 
 def get_rule_file(filename: str) -> dict:
     if filename not in _RULES_CACHE:
@@ -707,7 +721,7 @@ class ChatRouter:
             display_period = req.get("period", "Q2 2026-27")
             card_title = "Q2 Sales Incentive Summary"
             emp_formulas = [
-                f"{e['employee_id']}: Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
+                f"{e['employee_id']} ({get_employee_name(e['employee_id'])}): Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
                 for e in req.get("employees", [])
             ]
         else:
@@ -721,12 +735,12 @@ class ChatRouter:
             e07_amt = emp_map.get("E07", {}).get("amount", {}).get("value")
             e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value", 0)
             emp_formulas = [
-                f"E01 (Priya Sharma): Annual bonus {format_inr(e01_amt)}",
-                f"E03 (Kavya Iyer): Annual bonus {format_inr(e03_amt)} (tax incomplete)",
-                f"E04 (Rohan Joshi): Sales bonus {format_inr(e04_amt)}",
-                f"E07 (Ananya Sen): Joiner proration {format_inr(e07_amt)}",
-                f"E08 (Vikramaditya Verma): Notice exclusion: {format_inr(e08_amt)} (Ineligible)",
-                "E09 (Meera Nair): Missing performance rating (Needs input)"
+                f"E01 ({get_employee_name('E01')}): Annual bonus {format_inr(e01_amt)}",
+                f"E03 ({get_employee_name('E03')}): Annual bonus {format_inr(e03_amt)} (tax incomplete)",
+                f"E04 ({get_employee_name('E04')}): Annual bonus {format_inr(e04_amt)}",
+                f"E07 ({get_employee_name('E07')}): Joiner proration {format_inr(e07_amt)}",
+                f"E08 ({get_employee_name('E08')}): Notice exclusion: {format_inr(e08_amt)} (Ineligible)",
+                f"E09 ({get_employee_name('E09')}): Missing performance rating (Needs input)"
             ]
 
         # Approved sentence C32: "This is a proposal for the recorded {bonus type} for {period}."
@@ -753,6 +767,10 @@ class ChatRouter:
                         "eligible": eligible_list,
                         "not_eligible": not_eligible_list,
                         "needs_input": needs_input_list,
+                        "employee_names": {
+                            e["employee_id"]: get_employee_name(e["employee_id"])
+                            for e in req.get("employees", [])
+                        },
                         "status": "Needs HR decision"
                     }
                 },
@@ -1549,21 +1567,21 @@ class ChatRouter:
         approved_time = datetime.now(timezone.utc).isoformat()
         status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name}"
 
-        scope_base = "Priya Sharma · Apr–Sep 2026"
+        scope_base = f"{get_employee_name('E01')} · Apr–Sep 2026"
         if s_num == 2:
-            scope_base = "Arjun Rao · Apr–Sep 2026"
+            scope_base = f"{get_employee_name('E02')} · Apr–Sep 2026"
         elif s_num == 3:
-            scope_base = "Sneha Kulkarni · Apr–Sep 2026"
+            scope_base = f"{get_employee_name('E03')} · Apr–Sep 2026"
         elif s_num == 4:
-            scope_base = "Vikram Malhotra · Apr–Sep 2026"
+            scope_base = "Engineering & Sales · FY 2025-26 Bonus"
         elif s_num == 5:
-            scope_base = "Ananya Sen · Apr–Sep 2026"
+            scope_base = f"{get_employee_name('E09')} · FY 2025-26 Bonus"
         elif s_num == 6:
-            scope_base = "Rahul Verma · Settlement"
+            scope_base = f"{get_employee_name('E10')} · Settlement"
         elif s_num == 7:
-            scope_base = "Lakshmi Reddy · Settlement"
+            scope_base = f"{get_employee_name('E11')} · Settlement"
         elif s_num == 8:
-            scope_base = "Amit Patel · Settlement"
+            scope_base = f"{get_employee_name('E12')} · Settlement"
 
         return {
             "messages": [],

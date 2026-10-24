@@ -30,6 +30,7 @@ interface ProposalSummaryCardProps {
       rating?: string | null;
       bonus_amount?: number | null;
       due_date?: string;
+      employee_names?: Record<string, string>;
     };
   };
 }
@@ -122,28 +123,37 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
                 <div style={{ fontSize: '13px', marginBottom: 'var(--space-2)' }}>
                   <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Eligible ({d.eligible.length}): </span>
                   <span>
-                    {d.eligible.map((id: string, idx: number) => (
-                      <span key={id}>
-                        {idx > 0 && ', '}
-                        <strong className="tnum">{id}</strong>
-                        {id === 'E03' && (
-                          <span style={{ color: 'var(--color-status-warning-text)', marginLeft: '4px', fontSize: '12px' }}>(tax incomplete)</span>
-                        )}
-                      </span>
-                    ))}
+                    {d.eligible.map((id: string, idx: number) => {
+                      const name = d.employee_names?.[id];
+                      return (
+                        <span key={id}>
+                          {idx > 0 && ', '}
+                          <strong className="tnum">{id}</strong>
+                          {name && <span> ({name})</span>}
+                          {id === 'E03' && (
+                            <span style={{ color: 'var(--color-status-warning-text)', marginLeft: '4px', fontSize: '12px' }}>(tax incomplete)</span>
+                          )}
+                        </span>
+                      );
+                    })}
                   </span>
                 </div>
                 {d.not_eligible && d.not_eligible.length > 0 && (
                   <div style={{ fontSize: '13px', marginBottom: 'var(--space-2)' }}>
                     <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Not eligible ({d.not_eligible.length}): </span>
                     <span>
-                      {d.not_eligible.map((item: any, idx: number) => (
-                        <span key={idx}>
-                          {idx > 0 && ', '}
-                          <strong className="tnum">{typeof item === 'string' ? item : item.employee_id}</strong>
-                          {typeof item === 'object' && item.reason && ` (${item.reason})`}
-                        </span>
-                      ))}
+                      {d.not_eligible.map((item: any, idx: number) => {
+                        const id = typeof item === 'string' ? item : item.employee_id;
+                        const name = d.employee_names?.[id];
+                        return (
+                          <span key={idx}>
+                            {idx > 0 && ', '}
+                            <strong className="tnum">{id}</strong>
+                            {name && <span> ({name})</span>}
+                            {typeof item === 'object' && item.reason && ` (${item.reason})`}
+                          </span>
+                        );
+                      })}
                     </span>
                   </div>
                 )}
@@ -151,13 +161,18 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
                   <div style={{ fontSize: '13px' }}>
                     <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Needs input ({d.needs_input.length}): </span>
                     <span>
-                      {d.needs_input.map((item: any, idx: number) => (
-                        <span key={idx}>
-                          {idx > 0 && ', '}
-                          <strong className="tnum">{typeof item === 'string' ? item : item.employee_id}</strong>
-                          {typeof item === 'object' && item.reason && ` (${item.reason})`}
-                        </span>
-                      ))}
+                      {d.needs_input.map((item: any, idx: number) => {
+                        const id = typeof item === 'string' ? item : item.employee_id;
+                        const name = d.employee_names?.[id];
+                        return (
+                          <span key={idx}>
+                            {idx > 0 && ', '}
+                            <strong className="tnum">{id}</strong>
+                            {name && <span> ({name})</span>}
+                            {typeof item === 'object' && item.reason && ` (${item.reason})`}
+                          </span>
+                        );
+                      })}
                     </span>
                   </div>
                 )}

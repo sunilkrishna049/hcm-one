@@ -38,7 +38,8 @@
           "arrears_only_tds_impact": 1852,
           "recurring_salary_tds_impact": 1872,
           "payment_month": "2026-10",
-          "estimate_flag": "Estimated TDS if approved and paid in October 2026 payroll"
+          "estimate_flag": "Estimated TDS if approved and paid in October 2026 payroll",
+          "pf_rule": "PF change is ₹0 because monthly basic pay exceeds the PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹25,000 from 17 Sep 2026; Northwind demo rules v1), keeping contributions capped before and after the revision."
         }
       },
       {
@@ -54,7 +55,8 @@
               "revised_gross": 132000,
               "diff": 12000,
               "tds_impact": 312,
-              "paid_days": 30
+              "paid_days": 30,
+              "lop_days": 0
             },
             {
               "month": "2026-05",
@@ -62,7 +64,8 @@
               "revised_gross": 132000,
               "diff": 12000,
               "tds_impact": 312,
-              "paid_days": 31
+              "paid_days": 31,
+              "lop_days": 0
             },
             {
               "month": "2026-06",
@@ -70,7 +73,8 @@
               "revised_gross": 123200,
               "diff": 11200,
               "tds_impact": 292,
-              "paid_days": 28
+              "paid_days": 28,
+              "lop_days": 2
             },
             {
               "month": "2026-07",
@@ -78,7 +82,8 @@
               "revised_gross": 132000,
               "diff": 12000,
               "tds_impact": 312,
-              "paid_days": 31
+              "paid_days": 31,
+              "lop_days": 0
             },
             {
               "month": "2026-08",
@@ -86,7 +91,8 @@
               "revised_gross": 132000,
               "diff": 12000,
               "tds_impact": 312,
-              "paid_days": 31
+              "paid_days": 31,
+              "lop_days": 0
             },
             {
               "month": "2026-09",
@@ -94,7 +100,8 @@
               "revised_gross": 132000,
               "diff": 12000,
               "tds_impact": 312,
-              "paid_days": 30
+              "paid_days": 30,
+              "lop_days": 0
             }
           ],
           "total_gross_arrears": 71200
@@ -103,10 +110,10 @@
       {
         "id": "card-approval-s1",
         "type": "approval_card",
-        "title": "HR Authorization",
+        "title": "Approval",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Priya Sharma (E01) • 6 affected months (2026-04 to 2026-09)",
+          "scope_label": "Priya Sharma · Apr–Sep 2026",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -121,13 +128,6 @@
     "chips": [
       {
         "label": "Show calculation",
-        "action": "show-calculation",
-        "payload": {
-          "scenario_num": 1
-        }
-      },
-      {
-        "label": "View full month breakdown",
         "action": "show-calculation",
         "payload": {
           "scenario_num": 1
@@ -147,72 +147,93 @@
         "months": [
           {
             "month": "2026-04",
+            "short_month": "Apr",
             "old_gross": 120000,
             "revised_gross": 132000,
             "diff": 12000,
             "pf_change": 0,
             "tds_impact": 312,
-            "paid_days": 30
+            "paid_days": 30,
+            "lop_days": 0,
+            "formula": "Earned = revised × 30 ÷ 30"
           },
           {
             "month": "2026-05",
+            "short_month": "May",
             "old_gross": 120000,
             "revised_gross": 132000,
             "diff": 12000,
             "pf_change": 0,
             "tds_impact": 312,
-            "paid_days": 31
+            "paid_days": 31,
+            "lop_days": 0,
+            "formula": "Earned = revised × 31 ÷ 31"
           },
           {
             "month": "2026-06",
+            "short_month": "Jun",
             "old_gross": 112000,
             "revised_gross": 123200,
             "diff": 11200,
             "pf_change": 0,
             "tds_impact": 292,
-            "paid_days": 28
+            "paid_days": 28,
+            "lop_days": 2,
+            "formula": "Earned = revised × 28 ÷ 30"
           },
           {
             "month": "2026-07",
+            "short_month": "Jul",
             "old_gross": 120000,
             "revised_gross": 132000,
             "diff": 12000,
             "pf_change": 0,
             "tds_impact": 312,
-            "paid_days": 31
+            "paid_days": 31,
+            "lop_days": 0,
+            "formula": "Earned = revised × 31 ÷ 31"
           },
           {
             "month": "2026-08",
+            "short_month": "Aug",
             "old_gross": 120000,
             "revised_gross": 132000,
             "diff": 12000,
             "pf_change": 0,
             "tds_impact": 312,
-            "paid_days": 31
+            "paid_days": 31,
+            "lop_days": 0,
+            "formula": "Earned = revised × 31 ÷ 31"
           },
           {
             "month": "2026-09",
+            "short_month": "Sep",
             "old_gross": 120000,
             "revised_gross": 132000,
             "diff": 12000,
             "pf_change": 0,
             "tds_impact": 312,
-            "paid_days": 30
+            "paid_days": 30,
+            "lop_days": 0,
+            "formula": "Earned = revised × 30 ÷ 30"
           }
         ],
         "formulas": [
           "Earned salary = monthly salary × paid days ÷ calendar days",
           "Monthly arrears = revised earned gross − old earned gross",
+          "PF ceiling rule: PF change is ₹0 because monthly basic pay exceeds the PF wage ceiling (₹15,000 until 16 Sep 2026, then ₹25,000 from 17 Sep 2026; Northwind demo rules v1).",
           "Net Arrears = Gross Arrears (₹71,200) − Employee PF Change (₹0) − Estimated TDS Impact (₹3,724) = ₹67,476"
         ],
         "rule_citations": [
+          "PF wage ceiling: ₹15,000 until 16 Sep 2026, then ₹25,000 from 17 Sep 2026 (Northwind demo rules v1)",
           "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
           "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
-          "Income tax regime: New tax regime FY 2026-27",
+          "Income tax regime: New tax regime Tax year 2026-27",
           "Standard deduction: ₹75,000",
           "Health and education cess: 4%",
           "Rules version: Northwind demo rules v1"
-        ]
+        ],
+        "note": "Calculated with simplified demo rules. Not for real payroll."
       }
     }
   },
@@ -293,8 +314,8 @@
         "employee_name": "Arjun Rao",
         "employee_id": "E02",
         "formulas": [
-          "Segment 1 (1–16 Sep): Wage ceiling ₹15,000. Pro-rated ceiling: ₹15,000 × 16 ÷ 30 = ₹8,000",
-          "Segment 2 (17–30 Sep): Wage ceiling ₹25,000. Pro-rated ceiling: ₹25,000 × 14 ÷ 30 = ₹11,666.67",
+          "Segment 1 (1–16 Sep): Wage ceiling ₹15,000 (16 of 30 calendar days)",
+          "Segment 2 (17–30 Sep): Wage ceiling ₹25,000 (14 of 30 calendar days)",
           "Total PF change across dual segments = ₹101"
         ],
         "rule_citations": [
@@ -403,9 +424,8 @@
           "eligible_count": 4,
           "ineligible_count": 1,
           "needs_input_count": 1,
-          "gross_eligible_total": 213929,
-          "status": "Needs HR decision",
           "known_eligible_gross": 213929,
+          "gross_eligible_total": 213929,
           "known_eligible_gross_certainty": "Complete for this scope",
           "eligible": [
             "E01",
@@ -424,7 +444,16 @@
               "employee_id": "E09",
               "reason": "Performance record missing"
             }
-          ]
+          ],
+          "employee_names": {
+            "E01": "Priya Sharma",
+            "E03": "Kavya Iyer",
+            "E04": "Rohan Mehta",
+            "E07": "Sneha Kulkarni",
+            "E08": "Vikram Singh",
+            "E09": "Meera Nair"
+          },
+          "status": "Needs HR decision"
         }
       },
       {
@@ -472,9 +501,9 @@
         "formulas": [
           "E01 (Priya Sharma): Annual bonus ₹1,08,000",
           "E03 (Kavya Iyer): Annual bonus ₹36,000 (tax incomplete)",
-          "E04 (Rohan Joshi): Sales bonus ₹60,000",
-          "E07 (Ananya Sen): Joiner proration ₹9,929",
-          "E08 (Vikramaditya Verma): Notice exclusion: ₹0 (Ineligible)",
+          "E04 (Rohan Mehta): Annual bonus ₹60,000",
+          "E07 (Sneha Kulkarni): Joiner proration ₹9,929",
+          "E08 (Vikram Singh): Notice exclusion: ₹0 (Ineligible)",
           "E09 (Meera Nair): Missing performance rating (Needs input)"
         ],
         "rule_citations": [
@@ -643,9 +672,9 @@
         "employee_name": "Rahul Verma",
         "employee_id": "E10",
         "formulas": [
-          "Final Net = Gross Payables (₹3,35,256) − Total Deductions (₹1,975) = ₹3,32,256",
+          "Final Net = Gross Payables (₹3,35,256) − Total Deductions (₹3,000) = ₹3,32,256",
           "Gratuity = 15 × last drawn salary × completed years ÷ 26 = ₹2,01,923",
-          "Leave encashment = daily wage × unused encashable days = ₹1,26,559"
+          "Leave encashment = daily wage × unused encashable days = ₹33,333"
         ],
         "rule_citations": [
           "Gratuity Act: 15 days wages per completed year of continuous service exceeding 5 years",
@@ -682,7 +711,7 @@
               "name": "Gratuity",
               "amount": 0,
               "status": "Ineligible",
-              "note": "Close to minimum service: 4 years, 8 months, 24 days"
+              "note": "Close to minimum service: Continuous service less than statutory 5-year requirement"
             }
           ]
         }
@@ -723,7 +752,7 @@
       "panel": {
         "title": "Gratuity Service Eligibility Proof",
         "formulas": [
-          "Tenure: 4 years, 8 months, 24 days (less than statutory 5-year threshold)",
+          "Tenure: Continuous service is less than statutory 5-year threshold",
           "Gratuity payable = ₹0"
         ],
         "rule_citations": [
@@ -810,7 +839,7 @@
       "panel": {
         "title": "Asset Clearance Status",
         "formulas": [
-          "Notice shortfall recovery = ₹56,667",
+          "Notice shortfall recovery & known deductions = ₹56,667",
           "Asset clearance pending: Company laptop not received",
           "Final Net: Not available in generated data"
         ],
@@ -866,15 +895,6 @@
             }
           ],
           "tds_change": 0
-        }
-      },
-      {
-        "id": "card-calc-trigger-s9",
-        "type": "show_calculation",
-        "title": "Calculation Proof",
-        "certainty": "Complete for this scope",
-        "data": {
-          "button_label": "Show calculation"
         }
       }
     ],
@@ -972,15 +992,6 @@
             }
           ]
         }
-      },
-      {
-        "id": "card-calc-trigger-s10",
-        "type": "show_calculation",
-        "title": "Calculation Proof",
-        "certainty": "Complete for this scope",
-        "data": {
-          "button_label": "Show calculation"
-        }
       }
     ],
     "chips": [
@@ -1020,7 +1031,7 @@
         ],
         "rule_citations": [
           "Income Tax Act Section 192: Previous employer earnings declared under Form 12B integrated into annualized TDS",
-          "Income tax regime: New tax regime FY 2026-27",
+          "Income tax regime: New tax regime Tax year 2026-27",
           "Rules version: Northwind demo rules v1"
         ]
       }
@@ -1067,15 +1078,6 @@
             }
           ]
         }
-      },
-      {
-        "id": "card-calc-trigger-s11",
-        "type": "show_calculation",
-        "title": "Calculation Proof",
-        "certainty": "Complete for this scope",
-        "data": {
-          "button_label": "Show calculation"
-        }
       }
     ],
     "chips": [
@@ -1101,10 +1103,10 @@
       "panel": {
         "title": "Earnings & Deduction Proof",
         "formulas": [
-          "Basic pay: Unchanged at ₹20,000",
-          "Special allowance: Unchanged at ₹20,000",
-          "Gross earnings: Unchanged at ₹40,000",
-          "Take-home pay = earned gross − total employee deductions = ₹40,000 − ₹2,220 = ₹37,780 (change: −₹420)"
+          "Basic pay: Unchanged at ₹22,500",
+          "Special allowance: Unchanged at ₹11,250",
+          "Gross earnings: Unchanged at ₹45,000",
+          "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹420)"
         ],
         "rule_citations": [
           "PF wage ceiling: ₹15,000 until 16 Sep 2026; ₹25,000 from 17 Sep 2026",
@@ -1238,7 +1240,7 @@
       "panel": {
         "title": "Settlement Line Review",
         "formulas": [
-          "Notice shortfall recovery = ₹56,667",
+          "Notice shortfall recovery & known deductions = ₹56,667",
           "Asset clearance hold: Laptop status unconfirmed",
           "Final Net: Not available in generated data"
         ],
