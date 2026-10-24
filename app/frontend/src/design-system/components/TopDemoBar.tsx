@@ -67,13 +67,13 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
 }) => {
   return (
     <div className="hcm-top-demo-bar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        <strong style={{ letterSpacing: '0.05em', color: '#5EEAD4' }}>HCM ONE</strong>
-        <span style={{ color: '#94A3B8', fontSize: '12px' }}>PROTOTYPE</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <strong style={{ letterSpacing: '0.05em', color: 'var(--color-brand-accent)' }}>HCM ONE</strong>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>PROTOTYPE</span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginLeft: 'var(--space-4)' }}>
-          <Play size={14} color="#5EEAD4" />
-          <label htmlFor="scenario-select" style={{ fontSize: '13px', color: '#E2E8F0' }}>Scenario:</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginLeft: 'var(--space-2)' }}>
+          <Play size={14} color="var(--color-brand-accent)" />
+          <label htmlFor="scenario-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Scenario:</label>
           <select
             id="scenario-select"
             value={currentScenario}
@@ -89,10 +89,10 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <UserCheck size={14} color="#5EEAD4" />
-          <label htmlFor="user-select" style={{ fontSize: '13px', color: '#E2E8F0' }}>Logged in as:</label>
+          <UserCheck size={14} color="var(--color-brand-accent)" />
+          <label htmlFor="user-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Logged in as:</label>
           <select
             id="user-select"
             value={currentUser}
@@ -114,11 +114,12 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
             alignItems: 'center',
             gap: 'var(--space-1)',
             padding: 'var(--space-1) var(--space-3)',
-            backgroundColor: '#334155',
-            color: '#FFFFFF',
-            border: '1px solid #475569',
+            backgroundColor: 'var(--color-surface-hover)',
+            color: 'var(--color-text-primary)',
+            border: '1px solid var(--color-border-interactive)',
             borderRadius: 'var(--radius-button)',
             fontSize: '12px',
+            minHeight: '32px',
             cursor: isResetting ? 'not-allowed' : 'pointer',
           }}
           title="Reset runtime events, proposals, and queries to fresh state"

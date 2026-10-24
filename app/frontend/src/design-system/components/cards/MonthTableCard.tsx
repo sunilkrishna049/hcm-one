@@ -56,7 +56,7 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
               const hasLop = m.lop_days !== undefined && m.lop_days > 0;
               return (
                 <tr key={m.month}>
-                  <td className="tnum" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                  <td className="tnum" data-label="Month" style={{ fontWeight: 'var(--font-weight-medium)' }}>
                     <span>{formattedMonth}</span>
                     {hasLop && (
                       <span style={{ fontSize: '12px', color: 'var(--color-status-warning-text)', marginLeft: '6px', fontWeight: 'var(--font-weight-semibold)' }}>
@@ -64,12 +64,12 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
                       </span>
                     )}
                   </td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
-                  <td className="tnum" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
+                  <td className="tnum" data-label="Old Gross" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
+                  <td className="tnum" data-label="Revised Gross" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
+                  <td className="tnum" data-label="Arrears Diff" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
                     {formatINR(m.diff)}
                   </td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>
+                  <td className="tnum" data-label="Monthly TDS" style={{ textAlign: 'right' }}>
                     {m.tds_impact !== undefined ? formatINR(m.tds_impact) : '—'}
                   </td>
                 </tr>

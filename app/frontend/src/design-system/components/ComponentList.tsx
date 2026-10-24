@@ -62,7 +62,7 @@ export const ComponentList: React.FC<ComponentListProps> = ({
           <tbody>
             {items.map((item, idx) => (
               <tr key={item.id || idx}>
-                <td>
+                <td data-label="Component">
                   <div style={{ fontWeight: 'var(--font-weight-medium)' }}>{item.name}</div>
                   {item.reason && (
                     <div style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)' }}>
@@ -70,12 +70,12 @@ export const ComponentList: React.FC<ComponentListProps> = ({
                     </div>
                   )}
                 </td>
-                <td className="hcm-table-num" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                <td className="hcm-table-num" data-label="Amount (INR)" style={{ fontWeight: 'var(--font-weight-medium)' }}>
                   {item.amount !== null && item.amount !== undefined
                     ? item.amount.toLocaleString('en-IN')
                     : <span style={{ color: 'var(--color-status-warning-text)' }}>Incomplete</span>}
                 </td>
-                <td>
+                <td data-label="Status">
                   {item.certainty ? (
                     <CertaintyLabel certainty={item.certainty} />
                   ) : item.amount === null ? (
@@ -85,7 +85,7 @@ export const ComponentList: React.FC<ComponentListProps> = ({
                   )}
                 </td>
                 {showDueDates && (
-                  <td>
+                  <td data-label="Due Date">
                     {item.dueDate ? (
                       <div>
                         <div>{item.dueDate}</div>
@@ -98,7 +98,7 @@ export const ComponentList: React.FC<ComponentListProps> = ({
                     )}
                   </td>
                 )}
-                <td>
+                <td data-label="Source / Proof">
                   {item.onViewProof ? (
                     <SourceLink source="View calculation proof" onClick={item.onViewProof} />
                   ) : item.source ? (

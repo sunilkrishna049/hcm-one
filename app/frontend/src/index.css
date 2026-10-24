@@ -28,42 +28,11 @@ body {
   font-feature-settings: "tnum";
 }
 
-/* Mobile Frame Container (390px realistic mobile container) */
-.mobile-frame-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: var(--space-6) var(--space-4);
-  background-color: #0F172A;
-  min-height: calc(100vh - 120px);
-}
-
-.mobile-frame {
-  width: var(--width-mobile-frame);
-  max-width: 100%;
-  background-color: var(--color-background);
-  border: 8px solid #1E293B;
-  border-radius: 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px #334155;
-  overflow: hidden;
-  position: relative;
+/* App root layout */
+.hcm-app-root {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 780px;
-}
-
-.mobile-notch {
-  width: 120px;
-  height: 20px;
-  background-color: #1E293B;
-  margin: 0 auto;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-
-.mobile-screen-content {
-  flex: 1;
-  overflow-y: auto;
   background-color: var(--color-background);
 }
 

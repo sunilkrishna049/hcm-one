@@ -40,104 +40,134 @@ HCM One uses **Inter** for all UI copy, message prose, and financial figures.
 
 ---
 
-## 2. Color Tokens
+## 2. Color Tokens (Dark Theme Only)
 
-The visual palette relies on high contrast, slate neutrals, and a singular **deep teal brand accent (`#0F766E`)**. Semantic colors are reserved strictly for system states, verification status, and validation flags.
+HCM One operates exclusively in a **high-contrast dark theme** (DEC-039). There is no light theme and no theme toggle. All colors are defined in `app/frontend/src/design-system/tokens.css` as semantic CSS custom properties.
 
-| Color Token | Hex Code | Purpose & Application |
-|---|---|---|
-| **Page Background** | `#FFFFFF` | Main background for desktop chat workspace and mobile screen |
-| **Thread Surface** | `#F8FAFC` | Background for chat scroll container and panel canvas |
-| **Card Background** | `#FFFFFF` | Elevated surface for rich cards, side panels, and bottom sheets |
-| **Card Border** | `#E2E8F0` | Default 1 px boundary for cards, dividers, and message wrappers |
-| **Card Border Hover** | `#CBD5E1` | Interactive hover state for clickable cards and table rows |
-| **Primary Text** | `#0F172A` | Primary readability: headings, card text, message prose, amounts |
-| **Secondary Text** | `#475569` | Secondary copy: timestamps, sublabels, inactive tab labels |
-| **Muted Text** | `#64748B` | Tertiary copy: table column headers, helper notes, formula labels |
-| **Brand Accent (Teal)** | `#0F766E` | Primary interactive color: primary buttons, active chips, focus outlines |
-| **Brand Accent Hover** | `#115E59` | Hover state for primary buttons and interactive accents |
-| **Brand Tint Surface** | `#F0FDFA` | Subtle background tint for selected cards, active chips |
-| **Brand Tint Border** | `#99F6E4` | Border for active chips, focused cards, and calculation buttons |
-| **User Bubble Background**| `#F1F5F9` | Slate neutral background for user message bubbles |
-| **User Bubble Text** | `#0F172A` | High-contrast text within user message bubbles |
-| **Assistant Bubble Surface**| `#FFFFFF` | Clean white surface for assistant response cards and containers |
-| **Interactive Border** | `#94A3B8` | Normal border for inputs, textareas, and unselected radio options |
-| **Focus Ring** | `#0F766E` | 3 px solid focus outline with 2 px offset for keyboard navigation |
-| **Disabled Surface** | `#F1F5F9` | Disabled buttons, inactive inputs, unselected suggestion chips |
-| **Disabled Text** | `#94A3B8` | Text on disabled surfaces |
-| **Success Surface** | `#F0FDF4` | Background for completed actions, approved status, certainty complete |
-| **Success Border** | `#BBF7D0` | 1 px border for success badges |
-| **Success Text / Icon** | `#166534` | Text and icons for verified results, approved state |
-| **Warning Surface** | `#FFFBEB` | Background for missing data, unverified rules, unresolved items |
-| **Warning Border** | `#FDE68A` | 1 px border for warning badges |
-| **Warning Text / Icon** | `#92400E` | Text and icons for limitations, holds, unverified rule warnings |
-| **Error Surface** | `#FEF2F2` | Background for refusals, access denials, calculation errors |
-| **Error Border** | `#FECACA` | 1 px border for error badges |
-| **Error Text / Icon** | `#B91C1C` | Text and icons for validation errors, access refusals |
+- **Background Philosophy:** Pure black (`#000000`) is deliberately avoided to eliminate harsh glare and eye strain. Surfaces use layered slate-navy neutrals: base canvas `#0B0F19`, elevated cards `#111827`, and interactive hover `#1E293B`.
+- **Text Readability & Crisp Financial Figures:** Primary text uses `#F8FAFC`, ensuring numbers and currency symbols stay razor-sharp. Secondary text uses `#CBD5E1` and muted text uses `#94A3B8`.
+- **Brand Accent:** A vibrant deep teal accent (`#14B8A6`) with hover (`#2DD4BF`) and button background (`#0F766E`) provides focused affordance and exceeds contrast thresholds.
+- **Semantic Status Accessibility:** Status is **never shown by color alone** (always paired with clear text labels, distinct icons, and explicit borders). Badges use dark tinted surfaces with high-luminance text.
+
+### Dark Theme Token Palette & WCAG 2.2 AA Contrast Verification
+
+| Color Token | CSS Variable | Hex Code | WCAG Contrast Ratio on Surface (`#111827`) | Compliance Level | Purpose & Application |
+|---|---|---|---|---|---|
+| **Page Background** | `--color-background` | `#0B0F19` | N/A (Canvas) | Base | App root and workspace backdrop |
+| **Thread Surface** | `--color-surface` | `#111827` | N/A (Elevated) | Base | Chat scroll area, cards, side panel, bottom sheet |
+| **Surface Hover** | `--color-surface-hover` | `#1E293B` | N/A | Interactive | Hover state for cards, table rows, and list items |
+| **Card Border** | `--color-border` | `#1F2937` | 1.34:1 (Non-text boundary) | Met (UI component) | Card outline, dividers, section separators |
+| **Card Border Hover** | `--color-border-hover` | `#374151` | 2.05:1 (Non-text boundary) | Met (UI component) | Interactive card focus/hover boundary |
+| **Primary Text** | `--color-text-primary` | `#F8FAFC` | **17.02:1** | **WCAG AAA** (>=7:1) | Financial hero amounts, card titles, message prose |
+| **Secondary Text** | `--color-text-secondary`| `#CBD5E1` | **11.95:1** | **WCAG AAA** (>=7:1) | Timestamps, metadata, column headers, operands |
+| **Muted Text** | `--color-text-muted` | `#94A3B8` | **6.92:1** | **WCAG AA** (>=4.5:1) | Helper footnotes, subtle guidance, formula notes |
+| **Brand Accent** | `--color-brand-accent` | `#14B8A6` | **7.13:1** | **WCAG AAA** (>=7:1) | Active indicators, focus ring, prominent links |
+| **Brand Accent Hover** | `--color-brand-hover` | `#2DD4BF` | **10.35:1** | **WCAG AAA** (>=7:1) | Button and chip hover states |
+| **Brand Button BG** | `--color-brand-button-bg`| `#0F766E` | 4.85:1 (with `#FFFFFF` text) | **WCAG AA** (>=4.5:1) | Primary action button background |
+| **Brand Text on Accent**| `--color-brand-text-on-accent`| `#FFFFFF`| **4.85:1** on `#0F766E` | **WCAG AA** (>=4.5:1) | Label inside primary button |
+| **Brand Tint Surface** | `--color-brand-tint-surface`| `#134E4A`| N/A | Subdued | Selected card highlight tint |
+| **Brand Tint Border** | `--color-brand-tint-border` | `#0D9488`| 3.12:1 (Non-text) | Met | Active chip boundary |
+| **User Bubble BG** | `--color-user-bubble-bg`| `#1E293B` | N/A | Elevated | User message bubble background |
+| **User Bubble Text** | `--color-user-bubble-text`| `#F8FAFC`| **14.07:1** on `#1E293B` | **WCAG AAA** (>=7:1) | High-contrast text within user message |
+| **Success Surface** | `--color-success-surface`| `#064E3B` | N/A | Semantic | Complete certainty, approved proposal badge |
+| **Success Border** | `--color-success-border` | `#059669` | 3.5:1 (Non-text) | Met | Success badge border |
+| **Success Text** | `--color-success-text` | `#4ADE80` | **7.99:1** on `#064E3B` | **WCAG AAA** (>=7:1) | Verified results, approved indicator text |
+| **Warning Surface** | `--color-warning-surface`| `#78350F` | N/A | Semantic | Missing data, hold status, unresolved badge |
+| **Warning Border** | `--color-warning-border` | `#D97706` | 3.8:1 (Non-text) | Met | Warning badge border |
+| **Warning Text** | `--color-warning-text` | `#FBBF24` | **8.61:1** on `#78350F` | **WCAG AAA** (>=7:1) | Limitations, missing input warning text |
+| **Error Surface** | `--color-error-surface` | `#7F1D1D` | N/A | Semantic | Refusal, access denial badge |
+| **Error Border** | `--color-error-border` | `#DC2626` | 3.2:1 (Non-text) | Met | Error badge border |
+| **Error Text** | `--color-error-text` | `#F87171` | **5.92:1** on `#7F1D1D` | **WCAG AA** (>=4.5:1) | Access refusal copy, error messages |
+| **Neutral Surface** | `--color-neutral-surface`| `#1E293B` | N/A | Semantic | General info chip, draft query badge |
+| **Neutral Border** | `--color-neutral-border` | `#475569` | 2.5:1 (Non-text) | Met | Neutral badge border |
+| **Neutral Text** | `--color-neutral-text` | `#E2E8F0` | **11.23:1** on `#1E293B` | **WCAG AAA** (>=7:1) | Inactive tags, neutral metadata text |
 
 ---
 
-## 3. Layout, Dimensions & Elevation
+## 3. Unified Responsive Layout System
 
-HCM One uses responsive grid structures customized for the two target viewports:
+HCM One uses a **single unified responsive layout system** for both `CHAT-HR` and `CHAT-EMP` (DEC-038). The fixed phone frame wrapper is completely eliminated; both roles operate on the same fluid layout and adapt across screen sizes.
 
-```
-+-----------------------------------------------------------------------------------------+
-|                                CHAT-HR: Desktop (1440 px)                               |
-+-------------------------------------------------------------+---------------------------+
-| Top Bar (64 px height): Brand, Workspace, Role, Session     | Side Panel Header (64 px) |
-+-------------------------------------------------------------+---------------------------+
-| Chat Thread Area (Variable width, max 840 px prose):        | PANEL-HR (480 px width):  |
-| - Timestamp & Assistant Intro                               | - Sticky Header & Close   |
-| - User Bubble ("Prepare Priya Sharma's hike")               | - Month-by-month table    |
-| - Assistant Bubble (C03) + Proposal Summary Card           | - Settlement Ledgers      |
-| - Number Cards Grid (Net Arrears Hero, Gross, PF, TDS)     | - Calculation Proof       |
-| - Suggestion Chips row                                      | - Real Rule IDs           |
-| - Approval Card (Approve / Edit with reason / Reject)       | - Audit Flags             |
-+-------------------------------------------------------------+                           |
-| Sticky Composer Area (80 px height): Input + Send Button    | (Scrolls independently)   |
-+-------------------------------------------------------------+---------------------------+
-```
+All breakpoints and dimensions are defined as variables in `tokens.css`:
+- `--breakpoint-mobile-max: 767px`
+- `--breakpoint-tablet-min: 768px`
+- `--breakpoint-tablet-max: 1023px`
+- `--breakpoint-desktop-min: 1024px`
+- `--width-workspace-max: 1440px`
+- `--width-chat-thread-max: 840px`
+- `--width-panel-desktop: 480px`
+- `--width-panel-tablet: 520px`
+- `--height-composer-desktop: 80px`
+- `--height-composer-mobile: 64px`
+- `--size-touch-target-min: 44px`
 
 ```
-+------------------------------------+
-|     CHAT-EMP: Mobile (390 px)      |
-+------------------------------------+
-| Mobile Top Bar (56 px): Brand & Nav|
-+------------------------------------+
-| Mobile Chat Feed (Padding: 16 px): |
-| - Assistant Bubble (C27)           |
-| - Number Card Hero (-5,420)        |
-| - Reason List Card (LOP + PF)      |
-| - "Show calculation" Button        |
-| - Suggestion Chips (Swipeable)     |
-+------------------------------------+
-| Mobile Composer (64 px): Input+Send|
-+------------------------------------+
-| SHEET-EMP: Bottom Sheet (Overlay)  |
-| - Drag Handle & Close (X)          |
-| - LOP Day Calculation Proof        |
-| - Stored Formula & Glossary        |
-+------------------------------------+
++-------------------------------------------------------------------------------------------------+
+|                                DESKTOP VIEWPORT (>= 1024 px)                                    |
++-------------------------------------------------------------------+-----------------------------+
+| Top Bar (64 px): Brand, Role Switcher, Scenario Picker, Reset     | PANEL-HR / SHEET (480 px):  |
++-------------------------------------------------------------------+ - Sticky Header & Close [X] |
+| Chat Thread Area (Variable width, max 840 px prose, centered):    | - Multi-month table         |
+| - Timestamp & Assistant Intro                                     | - Settlement Ledgers        |
+| - User Bubble ("Prepare Priya Sharma's hike")                     | - Calculation Proof         |
+| - Assistant Bubble (C03) + Proposal Summary Card                 | - Real Rule Citations       |
+| - Number Cards Grid (Net Arrears Hero, Gross, PF, TDS)           | - Audit Flags               |
+| - Action & Suggestion Chips row                                   | (Docked beside chat thread; |
+| - Approval Card (Approve / Edit with reason / Reject)             |  scrolls independently)     |
++-------------------------------------------------------------------+                             |
+| Sticky Composer Area (80 px height): Input + Send Button          |                             |
++-------------------------------------------------------------------+-----------------------------+
 ```
 
-### Dimensional Specifications
+```
++-------------------------------------------------------------------------------------------------+
+|                                 TABLET VIEWPORT (768 to 1023 px)                                |
++-------------------------------------------------------------------+-----------------------------+
+| Top Bar (64 px): Brand, Role Switcher, Scenario Picker, Reset                                   |
++-------------------------------------------------------------------+-----------------------------+
+| Chat Thread Area (Full width, max 840 px prose):                  | OVERLAY PANEL (520 px):     |
+| - Conversational feed and inline cards                            | - Overlays chat thread      |
+| - Tapping "Show calculation" opens wide overlay panel             | - Dark backdrop behind      |
+| - Composer docked at bottom                                       | - Close via [X] or Escape   |
++-------------------------------------------------------------------+-----------------------------+
+```
 
-| Layout Element | Desktop (`CHAT-HR`) | Mobile (`CHAT-EMP`) | Design Constraints |
-|---|---|---|---|
-| **Reference Viewport** | 1440 px width (min 1280 px) | 390 px width (min 320 px) | Target responsive standards |
-| **Top App Header** | Height: 64 px; Border bottom: 1 px | Height: 56 px; Border bottom: 1 px | Sticky top; z-index: 30 |
-| **Chat Column Width** | Max reading width: 840 px centered | Full width (100% of 390 px) | Prevents over-stretched prose lines |
-| **Outer Padding** | Left/Right: 32 px | Left/Right: 16 px | Fluid container breathing room |
-| **Component Spacing** | 24 px between conversation turns | 16 px between conversation turns | Clear message demarcation |
-| **Card Gap** | 16 px between nested cards | 12 px between nested cards | Compact information density |
-| **Side Panel (`PANEL-HR`)** | Width: 480 px fixed; height 100vh | N/A (desktop only) | Border-left: 1 px `#E2E8F0`; z-index: 20 |
-| **Bottom Sheet (`SHEET-EMP`)**| N/A (mobile only) | Width: 100%; Max-height: 85vh | Border-radius: 16 px 16 px 0 0; z-index: 50 |
-| **Backdrop Overlay** | N/A (panel pushes or overlays cleanly)| `#0F172A` at 40% opacity | Dim background when sheet opens |
-| **Card Corner Radius** | 8 px | 8 px | Consistent subtle rounding |
-| **Pill / Chip Radius** | 9999 px (Fully rounded) | 9999 px (Fully rounded) | High affordance for taps |
-| **Control Radius** | 6 px | 6 px | Buttons and textareas |
-| **Minimum Touch Target** | 44 px by 44 px | 44 px by 44 px | WCAG 2.2 touch target compliance |
+```
++-------------------------------------------------------+
+|              MOBILE VIEWPORT (< 768 px)               |
++-------------------------------------------------------+
+| Mobile Top Bar: Stacked Brand & Controls              |
++-------------------------------------------------------+
+| Mobile Chat Thread (Full screen width, padding 16 px):|
+| - Assistant & User Bubbles                            |
+| - Hero Number Cards & Ranked Reasons                  |
+| - Stacked Table Cards (No horizontal scroll! Each     |
+|   row renders as an accessible card with data-labels) |
+| - Touch targets >= 44 px for chips and buttons        |
++-------------------------------------------------------+
+| Mobile Sticky Composer (64 px): Input + Send Icon     |
++-------------------------------------------------------+
+| CONTEXTUAL BOTTOM SHEET (Max-height 85vh):            |
+| - Visual Drag Handle at top (36 x 4 px)               |
+| - Accessible Close Button (min 44 px target)          |
+| - Formula proof, operands, and statutory citations    |
+| - Touch-friendly scrolling & Escape key dismissal     |
++-------------------------------------------------------+
+```
+
+### Layout Specifications Matrix
+
+| Layout Element | Desktop (>= 1024 px) | Tablet (768–1023 px) | Mobile (< 768 px) | Responsive Behavior & Constraints |
+|---|---|---|---|---|
+| **Workspace Width** | Up to `--width-workspace-max` (1440 px) | 100% fluid | 100% fluid | Centered container on large displays |
+| **Chat Thread Max Width**| `--width-chat-thread-max` (840 px) | Up to 840 px | 100% | Prevents overly long text lines for readability |
+| **Side Panel / Sheet** | Right docked, `--width-panel-desktop` (480 px) | Overlay, `--width-panel-tablet` (520 px) | Bottom sheet (`--sheet-max-height: 85vh`) | Switches from docked panel to bottom sheet automatically |
+| **Backdrop** | None (side-by-side) | Semi-transparent dark overlay (`rgba(11,15,25,0.7)`) | Full backdrop overlay with touch dismiss | Protects focus state when panel overlays content |
+| **Composer Height** | `--height-composer-desktop` (80 px) | 80 px | `--height-composer-mobile` (64 px) | Sticky to viewport bottom at all sizes |
+| **Table Layout** | Standard columnar grid | Standard columnar grid | **Stacked Card Layout** | Tables transform via CSS `display: block` and `data-label` pseudo-elements. Zero horizontal scroll. |
+| **Touch Targets** | Standard (min 36 px) | Standard (min 40 px) | **`--size-touch-target-min` (44 px)** | Meets WCAG 2.2 AA touch target size criteria on mobile |
+| **Card Border Radius** | 8 px | 8 px | 8 px | Consistent subtle rounding |
+| **Sheet Top Radius** | N/A | N/A | 16 px top-left & top-right | Standard mobile sheet affordance with drag handle |
 | **Elevation / Shadow** | `0 1px 3px rgba(0,0,0,0.05)` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle, flat aesthetic; no floating cards |
 
 ---

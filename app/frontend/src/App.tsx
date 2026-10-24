@@ -57,7 +57,7 @@ export function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#F8FAFC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
       {/* Top Demo Bar */}
       <TopDemoBar
         currentUser={currentUser}

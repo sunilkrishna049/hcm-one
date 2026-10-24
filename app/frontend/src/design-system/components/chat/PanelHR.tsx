@@ -57,74 +57,79 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
   const ruleCitations = data?.rule_citations || [];
 
   return (
-    <aside
-      className="hcm-panel-hr-root"
-      data-testid="panel-hr"
-      role="complementary"
-      aria-label={title}
-    >
-      {/* Header */}
-      <div className="hcm-panel-header">
-        <div>
-          <h2 className="hcm-panel-title">{title}</h2>
-          {data?.employee_name && (
-            <p className="hcm-panel-subtitle">
-              {data.employee_name} ({data.employee_id})
-            </p>
-          )}
-        </div>
-        <button
-          ref={closeBtnRef}
-          type="button"
-          onClick={onClose}
-          className="hcm-panel-close-btn"
-          data-testid="panel-close-btn"
-          aria-label="Close review panel"
-        >
-          <X size={20} />
-        </button>
-      </div>
+    <>
+      <div className="hcm-panel-backdrop" onClick={onClose} aria-hidden="true" />
+      <aside
+        className="hcm-panel-hr-root"
+        data-testid="panel-hr"
+        role="complementary"
+        aria-label={title}
+      >
+        {/* Mobile Drag Handle */}
+        <div className="hcm-sheet-drag-handle" aria-hidden="true" />
 
-      {/* Content Body */}
-      <div className="hcm-panel-body">
-        {/* Multi-month Proof Table (Fits without horizontal scrolling) */}
-        {months.length > 0 && (
-          <section className="hcm-panel-section" aria-label="Month-by-month proof">
-            <h3 className="hcm-panel-section-title">Month-by-Month Proof</h3>
-            <div className="hcm-panel-table-wrapper" style={{ overflowX: 'hidden' }}>
-              <table className="hcm-panel-table" style={{ width: '100%', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: '60px' }}>Month</th>
-                    <th className="hcm-num-cell" style={{ width: '60px' }}>Paid</th>
-                    <th className="hcm-num-cell" style={{ width: '60px' }}>LOP</th>
-                    <th style={{ textAlign: 'left', paddingLeft: 'var(--space-2)' }}>Formula Used</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {months.map((m: any, idx) => {
-                    const shortMonth = m.short_month || (m.month ? m.month.split('-')[1] : `M${idx + 1}`);
-                    const lopText = m.lop_days ? `${m.lop_days} d` : '0';
-                    const paidText = m.paid_days !== undefined ? `${m.paid_days} d` : '—';
-                    const formulaText = m.formula || `Diff = ${formatINR(m.diff)}`;
-                    return (
-                      <tr key={idx}>
-                        <td className="hcm-tnum" style={{ fontWeight: 600 }}>{shortMonth}</td>
-                        <td className="hcm-num-cell hcm-tnum">{paidText}</td>
-                        <td className="hcm-num-cell hcm-tnum" style={{ color: m.lop_days ? 'var(--color-status-error-text)' : 'inherit' }}>
-                          {lopText}
-                        </td>
-                        <td style={{ fontSize: '11px', color: 'var(--color-text-secondary)', wordBreak: 'break-word', paddingLeft: 'var(--space-2)' }}>
-                          {formulaText}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+        {/* Header */}
+        <div className="hcm-panel-header">
+          <div>
+            <h2 className="hcm-panel-title">{title}</h2>
+            {data?.employee_name && (
+              <p className="hcm-panel-subtitle">
+                {data.employee_name} ({data.employee_id})
+              </p>
+            )}
+          </div>
+          <button
+            ref={closeBtnRef}
+            type="button"
+            onClick={onClose}
+            className="hcm-panel-close-btn"
+            data-testid="panel-close-btn"
+            aria-label="Close review panel"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="hcm-panel-body">
+          {/* Multi-month Proof Table (Fits without horizontal scrolling) */}
+          {months.length > 0 && (
+            <section className="hcm-panel-section" aria-label="Month-by-month proof">
+              <h3 className="hcm-panel-section-title">Month-by-Month Proof</h3>
+              <div className="hcm-panel-table-wrapper">
+                <table className="hcm-panel-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '60px' }}>Month</th>
+                      <th className="hcm-num-cell" style={{ width: '60px' }}>Paid</th>
+                      <th className="hcm-num-cell" style={{ width: '60px' }}>LOP</th>
+                      <th style={{ textAlign: 'left', paddingLeft: 'var(--space-2)' }}>Formula Used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {months.map((m: any, idx) => {
+                      const shortMonth = m.short_month || (m.month ? m.month.split('-')[1] : `M${idx + 1}`);
+                      const lopText = m.lop_days ? `${m.lop_days} d` : '0';
+                      const paidText = m.paid_days !== undefined ? `${m.paid_days} d` : '—';
+                      const formulaText = m.formula || `Diff = ${formatINR(m.diff)}`;
+                      return (
+                        <tr key={idx}>
+                          <td className="hcm-tnum" data-label="Month" style={{ fontWeight: 600 }}>{shortMonth}</td>
+                          <td className="hcm-num-cell hcm-tnum" data-label="Paid">{paidText}</td>
+                          <td className="hcm-num-cell hcm-tnum" data-label="LOP" style={{ color: m.lop_days ? 'var(--color-status-error-text)' : 'inherit' }}>
+                            {lopText}
+                          </td>
+                          <td data-label="Formula" style={{ fontSize: '11px', color: 'var(--color-text-secondary)', wordBreak: 'break-word', paddingLeft: 'var(--space-2)' }}>
+                            {formulaText}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
         {/* Settlement Components List */}
         {components.length > 0 && (
@@ -190,5 +195,6 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
         </div>
       </div>
     </aside>
+    </>
   );
 };

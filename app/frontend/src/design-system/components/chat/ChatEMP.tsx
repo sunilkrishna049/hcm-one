@@ -237,23 +237,23 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   };
 
   return (
-    <div className="hcm-chat-emp-container" data-testid="chat-emp">
-      <div className="hcm-chat-emp-frame">
-        {/* Mobile Header (56 px) */}
-        <header className="hcm-chat-emp-header">
-          <div className="hcm-chat-emp-header-info">
-            <h1 className="hcm-chat-emp-title">HCM One</h1>
-            <span className="hcm-chat-emp-role-tag">Employee Assistant</span>
+    <div className="hcm-chat-layout hcm-chat-emp-container" data-testid="chat-emp">
+      <main className="hcm-chat-main hcm-chat-emp-main" role="main">
+        {/* Header */}
+        <header className="hcm-chat-top-header">
+          <div className="hcm-chat-header-title-box">
+            <h1 className="hcm-chat-header-title">HCM One</h1>
+            <span className="hcm-chat-header-badge">Employee Assistant</span>
           </div>
-          <div className="hcm-chat-emp-user-tag">
-            <User size={14} />
+          <div className="hcm-chat-header-meta">
+            <User size={14} color="var(--color-brand-accent)" />
             <span>{getUserDisplayName(currentUser)}</span>
           </div>
         </header>
 
         {/* Scrollable Conversation Stream */}
-        <main className="hcm-chat-emp-feed-scroll" data-testid="chat-feed" role="main">
-          <div className="hcm-chat-emp-feed-inner">
+        <div className="hcm-chat-feed-scroll" data-testid="chat-feed" role="region" aria-label="Conversation stream">
+          <div className="hcm-chat-feed-inner">
             {turns.map((turn) => {
               if (turn.type === 'user') {
                 return (
@@ -281,11 +281,11 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
             })}
             <div ref={feedEndRef} />
           </div>
-        </main>
+        </div>
 
         {/* Suggestion Chips */}
         {activeChips.length > 0 && (
-          <div className="hcm-chat-emp-chips-area">
+          <div className="hcm-chat-chips-area">
             <SuggestionChips
               chips={activeChips}
               onSelectChip={handleChipSelect}
@@ -294,21 +294,20 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           </div>
         )}
 
-        {/* Sticky Mobile Composer (64 px) */}
+        {/* Sticky Composer */}
         <Composer
           onSendMessage={handleSendMessage}
           disabled={isLoading}
           placeholder="Ask a question about your salary..."
-          isMobile={true}
         />
+      </main>
 
-        {/* Bottom Sheet Detail Proof (SHEET-EMP) */}
-        <SheetEMP
-          isOpen={isSheetOpen}
-          onClose={() => setIsSheetOpen(false)}
-          data={sheetData}
-        />
-      </div>
+      {/* Side Panel / Bottom Sheet Detail Proof (SHEET-EMP) */}
+      <SheetEMP
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        data={sheetData}
+      />
     </div>
   );
 };

@@ -31,58 +31,68 @@
   --font-size-card-number: 24px;
   --line-height-card-number: 32px;
 
-  --font-size-body: 16px;
-  --line-height-body: 24px;
+  --font-size-body: 15px;
+  --line-height-body: 22px;
 
-  --font-size-table: 14px;
-  --line-height-table: 20px;
+  --font-size-table: 13px;
+  --line-height-table: 18px;
 
-  --font-size-label: 14px;
-  --line-height-label: 20px;
+  --font-size-label: 13px;
+  --line-height-label: 18px;
 
   --font-size-small: 12px;
   --line-height-small: 16px;
 
-  /* Core Colors */
-  --color-background: #FFFFFF;
-  --color-surface: #F8FAFC;
-  --color-surface-hover: #F1F5F9;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748B;
+  /* Core Colors (Dark Theme Only - DEC-039) */
+  --color-background: #0B0F19;
+  --color-surface: #111827;
+  --color-surface-hover: #1E293B;
+  --color-surface-elevated: #161F30;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
 
-  /* Brand Accent: Single Deep Teal */
-  --color-brand-accent: #0F766E;
-  --color-brand-hover: #115E59;
-  --color-brand-tint: #F0FDFA;
+  /* Brand Accent: Single Deep Teal (Adjusted for dark background contrast > 7:1) */
+  --color-brand-accent: #14B8A6;
+  --color-brand-hover: #2DD4BF;
+  --color-brand-tint: rgba(20, 184, 166, 0.12);
+  --color-brand-tint-border: rgba(45, 212, 191, 0.35);
+  --color-brand-button-bg: #0F766E;
+  --color-brand-button-hover: #115E59;
   --color-brand-text-on-accent: #FFFFFF;
 
   /* Borders & Dividers */
-  --color-border-interactive: #64748B;
-  --color-border-subtle: #CBD5E1;
-  --color-divider: #E2E8F0;
-  --color-disabled-surface: #CBD5E1;
+  --color-border-interactive: #475569;
+  --color-border-subtle: #243046;
+  --color-divider: #1E293B;
+  --color-disabled-surface: #1E293B;
   --color-disabled-text: #64748B;
 
-  /* Semantic Status: Success */
-  --color-status-success-text: #166534;
-  --color-status-success-surface: #F0FDF4;
-  --color-status-success-border: #BBF7D0;
+  /* Semantic Status: Success (WCAG AA > 10:1) */
+  --color-status-success-text: #4ADE80;
+  --color-status-success-surface: rgba(74, 222, 128, 0.12);
+  --color-status-success-border: rgba(74, 222, 128, 0.3);
 
-  /* Semantic Status: Warning / Limitation */
-  --color-status-warning-text: #92400E;
-  --color-status-warning-surface: #FFFBEB;
-  --color-status-warning-border: #FDE68A;
+  /* Semantic Status: Warning / Limitation (WCAG AA > 10:1) */
+  --color-status-warning-text: #FBBF24;
+  --color-status-warning-surface: rgba(251, 191, 36, 0.12);
+  --color-status-warning-border: rgba(251, 191, 36, 0.3);
 
-  /* Semantic Status: Error / Refusal */
-  --color-status-error-text: #B91C1C;
-  --color-status-error-surface: #FEF2F2;
-  --color-status-error-border: #FECACA;
+  /* Semantic Status: Error / Refusal / Negative amounts (WCAG AA > 6:1) */
+  --color-status-error-text: #F87171;
+  --color-status-error-surface: rgba(248, 113, 113, 0.12);
+  --color-status-error-border: rgba(248, 113, 113, 0.3);
 
   /* Semantic Status: Neutral / Review / Draft */
-  --color-status-neutral-text: #334155;
-  --color-status-neutral-surface: #F1F5F9;
-  --color-status-neutral-border: #CBD5E1;
+  --color-status-neutral-text: #E2E8F0;
+  --color-status-neutral-surface: #1E293B;
+  --color-status-neutral-border: #334155;
+
+  /* Message Bubble specific colors */
+  --color-bubble-user-bg: #1E293B;
+  --color-bubble-user-text: #F8FAFC;
+  --color-bubble-assistant-bg: #161F30;
+  --color-bubble-assistant-text: #F8FAFC;
 
   /* Spacing Scale */
   --space-1: 4px;
@@ -100,20 +110,29 @@
   --radius-button: 6px;
   --radius-pill: 9999px;
 
-  /* Shadows (Subtle, purposeful) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.12);
+  /* Shadows (Tuned for dark surfaces) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.6);
 
-  /* Layout Widths & Frames */
-  --width-hr-desktop: 1440px;
-  --width-reading-column: 720px;
-  --width-drawer-desktop: 480px;
-  --width-employee-mobile: 390px;
+  /* Responsive Breakpoints & Layout Tokens */
+  --breakpoint-mobile-max: 767px;
+  --breakpoint-tablet-min: 768px;
+  --breakpoint-tablet-max: 1023px;
+  --breakpoint-desktop-min: 1024px;
 
-  /* Touch / Target Sizes */
-  --size-min-interactive: 44px;
+  --width-workspace-max: 1440px;
+  --width-chat-thread-max: 840px;
+  --width-panel-desktop: 480px;
+  --width-panel-tablet: 520px;
+  --height-composer-desktop: 80px;
+  --height-composer-mobile: 64px;
+  --height-header-desktop: 64px;
+  --height-header-mobile: 56px;
+
+  /* Touch / Target Sizes (WCAG 2.2 AA compliant >= 44px on mobile) */
+  --size-touch-target-min: 44px;
 
   /* Focus Indicator (WCAG 2.2 AA compliant 3px offset) */
   --focus-outline-width: 3px;
@@ -131,7 +150,7 @@
 body {
   font-family: var(--font-sans);
   color: var(--color-text-primary);
-  background-color: var(--color-surface);
+  background-color: var(--color-background);
   line-height: var(--line-height-body);
   font-size: var(--font-size-body);
   -webkit-font-smoothing: antialiased;
@@ -161,3 +180,4 @@ pre,
   outline: var(--focus-outline-width) solid var(--focus-outline-color);
   outline-offset: var(--focus-outline-offset);
 }
+

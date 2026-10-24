@@ -375,5 +375,26 @@
 - Status: Approved
 - Approved by: Project owner
 
+- ID: DEC-038
+- Date: 2026-10-24
+- Decision: Both chats are responsive: desktop layout with a side panel, and on mobile the panel becomes a bottom sheet.
+- Options considered: (a) Keep a fixed phone frame for CHAT-EMP and a desktop screen for CHAT-HR, (b) Single unified responsive layout system for both CHAT-HR and CHAT-EMP: desktop (>= 1024 px) full-width workspace with 480 px right side panel, tablet (768–1023 px) with 520 px overlay panel, and mobile (< 768 px) where chat fills the screen, the panel becomes an accessible bottom sheet, composer stays docked at bottom, and tables switch to a stacked card layout without horizontal scrolling.
+- Reason: Project owner decision. Removes artificial device frames. Both employee and HR workspaces adapt naturally to any screen width while maintaining identical content, cards, numbers, actions, rules, and WCAG 2.2 AA accessibility (min 44 px touch targets). Breakpoints and dimensions are centralized in tokens.css.
+- Evidence or source: Project owner instruction, 2026-10-24; [output/07-prototype/screen-inventory.md](../output/07-prototype/screen-inventory.md); [output/07-prototype/visual-spec.md](../output/07-prototype/visual-spec.md); [tokens.css](../app/frontend/src/design-system/tokens.css); [components.css](../app/frontend/src/design-system/components.css); [responsive_dark_theme.test.tsx](../app/frontend/src/tests/responsive_dark_theme.test.tsx).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+- ID: DEC-039
+- Date: 2026-10-24
+- Decision: The app uses a dark theme only, built by changing token values. A light theme can be added later the same way.
+- Options considered: (a) Light theme only, (b) Light/dark theme toggle, (c) Single high-contrast dark theme configured purely via token values in tokens.css without modifying component logic, with no light theme and no toggle.
+- Reason: Project owner decision. Centralizing all colors in design tokens allows instantaneous theme definition. Avoiding pure black (#000000) prevents eye strain; deep slate-navy surfaces (#0B0F19, #111827) provide depth and crisp tabular financial figures (#F8FAFC, 17:1 AAA contrast). Semantic status badges use dark surfaces with high-luminance text (> 5.9:1 to 8.6:1), ensuring status is never conveyed by color alone. A light theme can be reintroduced cleanly in the future simply by defining an alternate token map.
+- Evidence or source: Project owner instruction, 2026-10-24; [tokens.css](../app/frontend/src/design-system/tokens.css); [output/07-prototype/visual-spec.md](../output/07-prototype/visual-spec.md); [responsive_dark_theme.test.tsx](../app/frontend/src/tests/responsive_dark_theme.test.tsx).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+
 
 
