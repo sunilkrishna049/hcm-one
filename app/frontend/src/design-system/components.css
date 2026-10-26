@@ -861,6 +861,14 @@
   cursor: not-allowed;
 }
 
+.hcm-faq-action-chip {
+  outline: none;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 /* --- Sticky Composer --- */
 .hcm-composer-container {
   background-color: var(--color-surface);

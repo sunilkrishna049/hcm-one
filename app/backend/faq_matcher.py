@@ -36,15 +36,52 @@ class FAQMatcher:
         tokens = set(cleaned.split())
         return {t for t in tokens if t and t not in STOP_WORDS}
 
+    def is_personal_pay_question(self, query: str) -> bool:
+        """Personal questions about user's own pay must never route to FAQ answers."""
+        q = (query or "").lower().strip()
+        personal_patterns = [
+            r"\bmy (salary|pay|take[- ]?home|tds|tax|deduction|deductions|pf|net pay|earnings|payout)\b",
+            r"\b(salary|pay|take[- ]?home|net pay|paisa|paise) kam\b",
+            r"\bkam (kyun|kyu|aaya|aayi|mila|mile|paise|paisa)\b",
+            r"\b(less|lower|reduced|cut|drop|dropped|decrease|decreased) (this month|in september|money)\b",
+            r"\bwhy (is|did|was|am) (i|my) (salary|pay|take[- ]?home|money|net pay).*(less|lower|drop|dropped|reduced|decrease|cut)\b",
+            r"\bwhy did i get less\b",
+            r"\bwhy am i getting less\b",
+            r"\bwhy was i paid less\b",
+            r"\bcut in (my )?salary\b",
+            r"\bwhy is my salary less\b",
+            r"\bpay kam kyun\b",
+            r"\bkam kyun\b"
+        ]
+        return any(re.search(pat, q) for pat in personal_patterns)
+
     def match(self, query: str) -> Tuple[Optional[dict], float]:
-        """Returns (matched_entry, confidence) or (None, 0.0) if low confidence."""
+        """Returns (matched_entry, confidence) or (None, 0.0) if low confidence.
+        Rule: Personal questions beat glossary questions.
+        Rule: FAQ matches must be definition-style questions ('what is', 'what does … mean', 'meaning of').
+        Threshold: >= 0.70.
+        """
         if not self._faq_data:
             self._load()
 
-        query_tokens = self._tokenize(query)
-        lower_query = query.lower().strip()
+        lower_query = (query or "").lower().strip()
 
-        # Direct acronym / keyword priority mappings
+        # Personal pay questions beat glossary questions: never route to FAQ
+        if self.is_personal_pay_question(lower_query):
+            return None, 0.0
+
+        # FAQ matches MUST be definition-style questions or exact acronym lookups
+        is_def_style = bool(re.search(
+            r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b",
+            lower_query
+        ))
+        is_exact_acronym = bool(re.fullmatch(r"(lop|pf|epf|eps|tds|gratuity|arrears|leave encashment|notice recovery)", lower_query))
+        if not (is_def_style or is_exact_acronym):
+            return None, 0.0
+
+        query_tokens = self._tokenize(query)
+
+        # Direct acronym / keyword priority mappings for definition questions
         exact_triggers = [
             (r"\blop\b", "FAQ-PAY-01"),
             (r"\bepf\b", "FAQ-PAY-03"),
@@ -102,8 +139,8 @@ class FAQMatcher:
                 best_score = combined
                 best_entry = entry
 
-        # Threshold: require at least 0.35 confidence to prevent false positive matches
-        if best_entry and best_score >= 0.35:
+        # Raised threshold: require at least 0.70 confidence
+        if best_entry and best_score >= 0.70:
             return best_entry, round(best_score, 2)
 
         return None, 0.0

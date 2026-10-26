@@ -70,7 +70,7 @@ def search_payroll_faq(query: str, user_id: str = "HR01") -> dict:
     surface = "CHAT-HR" if role == "HR Admin" else "CHAT-EMP"
 
     matched_faq, conf = faq_matcher.match(query)
-    if matched_faq and conf >= 0.35:
+    if matched_faq and conf >= 0.70:
         res = _router._build_faq_response(matched_faq, conf, role, surface)
         return {
             "found": True,

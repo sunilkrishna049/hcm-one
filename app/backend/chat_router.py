@@ -181,11 +181,11 @@ class ChatRouter:
                 return self._build_scenario_7(user, role, surface)
             elif act in ("scenario-8", "scenario-08"):
                 return self._build_scenario_8(user, role, surface)
-            elif act in ("scenario-9", "scenario-09", "explain-salary"):
+            elif act in ("scenario-9", "scenario-09", "explain-salary", "explain_salary"):
                 return self._build_scenario_9(user, role, surface)
-            elif act in ("scenario-10", "scenario-10", "explain-tds"):
+            elif act in ("scenario-10", "scenario-10", "explain-tds", "explain_tds"):
                 return self._build_scenario_10(user, role, surface)
-            elif act in ("scenario-11", "scenario-11"):
+            elif act in ("scenario-11", "scenario-11", "explain-deduction", "explain_deduction"):
                 return self._build_scenario_11(user, role, surface)
             elif act in ("scenario-12", "scenario-12"):
                 return self._build_scenario_12(user, role, surface)
@@ -256,11 +256,12 @@ class ChatRouter:
         if re.search(r"\b(show calculation|view full month breakdown)\b", lower_msg):
             return self._handle_show_calculation(user, role, surface, context)
 
-        # FAQ lookup priority for general questions
-        if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or len(lower_msg.split()) <= 4:
-            matched_faq, conf = faq_matcher.match(raw_msg)
-            if matched_faq and conf >= 0.35:
-                return self._build_faq_response(matched_faq, conf, role, surface)
+        # FAQ lookup priority for general definition questions
+        if not faq_matcher.is_personal_pay_question(lower_msg):
+            if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or len(lower_msg.split()) <= 4:
+                matched_faq, conf = faq_matcher.match(raw_msg)
+                if matched_faq and conf >= 0.70:
+                    return self._build_faq_response(matched_faq, conf, role, surface)
 
         # Scenario 1 (Priya Sharma hike)
         if "priya" in lower_msg or "sharma" in lower_msg or ("hike" in lower_msg and "lop" in lower_msg):
@@ -329,8 +330,15 @@ class ChatRouter:
         if "siddharth" in lower_msg or "e06" in lower_msg or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)):
             return self._build_scenario_10(user, role, surface)
 
-        # Scenario 9 (Neha Gupta / September salary drop)
-        if "neha" in lower_msg or "e05" in lower_msg or (("take-home" in lower_msg or "salary" in lower_msg or "payslip" in lower_msg) and ("lower" in lower_msg or "drop" in lower_msg or "change" in lower_msg or "september" in lower_msg)):
+        # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)
+        is_salary_drop_query = bool(re.search(
+            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+            lower_msg
+        ))
+        if "neha" in lower_msg or "e05" in lower_msg or is_salary_drop_query or (
+            ("take-home" in lower_msg or "salary" in lower_msg or "payslip" in lower_msg)
+            and ("lower" in lower_msg or "drop" in lower_msg or "change" in lower_msg or "september" in lower_msg or "less" in lower_msg)
+        ):
             return self._build_scenario_9(user, role, surface)
 
         # Query Flows
@@ -342,9 +350,10 @@ class ChatRouter:
             return self._handle_hr_query_review(user, role, surface, context)
 
         # Fallback to FAQ keyword match
-        matched_faq, conf = faq_matcher.match(raw_msg)
-        if matched_faq and conf >= 0.35:
-            return self._build_faq_response(matched_faq, conf, role, surface)
+        if not faq_matcher.is_personal_pay_question(lower_msg):
+            matched_faq, conf = faq_matcher.match(raw_msg)
+            if matched_faq and conf >= 0.70:
+                return self._build_faq_response(matched_faq, conf, role, surface)
 
         # 6. Fallback Response (Never hallucinate)
         return self._build_unknown_fallback(role, surface)
@@ -1512,7 +1521,7 @@ class ChatRouter:
                     "title": faq_entry.get("question", "FAQ Answer"),
                     "data": {
                         "id": faq_entry["id"],
-                        "category": faq_entry["category"],
+                        "category": faq_entry.get("category", "Payroll Glossary"),
                         "question": faq_entry["question"],
                         "answer": faq_entry["answer"],
                         "link_text": faq_entry.get("link_text", ""),
@@ -1533,7 +1542,9 @@ class ChatRouter:
         }
 
     def _handle_faq_query(self, topic: str, role: str, surface: str) -> dict:
-        entry, conf = faq_matcher.match(topic)
+        entry, conf = faq_matcher.match(f"what is {topic}")
+        if not entry:
+            entry, conf = faq_matcher.match(topic)
         if entry:
             return self._build_faq_response(entry, conf, role, surface)
         return self._build_unknown_fallback(role, surface)

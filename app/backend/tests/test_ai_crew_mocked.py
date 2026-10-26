@@ -10,6 +10,8 @@ Verifies:
 8. Prompt injection -> refusal with C10, no employee data sent.
 9. AI_MODE off -> existing router works unchanged.
 """
+import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 import pytest
 from fastapi.testclient import TestClient
@@ -19,6 +21,7 @@ from app.backend.auth import set_active_demo_user
 from app.backend.ai.crew import PayrollAICrew, ai_crew
 from app.backend.ai.guards import runtime_guards
 from app.backend.ai.facts import build_facts_list
+from app.backend.ai.logger import set_ai_runs_log_path
 from app.backend.chat_router import chat_router
 import app.backend.config as backend_config
 
@@ -42,7 +45,11 @@ class MockLLM:
             return self.custom_classify_response
 
         lower = message.lower()
-        if "september" in lower or "take-home" in lower:
+        is_salary_drop = bool(re.search(
+            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|reduced this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower|pay.*lower|pay.*reduced|salary.*reduced|paisa kam|kam paise|salary.*cut|pay.*cut|less money)\b",
+            lower
+        ))
+        if is_salary_drop or "september" in lower or "take-home" in lower or "drop" in lower or "less" in lower:
             return {
                 "intent": "explain_salary",
                 "scenario_num": 9,
@@ -91,12 +98,15 @@ class MockLLM:
 
 
 @pytest.fixture(autouse=True)
-def setup_teardown():
+def setup_teardown(tmp_path):
     set_active_demo_user("HR01")
     orig_crew_llm = ai_crew._custom_llm
     orig_ai_mode = backend_config.AI_MODE
     backend_config.AI_MODE = True
+    temp_log = tmp_path / "test_ai_runs.jsonl"
+    set_ai_runs_log_path(temp_log)
     yield
+    set_ai_runs_log_path(None)
     ai_crew._custom_llm = orig_crew_llm
     backend_config.AI_MODE = orig_ai_mode
     set_active_demo_user("HR01")
@@ -457,4 +467,173 @@ def test_guard_pipeline_unit_tests():
     )
     assert res.passed is False
     assert res.failed_guard == "NoFillerGuard"
+
+
+# 11. 10 casual phrasings for Neha -> explain_salary path, never FAQ
+def test_10_casual_phrasings_for_neha_explain_salary_never_faq():
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    casual_phrasings = [
+        "why is my salary less this month?",
+        "pay kam kyun aaya",
+        "why did I get less money in September",
+        "why is my take-home pay lower in September?",
+        "my salary dropped this month",
+        "salary kam kyu aayi",
+        "why was my pay reduced this month",
+        "cut in my salary this month",
+        "why did i get less pay",
+        "paisa kam aaya iss mahine"
+    ]
+
+    for phrasing in casual_phrasings:
+        res = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": phrasing
+        })
+        assert res.status_code == 200, f"Failed for phrasing: {phrasing}"
+        data = res.json()
+
+        # Must route to explain_salary path
+        assert data["state"]["intent"] == "explain_salary", f"Expected explain_salary for: {phrasing}, got: {data['state']['intent']}"
+        assert data["state"]["scenario_num"] == 9, f"Expected scenario 9 for: {phrasing}"
+        assert data["state"]["intent"] != "faq_question", f"Incorrectly routed to FAQ for: {phrasing}"
+
+        # Never return an FAQ card
+        card_types = [c.get("type") for c in data.get("cards", [])]
+        assert "faq_answer" not in card_types, f"FAQ card returned for personal question: {phrasing}"
+        assert "number_hero" in card_types, f"Missing salary comparison card for: {phrasing}"
+
+
+# 12. Failing AI draft for explain_salary -> fallback shows C30 and the salary cards (not an FAQ card)
+def test_failing_ai_draft_fallback_shows_c30_and_salary_cards():
+    mock_llm = MockLLM()
+    # Drafting agent produces text that fails guards (raw digit and missing required slot)
+    mock_llm.custom_draft_response = "Your pay decreased by 5420 rupees due to loss of pay."
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "why is my salary less this month?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    # Fallback MUST keep the intent: shows C30 and salary cards
+    messages = data.get("messages", [])
+    assert len(messages) >= 1
+    assert messages[0]["code"] == "C30", f"Expected C30 fallback, got: {messages[0]}"
+    assert "Your September take-home is" in messages[0]["text"]
+    assert "lower than August" in messages[0]["text"]
+
+    card_types = [c.get("type") for c in data.get("cards", [])]
+    assert "number_hero" in card_types
+    assert "reason_list" in card_types
+    assert "faq_answer" not in card_types, "Failing AI draft must not fall back to an FAQ card"
+    assert data["state"]["scenario_num"] == 9
+
+
+# 13. "What is LOP?" still -> FAQ
+def test_what_is_lop_still_routes_to_faq():
+    mock_llm = MockLLM()
+    mock_llm.custom_classify_response = {
+        "intent": "faq_question",
+        "scenario_num": None,
+        "entities": {},
+        "confidence": 0.95,
+        "is_prompt_injection": False,
+        "clarification_needed": False
+    }
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "What is LOP?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    assert data["state"]["intent"] == "faq_question"
+    card_types = [c.get("type") for c in data.get("cards", [])]
+    assert "faq_answer" in card_types
+
+    # Ensure FAQ ID is not shown in card data
+    faq_card = next(c for c in data["cards"] if c["type"] == "faq_answer")
+    assert faq_card["data"]["id"] == "FAQ-PAY-01"
+    assert "Unpaid leave" in faq_card["data"]["answer"]
+
+
+# 14. Name detection: "Vikram's salary" and "Pooja Das salary" detected as other employees for Neha; "khana" and "rao" inside other words are not
+def test_name_detection_from_employees_json():
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    # Vikram Singh (E08) -> other employee for Neha (USER-E05)
+    res_vikram = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "What is Vikram's salary?"
+    })
+    assert res_vikram.status_code == 200
+    data_vikram = res_vikram.json()
+    assert data_vikram["cards"][0]["type"] == "refusal_card", "Vikram mention must be blocked under Scenario 12"
+    assert data_vikram["messages"][0]["code"] == "C10"
+
+    # Pooja Das (E16) -> other employee for Neha (USER-E05)
+    res_pooja = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Show Pooja Das salary"
+    })
+    assert res_pooja.status_code == 200
+    data_pooja = res_pooja.json()
+    assert data_pooja["cards"][0]["type"] == "refusal_card", "Pooja Das mention must be blocked under Scenario 12"
+    assert data_pooja["messages"][0]["code"] == "C10"
+
+    # "khana" contains "khan" but is NOT a whole-word match for Imran Khan
+    res_khana = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Aaj khana kaisa tha?"
+    })
+    assert res_khana.status_code == 200
+    data_khana = res_khana.json()
+    card_types_khana = [c.get("type") for c in data_khana.get("cards", [])]
+    assert "refusal_card" not in card_types_khana, "'khana' must not trigger Scenario 12 refusal"
+
+    # "courageous" or "extraordinary" contains "rao" inside, but not whole-word "rao"
+    res_extra = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "It was an extraordinary situation"
+    })
+    assert res_extra.status_code == 200
+    data_extra = res_extra.json()
+    card_types_extra = [c.get("type") for c in data_extra.get("cards", [])]
+    assert "refusal_card" not in card_types_extra, "'extraordinary' must not trigger Scenario 12 refusal"
+
+
+# 15. Mocked tests must write to temporary AI log, not data/runtime/ai_runs.jsonl
+def test_mocked_tests_write_to_temporary_ai_log(tmp_path):
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    temp_log = tmp_path / "custom_temp_runs.jsonl"
+    set_ai_runs_log_path(temp_log)
+
+    prod_log = Path("data/runtime/ai_runs.jsonl")
+    initial_prod_size = prod_log.stat().st_size if prod_log.exists() else 0
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Why is my take-home pay lower in September?"
+    })
+    assert res.status_code == 200
+
+    # Ensure temp log received the execution record
+    assert temp_log.exists()
+    temp_content = temp_log.read_text(encoding="utf-8")
+    assert "USER-***" in temp_content
+    assert "explain_salary" in temp_content
+
+    # Ensure prod log was untouched
+    final_prod_size = prod_log.stat().st_size if prod_log.exists() else 0
+    assert final_prod_size == initial_prod_size, "Production ai_runs.jsonl must not be modified by mocked tests"
 

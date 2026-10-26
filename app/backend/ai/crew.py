@@ -5,15 +5,56 @@ Retrieval and Escalation use deterministic tools only.
 """
 from datetime import datetime, timezone
 import json
+from pathlib import Path
 import re
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Crew, Process, Task
 
 from ..ai_messages import get_message
 from ..auth import USERS, check_employee_access
 from ..chat_router import ChatRouter, EMPLOYEE_NAMES
+from ..faq_matcher import faq_matcher
+
+EMPLOYEES_PATH = Path(__file__).resolve().parents[3] / "data" / "mock" / "employees.json"
+
+
+def _load_mock_employees() -> List[dict]:
+    if EMPLOYEES_PATH.exists():
+        try:
+            return json.loads(EMPLOYEES_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+_ALL_EMPLOYEES = _load_mock_employees()
+
+
+def _get_mentioned_employee_ids(lower_msg: str) -> List[str]:
+    """Detects mentions of employees from data/mock/employees.json using whole-word matching only.
+    Ensures 'rao' does not match inside other words and 'khan' does not match 'khana'.
+    """
+    mentioned = []
+    for emp in _ALL_EMPLOYEES:
+        emp_id = emp.get("employee_id")
+        full_name = emp.get("name", "")
+        if not emp_id or not full_name:
+            continue
+        parts = full_name.strip().split()
+        tokens = [emp_id, full_name]
+        if parts:
+            tokens.append(parts[0])  # first name
+        if len(parts) > 1:
+            tokens.append(parts[-1])  # last name
+        for tok in tokens:
+            pattern = rf"\b{re.escape(tok.lower())}\b"
+            if re.search(pattern, lower_msg):
+                if emp_id not in mentioned:
+                    mentioned.append(emp_id)
+                break
+    return mentioned
 
 from ..config import (
     AI_MAX_OUTPUT_TOKENS,
@@ -114,22 +155,9 @@ class PayrollAICrew:
             return _router._build_scenario_12(user, role, surface)
 
         allowed_emp_ids = set(user.get("allowed_employee_ids") or [])
-        other_employee_mentions = [
-            ("priya", "E01"),
-            ("sharma", "E01"),
-            ("arjun", "E02"),
-            ("rao", "E02"),
-            ("kavya", "E03"),
-            ("iyer", "E03"),
-            ("rahul", "E10"),
-            ("verma", "E10"),
-            ("lakshmi", "E11"),
-            ("reddy", "E11"),
-            ("imran", "E12"),
-            ("khan", "E12")
-        ]
-        for name, emp_id in other_employee_mentions:
-            if (name in lower_msg or emp_id.lower() in lower_msg) and emp_id not in allowed_emp_ids:
+        mentioned_emp_ids = _get_mentioned_employee_ids(lower_msg)
+        for emp_id in mentioned_emp_ids:
+            if emp_id not in allowed_emp_ids:
                 # Unauthorized employee access attempt: zero data sent to LLM
                 return _router._build_scenario_12(user, role, surface)
 
@@ -150,6 +178,10 @@ class PayrollAICrew:
         # -------------------------------------------------------------
         # STEP 2: CrewAI Execution (Classifier, Retrieval, Drafting, Escalation)
         # -------------------------------------------------------------
+        classifier_res: Optional[ClassifierOutput] = None
+        scenario_num: Optional[int] = None
+        bonus_key: Optional[str] = None
+
         try:
             # Agent 1: Classifier Agent (LLM)
             if self._custom_llm and hasattr(self._custom_llm, "classify"):
@@ -194,6 +226,14 @@ class PayrollAICrew:
 
             # Agent 2: Retrieval Agent (Deterministic Tools Only — No LLM)
             scenario_num = classifier_res.scenario_num or context.get("scenario_num")
+            if not scenario_num:
+                if classifier_res.intent == "explain_salary":
+                    scenario_num = 9
+                elif classifier_res.intent == "explain_tds":
+                    scenario_num = 10
+                elif classifier_res.intent == "explain_deduction":
+                    scenario_num = 11
+
             bonus_key = None
             if "annual" in lower_msg:
                 bonus_key = "annual_performance_bonus"
@@ -202,7 +242,13 @@ class PayrollAICrew:
 
             retrieval_data = self._execute_retrieval(scenario_num, user_id, bonus_key, raw_msg)
             if not retrieval_data.get("authorized", True) or not retrieval_data.get("cards"):
-                # Fallback to deterministic router
+                # Fallback to deterministic reply for that same intent
+                if classifier_res and classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
+                    fallback_resp = self._build_deterministic_fallback_for_intent(
+                        classifier_res.intent, scenario_num, user, role, surface, bonus_key
+                    )
+                    if fallback_resp:
+                        return fallback_resp
                 return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
             # If this is an FAQ result or FAQ intent, return the deterministic FAQ response directly
@@ -264,6 +310,13 @@ class PayrollAICrew:
                     fallback_reason=guard_result.error_message,
                     latency_ms=(time.time() - start_time) * 1000
                 )
+                if classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
+                    fallback_resp = self._build_deterministic_fallback_for_intent(
+                        classifier_res.intent, scenario_num, user, role, surface, bonus_key
+                    )
+                    if fallback_resp:
+                        return fallback_resp
+
                 return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
             # -------------------------------------------------------------
@@ -313,22 +366,71 @@ class PayrollAICrew:
 
         except Exception as e:
             # Fallback on any runtime exception or timeout (>20s)
+            curr_intent = classifier_res.intent if classifier_res else "unknown"
+            curr_sc = scenario_num if scenario_num else (classifier_res.scenario_num if classifier_res else context.get("scenario_num"))
             log_ai_run(
                 user_id=user_id,
                 role=role,
                 surface=surface,
-                intent="unknown",
-                scenario_num=context.get("scenario_num"),
+                intent=curr_intent,
+                scenario_num=curr_sc,
                 guards_result={"execution_error": str(e)},
                 fallback_triggered=True,
                 fallback_reason=f"Exception in AI Crew: {str(e)}",
                 latency_ms=(time.time() - start_time) * 1000
             )
+            if classifier_res and classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
+                fallback_resp = self._build_deterministic_fallback_for_intent(
+                    classifier_res.intent, curr_sc, user, role, surface, bonus_key
+                )
+                if fallback_resp:
+                    return fallback_resp
+
             return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
     # -------------------------------------------------------------
     # Helper Execution Methods
     # -------------------------------------------------------------
+
+    def _build_deterministic_fallback_for_intent(
+        self,
+        intent: str,
+        scenario_num: Optional[int],
+        user: dict,
+        role: str,
+        surface: str,
+        bonus_key: Optional[str] = None
+    ) -> Optional[dict]:
+        """Returns the deterministic reply for the identified intent without fresh keyword routing."""
+        if intent == "explain_salary":
+            return _router._build_scenario_9(user, role, surface)
+        elif intent == "explain_tds":
+            return _router._build_scenario_10(user, role, surface)
+        elif intent == "explain_deduction":
+            return _router._build_scenario_11(user, role, surface)
+        elif intent in ("prepare_hike", "review_hike"):
+            if scenario_num == 2:
+                return _router._build_scenario_2(user, role, surface)
+            elif scenario_num == 3:
+                return _router._build_scenario_3(user, role, surface)
+            return _router._build_scenario_1(user, role, surface)
+        elif intent == "settlement_proposal":
+            if scenario_num == 6:
+                return _router._build_scenario_6(user, role, surface)
+            elif scenario_num == 7:
+                return _router._build_scenario_7(user, role, surface)
+            elif scenario_num == 8:
+                return _router._build_scenario_8(user, role, surface)
+            elif scenario_num == 13:
+                return _router._build_scenario_13(user, role, surface)
+            return _router._build_scenario_8(user, role, surface)
+        elif intent == "settlement_review":
+            return _router._build_scenario_13(user, role, surface)
+        elif intent == "bonus_proposal":
+            if scenario_num == 5:
+                return _router._build_scenario_5(user, role, surface)
+            return _router._build_scenario_4(user, role, surface, bonus_type_key=bonus_key or "annual_performance_bonus")
+        return None
 
     def _execute_classifier(self, task: Task, message: str, role: str, user: dict, context: dict) -> ClassifierOutput:
         """Executes Classifier task and validates output."""
@@ -337,7 +439,10 @@ class PayrollAICrew:
         # If custom LLM is a mock or callable, use it; otherwise run task
         if self._custom_llm and hasattr(self._custom_llm, "classify"):
             raw_out = self._custom_llm.classify(message, role, context)
-            return validate_classifier_output(raw_out, user)
+            res = validate_classifier_output(raw_out, user)
+            if res.intent == "explain_salary" and not res.scenario_num:
+                res.scenario_num = 9
+            return res
 
         # Standard Crew task execution
         try:
@@ -352,7 +457,10 @@ class PayrollAICrew:
             m = re.search(r"\{.*\}", result_str, re.DOTALL)
             if m:
                 raw_json = json.loads(m.group(0))
-                return validate_classifier_output(raw_json, user)
+                res = validate_classifier_output(raw_json, user)
+                if res.intent == "explain_salary" and not res.scenario_num:
+                    res.scenario_num = 9
+                return res
         except Exception:
             pass
 
@@ -377,13 +485,19 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 7, "entities": {"employee_name": "Lakshmi Reddy"}}, user)
         if "imran" in lower_msg:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
-        if "september" in lower_msg or "take-home" in lower_msg or "drop" in lower_msg:
+
+        # Casual phrasings and personal pay queries for Neha / salary explanation
+        is_salary_drop = bool(re.search(
+            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+            lower_msg
+        ))
+        if is_salary_drop or "september" in lower_msg or "take-home" in lower_msg or "drop" in lower_msg or "less" in lower_msg:
             return validate_classifier_output({"intent": "explain_salary", "scenario_num": 9}, user)
-        if "tds" in lower_msg:
+        if "tds" in lower_msg or "tax" in lower_msg:
             return validate_classifier_output({"intent": "explain_tds", "scenario_num": 10}, user)
         if "gross" in lower_msg:
             return validate_classifier_output({"intent": "explain_deduction", "scenario_num": 11}, user)
-        if lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg:
+        if (lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
             return validate_classifier_output({"intent": "faq_question", "scenario_num": None}, user)
 
         sc_num = context.get("scenario_num")
