@@ -247,6 +247,14 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
                 />
               );
             })}
+            {isLoading && (
+              <div className="hcm-chat-thinking" data-testid="chat-thinking" aria-live="polite">
+                <span className="hcm-thinking-dot" />
+                <span className="hcm-thinking-dot" />
+                <span className="hcm-thinking-dot" />
+                <span className="hcm-thinking-text">Thinking…</span>
+              </div>
+            )}
             <div ref={feedEndRef} />
           </div>
         </div>

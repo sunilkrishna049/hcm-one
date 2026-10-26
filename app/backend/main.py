@@ -13,6 +13,8 @@ from .config import MOCK_DIR
 from .engine_bridge import bridge
 from .lifecycle import lifecycle
 from .chat_router import chat_router
+from .ai.crew import ai_crew
+
 
 
 def load_employees_map() -> Dict[str, dict]:
@@ -525,12 +527,13 @@ class ChatRequest(BaseModel):
 
 @app.post("/api/chat")
 def handle_chat_endpoint(req: ChatRequest, user: dict = Depends(get_current_user)):
-    """Unified chat endpoint executing deterministic intent router per chat_contract.md."""
+    """Unified chat endpoint executing AI Crew / deterministic router per chat_contract.md."""
     target_user_id = req.user_id or user.get("user_id", "HR01")
-    return chat_router.handle_chat(
+    return ai_crew.handle_chat(
         user_id=target_user_id,
         message=req.message or "",
         action=req.action,
         context=req.context or {}
     )
+
 

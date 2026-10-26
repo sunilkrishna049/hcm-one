@@ -404,3 +404,14 @@
 - Proposed by: Project owner
 - Status: Approved
 - Approved by: Project owner
+
+- ID: DEC-041
+- Date: 2026-10-26
+- Decision: Real AI layer architecture (Option B: Guarded natural replies with CrewAI 4-agent crew, slot-based drafting, server-side critical sentences, and mechanical runtime guards).
+- Options considered: (a) Option A: Unconstrained LLM generation, (b) Option B: Guarded natural replies with slot-based drafting, deterministic tools, server-side critical sentences, and mechanical runtime guards with deterministic router fallback, (c) Option C: Pure deterministic templates without AI.
+- Reason: Project owner decision. Keeps /api/chat contract 100% stable. Only Classifier and Drafting agents invoke LLM; Retrieval and Escalation use deterministic tools only (no LLM reasoning). Timeout is 20s with a "Thinking…" loading state in the UI. Drafting agent never writes numbers, amounts, percentages, or dates; it writes named slots (e.g. {net_change}, {later_month}) chosen from a facts list supplied by the tools for that reply. Server fills slots from formatted engine values and appends critical approved sentences (C01, C04, C10, C11, C09, C17, C25, and certainty labels). Guards are mechanical only (slots, numbers, names, concepts, banned terms, policy wording, length 1–3 sentences and max 60 words); tone and helpfulness are judged in evaluation, not at runtime. Acceptance targets: intent accuracy >= 90%, zero wrong numbers shown, fallback rate <= 15%, zero cross-employee data sent to AI. Common transliterated Hinglish supported. Bonus choice remembered within session, cleared on New chat.
+- Evidence or source: Project owner instructions, 2026-10-26; [app/backend/ai/AI_DESIGN.md](../app/backend/ai/AI_DESIGN.md); [app/backend/chat_contract.md](../app/backend/chat_contract.md); [chat_router.py](../app/backend/chat_router.py); [output/06-ai-interaction/](../output/06-ai-interaction/).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
