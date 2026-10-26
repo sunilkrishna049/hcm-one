@@ -39,6 +39,17 @@ FORBIDDEN_POLICY_PATTERNS = [
 ]
 
 
+HEDGING_TERMS_PATTERN = re.compile(
+    r"\b(may|might|possibly|could be|perhaps|likely|seems)\b",
+    re.IGNORECASE
+)
+
+CLOSING_FILLER_PATTERN = re.compile(
+    r"\b(if you have (any |further )?questions?|please let me know|hope this helps|feel free to (ask|reach out)|don't hesitate|do not hesitate)\b",
+    re.IGNORECASE
+)
+
+
 class GuardResult(BaseModel):
     passed: bool
     failed_guard: Optional[str] = None
@@ -55,9 +66,12 @@ class RuntimeGuardPipeline:
         self,
         raw_draft: str,
         facts_list: Dict[str, str],
-        active_employee_id: Optional[str] = None
+        active_employee_id: Optional[str] = None,
+        intent: Optional[str] = None,
+        scenario_num: Optional[int] = None,
+        certainty_label: Optional[str] = None
     ) -> GuardResult:
-        """Runs the 7 mechanical runtime guards and performs server slot interpolation.
+        """Runs the mechanical runtime guards and performs server slot interpolation.
         Returns GuardResult with passed=True and filled_text on success.
         """
         raw_draft = (raw_draft or "").strip()
@@ -85,6 +99,91 @@ class RuntimeGuardPipeline:
                     failed_guard="SlotWhitelistGuard",
                     error_message=f"Unknown slot '{{{slot}}}' not found in turn facts list."
                 )
+
+        # Guard 2b: Required Slots Guard (for salary and TDS explanation intents)
+        # For salary and TDS explanation intents, the AI draft must include {net_change},
+        # {earlier_month} and {later_month}, and name each engine reason with its amount slot.
+        is_explanation_intent = (
+            intent in ("explain_salary", "explain_tds", "explain_deduction", "explain_salary_change", "explain_tds_change")
+            or scenario_num in (9, 10, 11)
+        )
+        if is_explanation_intent:
+            if "{net_change}" not in raw_draft:
+                return GuardResult(
+                    passed=False,
+                    failed_guard="RequiredSlotsGuard",
+                    error_message="Missing required slot '{net_change}' in explanation draft."
+                )
+            if "{earlier_month}" not in raw_draft:
+                return GuardResult(
+                    passed=False,
+                    failed_guard="RequiredSlotsGuard",
+                    error_message="Missing required slot '{earlier_month}' in explanation draft."
+                )
+            if "{later_month}" not in raw_draft:
+                return GuardResult(
+                    passed=False,
+                    failed_guard="RequiredSlotsGuard",
+                    error_message="Missing required slot '{later_month}' in explanation draft."
+                )
+
+            # Name each engine reason with its amount slot
+            if scenario_num == 9 or intent in ("explain_salary", "explain_salary_change"):
+                if not any(s in raw_draft for s in ("{lop_amount}", "{lop_amt}")):
+                    return GuardResult(
+                        passed=False,
+                        failed_guard="RequiredSlotsGuard",
+                        error_message="Missing required reason amount slot for Loss of Pay ('{lop_amount}')."
+                    )
+                if not any(s in raw_draft for s in ("{pf_change}", "{pf_effect}")):
+                    return GuardResult(
+                        passed=False,
+                        failed_guard="RequiredSlotsGuard",
+                        error_message="Missing required reason amount slot for PF ceiling change ('{pf_change}')."
+                    )
+            elif scenario_num == 10 or intent in ("explain_tds", "explain_tds_change"):
+                if not any(s in raw_draft for s in ("{tds_increase}", "{prior_tds_amt}", "{tds_change}")):
+                    return GuardResult(
+                        passed=False,
+                        failed_guard="RequiredSlotsGuard",
+                        error_message="Missing required reason amount slot for TDS change ('{tds_increase}')."
+                    )
+                if not any(s in raw_draft for s in ("{pf_change}", "{pf_amt}")):
+                    return GuardResult(
+                        passed=False,
+                        failed_guard="RequiredSlotsGuard",
+                        error_message="Missing required reason amount slot for PF ceiling change ('{pf_change}')."
+                    )
+            elif scenario_num == 11 or intent in ("explain_deduction",):
+                if not any(s in raw_draft for s in ("{pf_change}", "{net_decrease}")):
+                    return GuardResult(
+                        passed=False,
+                        failed_guard="RequiredSlotsGuard",
+                        error_message="Missing required reason amount slot for PF change ('{pf_change}')."
+                    )
+
+        # Guard 2c: No False Uncertainty Guard
+        # When reply certainty is "Complete for this scope", reject hedging words
+        # (may, might, possibly, could be, perhaps, likely, seems).
+        if certainty_label == "Complete for this scope":
+            hedging_match = HEDGING_TERMS_PATTERN.search(raw_draft)
+            if hedging_match:
+                return GuardResult(
+                    passed=False,
+                    failed_guard="NoHedgingGuard",
+                    error_message=f"False uncertainty: hedging term '{hedging_match.group(0)}' not permitted when certainty is 'Complete for this scope'."
+                )
+
+        # Guard 2d: No Filler Guard
+        # Reject closing filler such as "If you have further questions", "please let me know",
+        # "Hope this helps", "Feel free to ask".
+        filler_match = CLOSING_FILLER_PATTERN.search(raw_draft)
+        if filler_match:
+            return GuardResult(
+                passed=False,
+                failed_guard="NoFillerGuard",
+                error_message=f"Closing filler '{filler_match.group(0)}' detected in draft."
+            )
 
         # Guard 3: Concept & Banned Terms Guard (on raw draft)
         lower_raw = raw_draft.lower()

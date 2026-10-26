@@ -22,6 +22,7 @@ interface ChatHRProps {
   currentScenario?: number;
   initialMessage?: string;
   prefilledText?: string;
+  onClearPrefill?: () => void;
   onNewChat?: () => void;
 }
 
@@ -52,6 +53,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   currentUser,
   currentScenario = 1,
   prefilledText,
+  onClearPrefill,
   onNewChat,
 }) => {
   const [turns, setTurns] = useState<ChatMessageTurn[]>(() => [createWelcomeTurn(currentUser)]);
@@ -59,6 +61,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   const [panelData, setPanelData] = useState<PanelHRData | null>(null);
   const [activeChips, setActiveChips] = useState<ChipItem[]>(HR_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
+  const [clearSignal, setClearSignal] = useState(0);
   const feedEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -91,6 +94,9 @@ export const ChatHR: React.FC<ChatHRProps> = ({
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
+
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
 
     const userTurn: ChatMessageTurn = {
       id: `user-${Date.now()}`,
@@ -140,6 +146,8 @@ export const ChatHR: React.FC<ChatHRProps> = ({
 
   const handleAction = async (actionName: string, actionPayload?: any) => {
     if (isLoading) return;
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
     setIsLoading(true);
 
     try {
@@ -220,6 +228,8 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   };
 
   const handleChipSelect = (chip: ChipItem) => {
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
     if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof') {
       setIsPanelOpen(true);
       return;
@@ -323,6 +333,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
           placeholder="Ask a question or enter a payroll request..."
           isMobile={false}
           prefilledText={prefilledText}
+          clearSignal={clearSignal}
         />
       </main>
 

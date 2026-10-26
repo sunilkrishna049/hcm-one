@@ -716,5 +716,71 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
+  it('14. Composer: login switcher does not pre-type, scenario picker pre-types, composer empty after typed message and after chip', async () => {
+    render(<App />);
+
+    const textarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('');
+
+    // 1. Switching login with login switcher does NOT pre-type anything
+    const userSelect = screen.getByTestId('user-select');
+    fireEvent.change(userSelect, { target: { value: 'USER-E05' } });
+
+    await waitFor(() => {
+      const empTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(empTextarea.value).toBe('');
+    });
+
+    // Switch to another user: still empty
+    fireEvent.change(userSelect, { target: { value: 'HR02' } });
+    await waitFor(() => {
+      const hrTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(hrTextarea.value).toBe('');
+    });
+
+    // 2. Scenario picker pre-types
+    const scenarioSelect = screen.getByTestId('scenario-select');
+    fireEvent.change(scenarioSelect, { target: { value: '9' } });
+
+    await waitFor(() => {
+      const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(composer.value).toBe('Why is my September salary lower than August?');
+    });
+
+    // 3. After typed message is sent, composer must be empty
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C30', text: 'September pay lower than August' }],
+      cards: [],
+      chips: [{ label: 'What is LOP?', action: 'faq-lop', payload: {} }],
+    });
+
+    const sendBtn = screen.getByTestId('composer-send-btn');
+    fireEvent.click(sendBtn);
+
+    await waitFor(() => {
+      const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(composer.value).toBe('');
+    });
+
+    // 4. User types text into composer, then clicks a chip -> composer must be empty
+    const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'Some uncommitted text' } });
+    expect(composer.value).toBe('Some uncommitted text');
+
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'FAQ', text: 'Loss of pay explanation' }],
+      cards: [],
+      chips: [],
+    });
+
+    const lopChip = await screen.findByText('What is LOP?');
+    fireEvent.click(lopChip);
+
+    await waitFor(() => {
+      const composerAfterChip = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(composerAfterChip.value).toBe('');
+    });
+  });
+
 });
 

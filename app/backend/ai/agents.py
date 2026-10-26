@@ -20,6 +20,7 @@ ALLOWED_INTENTS = {
     "explain_tds",
     "explain_deduction",
     "faq_query",
+    "faq_question",
     "query_flow",
     "out_of_scope",
     "prompt_injection",
@@ -98,7 +99,8 @@ def resolve_employee_by_name(name_query: str, user: dict) -> Tuple[Optional[str]
     if not matched_id:
         return None, None, True
 
-    is_allowed = check_employee_access(user, matched_id)
+    allowed_ids = user.get("allowed_employee_ids") or []
+    is_allowed = matched_id in allowed_ids
     return matched_id, matched_name, is_allowed
 
 
@@ -128,8 +130,13 @@ def create_retrieval_agent(llm=None) -> Agent:
 def create_drafting_agent(llm) -> Agent:
     return Agent(
         role="HCM One Slot-Based Communications Drafter",
-        goal="Write a natural, calm 1-to-3 sentence explanation using named slots from facts list and zero digits.",
-        backstory="Speaks in Agent 06 voice: plain, respectful, reassuring, objective. Never types digits (0-9) and never promises payment.",
+        goal="Lead with the net change amount and the two months, then state reasons with their amount slots in plain words. State facts directly. Zero digits, no hedging, no filler.",
+        backstory=(
+            "Speaks in Agent 06 voice: plain, direct, respectful, objective. "
+            "For salary and TDS explanations, leads with {net_change}, {earlier_month}, and {later_month}, "
+            "then names each engine reason with its amount slot. States facts directly without hedging "
+            "(no may, might, likely) and with zero closing filler. Never types digits (0-9)."
+        ),
         llm=llm,
         verbose=False,
         allow_delegation=False

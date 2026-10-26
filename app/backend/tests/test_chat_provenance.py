@@ -8,7 +8,16 @@ from fastapi.testclient import TestClient
 from app.backend.main import app
 from app.backend.chat_router import chat_router
 
+import app.backend.config as backend_config
+
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def setup_teardown():
+    orig_ai_mode = backend_config.AI_MODE
+    backend_config.AI_MODE = False
+    yield
+    backend_config.AI_MODE = orig_ai_mode
 
 # Allowed exceptions mapping: {scenario_num: {number: "explicit reason"}}
 # Currently strictly NONE. All numeric figures must trace to data/generated/scenarios/ or data/rules/

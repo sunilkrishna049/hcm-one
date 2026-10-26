@@ -180,28 +180,54 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
         }
 
     elif scenario_num == 10:
+        sc = bridge.get_scenario(10)
+        r = sc["result"]
+        net_change = r.get("net_change", {}).get("value", -13014)
+        abs_net_change = abs(net_change)
+        tds_change = r.get("tds_change", {}).get("value", 12454)
+        reasons_list = r.get("reasons", [])
+        prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -12454
+        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -560
+        after_tds = r.get("after", {}).get("tds", {}).get("amount", {}).get("value", 12454)
+
         facts = {
             "employee_name": "Siddharth Jain",
             "employee_first_name": "Siddharth",
             "employee_id": "E06",
             "earlier_month": "August",
             "later_month": "September",
+            "net_change": format_inr(net_change),
+            "abs_net_change": format_inr(abs_net_change),
+            "tds_increase": format_inr(tds_change),
+            "tds_change": format_inr(tds_change),
+            "prior_tds_amt": format_inr(prior_tds_amt),
+            "pf_change": format_inr(pf_amt),
+            "after_tds": format_inr(after_tds),
             "declared_months": "April to July 2026",
-            "tds_increase": format_inr(4200),
-            "primary_reason": "previous employer income declaration"
+            "primary_reason": "previous employer income declaration",
+            "secondary_reason": "PF ceiling change"
         }
 
     elif scenario_num == 11:
+        sc = bridge.get_scenario(11)
+        r = sc["result"]
+        net_change = r.get("net_change", {}).get("value", -420)
+        abs_net_change = abs(net_change)
+        reasons_list = r.get("reasons", [])
+        pf_amt = reasons_list[0].get("effect_amount", {}).get("value", -420) if reasons_list else -420
+
         facts = {
             "employee_name": "Pooja Das",
             "employee_first_name": "Pooja",
             "employee_id": "E16",
             "earlier_month": "August",
             "later_month": "September",
+            "net_change": format_inr(net_change),
+            "abs_net_change": format_inr(abs_net_change),
+            "net_decrease": format_inr(net_change),
+            "abs_net_decrease": format_inr(abs_net_change),
             "gross_amount": format_inr(60000),
-            "net_decrease": format_inr(-1200),
-            "abs_net_decrease": format_inr(1200),
-            "pf_change": format_inr(-1200),
+            "pf_change": format_inr(pf_amt),
             "primary_reason": "revised PF statutory deduction"
         }
 

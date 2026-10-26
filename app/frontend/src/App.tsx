@@ -89,6 +89,7 @@ export function App() {
             currentUser={currentUser}
             currentScenario={currentScenario}
             prefilledText={prefilledText}
+            onClearPrefill={() => setPrefilledText('')}
             onNewChat={handleNewChat}
           />
         ) : (
@@ -97,6 +98,7 @@ export function App() {
             currentUser={currentUser}
             currentScenario={currentScenario}
             prefilledText={prefilledText}
+            onClearPrefill={() => setPrefilledText('')}
             onNewChat={handleNewChat}
           />
         )}

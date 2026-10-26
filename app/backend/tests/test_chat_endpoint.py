@@ -14,14 +14,19 @@ from app.backend.lifecycle import lifecycle
 from app.backend.chat_router import ChatRouter
 from app.backend.engine_bridge import bridge
 
+import app.backend.config as backend_config
+
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def setup_teardown():
+    orig_ai_mode = backend_config.AI_MODE
+    backend_config.AI_MODE = False
     lifecycle.reset_demo()
     set_active_demo_user("HR01")
     yield
+    backend_config.AI_MODE = orig_ai_mode
     lifecycle.reset_demo()
     set_active_demo_user("HR01")
 

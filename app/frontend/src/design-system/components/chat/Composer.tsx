@@ -7,6 +7,7 @@ interface ComposerProps {
   disabled?: boolean;
   isMobile?: boolean;
   prefilledText?: string;
+  clearSignal?: number;
 }
 
 export const Composer: React.FC<ComposerProps> = ({
@@ -15,6 +16,7 @@ export const Composer: React.FC<ComposerProps> = ({
   disabled = false,
   isMobile = false,
   prefilledText,
+  clearSignal,
 }) => {
   const [text, setText] = useState(prefilledText || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -30,6 +32,15 @@ export const Composer: React.FC<ComposerProps> = ({
       }
     }
   }, [prefilledText]);
+
+  useEffect(() => {
+    if (clearSignal !== undefined && clearSignal > 0) {
+      setText('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+    }
+  }, [clearSignal]);
 
 
   const handleSend = () => {

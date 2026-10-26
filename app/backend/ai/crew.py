@@ -179,10 +179,15 @@ class PayrollAICrew:
             ):
                 return _router._build_scenario_12(user, role, surface)
 
-            # Ambiguous bonus check -> show clarifying question card
+            # Ambiguous bonus check -> show clarifying question card (only for team bonus without specific employee)
             if (
                 classifier_res.clarification_needed
-                or (classifier_res.intent == "bonus_proposal" and not classifier_res.entities.get("bonus_type"))
+                or (
+                    classifier_res.intent == "bonus_proposal"
+                    and not classifier_res.entities.get("bonus_type")
+                    and classifier_res.scenario_num != 5
+                    and classifier_res.entities.get("employee_id") != "E09"
+                )
             ):
                 if "annual" not in lower_msg and "sales" not in lower_msg:
                     return _router._build_bonus_clarifying_question(role, surface)
@@ -200,6 +205,10 @@ class PayrollAICrew:
                 # Fallback to deterministic router
                 return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
+            # If this is an FAQ result or FAQ intent, return the deterministic FAQ response directly
+            if not scenario_num or retrieval_data.get("state", {}).get("intent") == "faq_question":
+                return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
+
             facts_list = retrieval_data.get("facts_list", {})
             active_emp_id = facts_list.get("employee_id") or user.get("employee_id")
 
@@ -215,10 +224,13 @@ class PayrollAICrew:
                         f"User message: '{raw_msg}'\n"
                         f"Available facts slots: {allowed_slots_str}\n"
                         "RULES:\n"
-                        "1. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots like {net_change}, {later_month}.\n"
-                        "2. Do NOT type any digits (0-9).\n"
-                        "3. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
-                        "4. Do NOT make payment promises or give tax regime recommendations."
+                        "1. For salary and TDS explanations: lead with the net change amount {net_change} and the two months {earlier_month} and {later_month}, then the reasons with their amounts, in plain words. State facts directly.\n"
+                        "2. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots like {net_change}, {later_month}.\n"
+                        "3. Do NOT type any digits (0-9).\n"
+                        "4. State facts directly. Do NOT use hedging words (no may, might, possibly, could be, perhaps, likely, seems) when facts are complete.\n"
+                        "5. Absolutely NO closing filler (no 'If you have further questions', 'please let me know', 'Hope this helps', 'Feel free to ask'). End immediately after stating facts.\n"
+                        "6. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
+                        "7. Do NOT make payment promises or give tax regime recommendations."
                     ),
                     expected_output="Plain text reply with slot tokens and zero digits",
                     agent=drafting_agent
@@ -229,10 +241,14 @@ class PayrollAICrew:
             # -------------------------------------------------------------
             # STEP 3: Mechanical Runtime Guards & Server Slot Filling
             # -------------------------------------------------------------
+            certainty_lbl = retrieval_data.get("certainty_label") or "Complete for this scope"
             guard_result = _guards.validate_and_fill(
                 raw_draft=raw_draft,
                 facts_list=facts_list,
-                active_employee_id=active_emp_id
+                active_employee_id=active_emp_id,
+                intent=classifier_res.intent,
+                scenario_num=scenario_num,
+                certainty_label=certainty_lbl
             )
 
             if not guard_result.passed:
@@ -351,16 +367,24 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "review_hike", "scenario_num": 2, "entities": {"employee_name": "Arjun Rao"}}, user)
         if "kavya" in lower_msg:
             return validate_classifier_output({"intent": "prepare_hike", "scenario_num": 3, "entities": {"employee_name": "Kavya Iyer"}}, user)
+        if "meera" in lower_msg:
+            return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 5, "entities": {"employee_name": "Meera Nair"}}, user)
         if "bonus" in lower_msg:
             return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 4}, user)
         if "rahul" in lower_msg:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 6, "entities": {"employee_name": "Rahul Verma"}}, user)
+        if "lakshmi" in lower_msg:
+            return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 7, "entities": {"employee_name": "Lakshmi Reddy"}}, user)
+        if "imran" in lower_msg:
+            return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
         if "september" in lower_msg or "take-home" in lower_msg or "drop" in lower_msg:
             return validate_classifier_output({"intent": "explain_salary", "scenario_num": 9}, user)
         if "tds" in lower_msg:
             return validate_classifier_output({"intent": "explain_tds", "scenario_num": 10}, user)
         if "gross" in lower_msg:
             return validate_classifier_output({"intent": "explain_deduction", "scenario_num": 11}, user)
+        if lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg:
+            return validate_classifier_output({"intent": "faq_question", "scenario_num": None}, user)
 
         sc_num = context.get("scenario_num")
         return validate_classifier_output({"intent": "unknown", "scenario_num": sc_num}, user)
@@ -403,7 +427,11 @@ class PayrollAICrew:
         except Exception:
             # Fallback natural slotted template if drafting LLM errors
             if scenario_num == 9:
-                return "Your {later_month} take-home pay is {net_change} {net_change_direction} than {earlier_month}. The change is due to {lop_days} days unpaid leave and the revised PF ceiling."
+                return "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+            elif scenario_num == 10:
+                return "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. TDS increased by {tds_increase} and the PF ceiling change was {pf_change}."
+            elif scenario_num == 11:
+                return "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. The PF ceiling change was {pf_change}."
             elif scenario_num == 1:
                 return "This is a proposal for the recorded hike for {employee_name} for {period}. Gross arrears are {gross_arrears}."
             elif scenario_num == 4:

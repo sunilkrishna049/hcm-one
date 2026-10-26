@@ -22,6 +22,7 @@ interface ChatEMPProps {
   currentScenario?: number;
   initialMessage?: string;
   prefilledText?: string;
+  onClearPrefill?: () => void;
   onNewChat?: () => void;
 }
 
@@ -52,6 +53,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   currentUser,
   currentScenario = 9,
   prefilledText,
+  onClearPrefill,
   onNewChat,
 }) => {
   const [turns, setTurns] = useState<ChatMessageTurn[]>(() => [createWelcomeTurn(currentUser)]);
@@ -59,6 +61,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   const [sheetData, setSheetData] = useState<SheetEMPData | null>(null);
   const [activeChips, setActiveChips] = useState<ChipItem[]>(EMP_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
+  const [clearSignal, setClearSignal] = useState(0);
   const feedEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -91,6 +94,9 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
+
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
 
     const userTurn: ChatMessageTurn = {
       id: `user-${Date.now()}`,
@@ -140,6 +146,8 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
 
   const handleAction = async (actionName: string, actionPayload?: any) => {
     if (isLoading) return;
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
     setIsLoading(true);
 
     try {
@@ -180,6 +188,8 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   };
 
   const handleChipSelect = (chip: ChipItem) => {
+    setClearSignal((s) => s + 1);
+    if (onClearPrefill) onClearPrefill();
     if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof') {
       setIsSheetOpen(true);
       return;
@@ -276,6 +286,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
           disabled={isLoading}
           placeholder="Ask a question about your salary..."
           prefilledText={prefilledText}
+          clearSignal={clearSignal}
         />
       </main>
 

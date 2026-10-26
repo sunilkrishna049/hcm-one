@@ -84,8 +84,8 @@ class MockLLM:
         # Default valid slotted draft for scenario 9
         if scenario_num == 9:
             return (
-                "Your {later_month} take-home pay is {net_change} {net_change_direction} than {earlier_month}. "
-                "This change is primarily due to {lop_days} days of unpaid leave and the revised PF ceiling."
+                "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. "
+                "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
             )
         return "Here is the calculation proposal for {employee_name}."
 
@@ -116,10 +116,10 @@ def test_valid_slotted_draft_scenario_9():
 
     # Verify AI message is populated with filled values
     ai_msg = data["messages"][0]["text"]
-    assert "Your September take-home pay is" in ai_msg
-    assert "lower than August" in ai_msg
-    assert "3 days of unpaid leave" in ai_msg
-    assert "revised PF ceiling" in ai_msg
+    assert "Your September take-home pay changed by" in ai_msg
+    assert "compared to August" in ai_msg
+    assert "Loss of Pay was" in ai_msg
+    assert "PF ceiling change was" in ai_msg
 
     # Verify approved follow-up C27 appended by server
     assert len(data["messages"]) >= 2
@@ -290,3 +290,171 @@ def test_ai_mode_off_runs_deterministic_router():
     assert data["messages"][0]["code"] == "C03"
     cards = {c["type"]: c for c in data["cards"]}
     assert cards["number_cards"]["data"]["hero_amount"] == 67476
+
+
+# 10. Required slots guard: draft missing {net_change} falls back
+def test_draft_missing_net_change_slot_falls_back():
+    mock_llm = MockLLM()
+    # Invalid: missing {net_change}
+    mock_llm.custom_draft_response = (
+        "Your {later_month} take-home pay changed compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+    )
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Why is my take-home pay lower in September?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    # Falls back to deterministic router output (C30 approved copy)
+    assert data["messages"][0]["code"] == "C30"
+    assert "The main recorded reasons are below." in data["messages"][0]["text"]
+    assert data["state"]["scenario_num"] == 9
+
+
+# 11. No false uncertainty guard: "may be" with Complete certainty falls back
+def test_hedging_with_complete_certainty_falls_back():
+    mock_llm = MockLLM()
+    # Invalid: contains "may be" when certainty is "Complete for this scope"
+    mock_llm.custom_draft_response = (
+        "Your {later_month} take-home pay may be {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+    )
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Why is my take-home pay lower in September?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    # Falls back to deterministic router output (C30 approved copy)
+    assert data["messages"][0]["code"] == "C30"
+    assert "The main recorded reasons are below." in data["messages"][0]["text"]
+    assert data["state"]["scenario_num"] == 9
+
+
+# 12. No filler guard: "please let me know" falls back
+def test_closing_filler_falls_back():
+    mock_llm = MockLLM()
+    # Invalid: contains closing filler "please let me know"
+    mock_llm.custom_draft_response = (
+        "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}. "
+        "Please let me know if you have questions."
+    )
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Why is my take-home pay lower in September?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    # Falls back to deterministic router output (C30 approved copy)
+    assert data["messages"][0]["code"] == "C30"
+    assert "The main recorded reasons are below." in data["messages"][0]["text"]
+    assert data["state"]["scenario_num"] == 9
+
+
+# 13. Unit tests directly on RuntimeGuardPipeline
+def test_guard_pipeline_unit_tests():
+    facts = {
+        "net_change": "-₹5,420",
+        "earlier_month": "August",
+        "later_month": "September",
+        "lop_amount": "-₹5,000",
+        "pf_change": "-₹420"
+    }
+
+    # Pass case
+    valid_draft = (
+        "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+    )
+    res = runtime_guards.validate_and_fill(
+        raw_draft=valid_draft,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Complete for this scope"
+    )
+    assert res.passed is True
+    assert "−₹5,420" in res.filled_text or "-₹5,420" in res.filled_text
+
+    # Missing {earlier_month}
+    missing_month_draft = (
+        "Your {later_month} take-home pay changed by {net_change}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+    )
+    res = runtime_guards.validate_and_fill(
+        raw_draft=missing_month_draft,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Complete for this scope"
+    )
+    assert res.passed is False
+    assert res.failed_guard == "RequiredSlotsGuard"
+
+    # Missing reason amount slot {pf_change}
+    missing_reason_slot = (
+        "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount}."
+    )
+    res = runtime_guards.validate_and_fill(
+        raw_draft=missing_reason_slot,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Complete for this scope"
+    )
+    assert res.passed is False
+    assert res.failed_guard == "RequiredSlotsGuard"
+
+    # Hedging: "might" or "possibly" with Complete
+    hedging_draft = (
+        "Your {later_month} take-home pay might be {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}."
+    )
+    res = runtime_guards.validate_and_fill(
+        raw_draft=hedging_draft,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Complete for this scope"
+    )
+    assert res.passed is False
+    assert res.failed_guard == "NoHedgingGuard"
+
+    # Hedging when certainty is NOT Complete (e.g. Incomplete) is allowed by NoHedgingGuard
+    res_incomplete = runtime_guards.validate_and_fill(
+        raw_draft=hedging_draft,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Incomplete"
+    )
+    assert res_incomplete.passed is True
+
+    # Filler: "Feel free to ask"
+    filler_draft = (
+        "Your {later_month} take-home pay changed by {net_change} compared to {earlier_month}. "
+        "Loss of Pay was {lop_amount} and the PF ceiling change was {pf_change}. "
+        "Feel free to ask."
+    )
+    res = runtime_guards.validate_and_fill(
+        raw_draft=filler_draft,
+        facts_list=facts,
+        intent="explain_salary",
+        scenario_num=9,
+        certainty_label="Complete for this scope"
+    )
+    assert res.passed is False
+    assert res.failed_guard == "NoFillerGuard"
+
