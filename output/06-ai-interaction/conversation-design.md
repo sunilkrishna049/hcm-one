@@ -126,6 +126,11 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
   - Employee: "Why is my take-home lower this month?", "Why did my TDS change?", "What is LOP?", "Track my query".
 - **Source IDs:** Approved by Project owner; DEC-040.
 
+### A06-15: Unrecognized request and fallback state
+- **Purpose:** Gracefully handle requests that cannot be matched to a known payroll scenario or FAQ without inventing data or saying "demo" to users.
+- **Approved wording (C33):** "I didn't quite get that. Here is what I can help with:" (Approved by: Project owner).
+- **Suggestions:** Role-scoped suggestion chips: Employee never sees settlements or bonuses; HR sees HR tasks. Every chip shown must lead to a verified answer or task flow, never another fallback.
+
 ## 8. Example conversations (5)
 
 All five scripts use the fictional company Northwind Technologies and fictional participants. They are content examples, not observed conversations, executed tests, actual calculations or approvals. Each numerical slot is labeled **Illustrative example, not a calculation**. Slots are intentionally unfilled. In a working demo, authorized records and Calculation code must supply every numeric input reference and derived result; the AI must never fill them from imagination. Words such as "April" and "May" identify fictional example periods, not real employee dates. No rate, amount, due date or confidence score is asserted here. (GR-3.1–GR-3.2, GR-8.1; conversation skill; BRD C-3)

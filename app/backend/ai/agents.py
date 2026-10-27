@@ -108,7 +108,7 @@ def create_classifier_agent(llm) -> Agent:
     return Agent(
         role="HCM One Payroll Intent Classifier",
         goal="Accurately classify payroll questions into allowed intents and entities without numbers.",
-        backstory="Expert classifier trained on enterprise payroll terminology, casual English, and common transliterated Hinglish. Emits zero numbers.",
+        backstory="Expert classifier trained on enterprise payroll terminology and casual English. English only. Emits zero numbers.",
         llm=llm,
         verbose=False,
         allow_delegation=False

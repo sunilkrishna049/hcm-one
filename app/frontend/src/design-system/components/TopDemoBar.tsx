@@ -51,8 +51,8 @@ export const SCENARIOS: ScenarioOption[] = [
 interface TopDemoBarProps {
   currentUser: string;
   onUserChange: (userId: string) => void;
-  currentScenario: number;
-  onScenarioChange: (scenarioId: number) => void;
+  currentScenario?: number;
+  onScenarioChange?: (scenarioId: number) => void;
   onResetDemo: () => void;
   isResetting?: boolean;
 }
@@ -60,52 +60,73 @@ interface TopDemoBarProps {
 export const TopDemoBar: React.FC<TopDemoBarProps> = ({
   currentUser,
   onUserChange,
-  currentScenario,
-  onScenarioChange,
   onResetDemo,
   isResetting = false,
 }) => {
+  const isHR = currentUser.startsWith('HR');
+
   return (
     <div className="hcm-top-demo-bar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
         <strong style={{ letterSpacing: '0.05em', color: 'var(--color-brand-accent)' }}>HCM ONE</strong>
         <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>PROTOTYPE</span>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginLeft: 'var(--space-2)' }}>
-          <Play size={14} color="var(--color-brand-accent)" />
-          <label htmlFor="scenario-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Scenario:</label>
-          <select
-            id="scenario-select"
-            data-testid="scenario-select"
-            value={currentScenario}
-            onChange={(e) => onScenarioChange(Number(e.target.value))}
-            style={{ fontWeight: 500 }}
-          >
-            {SCENARIOS.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <UserCheck size={14} color="var(--color-brand-accent)" />
-          <label htmlFor="user-select" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Logged in as:</label>
-          <select
-            id="user-select"
-            data-testid="user-select"
-            value={currentUser}
-            onChange={(e) => onUserChange(e.target.value)}
+        {/* Two-way toggle: HR view · Employee view */}
+        <div
+          data-testid="view-toggle"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            backgroundColor: 'var(--color-surface-sunken)',
+            borderRadius: 'var(--radius-button)',
+            padding: '2px 4px',
+            border: '1px solid var(--color-border-card)',
+            gap: 'var(--space-1)',
+          }}
+        >
+          <button
+            type="button"
+            id="toggle-hr-view"
+            data-testid="toggle-hr-view"
+            onClick={() => onUserChange('HR01')}
+            style={{
+              padding: 'var(--space-1) var(--space-3)',
+              fontSize: '12px',
+              fontWeight: isHR ? 600 : 400,
+              backgroundColor: isHR ? 'var(--color-surface)' : 'transparent',
+              color: isHR ? 'var(--color-brand-accent)' : 'var(--color-text-secondary)',
+              border: isHR ? '1px solid var(--color-border-interactive)' : '1px solid transparent',
+              borderRadius: 'var(--radius-button)',
+              boxShadow: isHR ? 'var(--shadow-card)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
           >
-            {DEMO_USERS.map(u => (
-              <option key={u.id} value={u.id}>
-                {u.id} - {u.name} ({u.role})
-              </option>
-            ))}
-          </select>
+            HR view
+          </button>
+          <span style={{ color: 'var(--color-text-muted)', fontSize: '11px', userSelect: 'none' }}>·</span>
+          <button
+            type="button"
+            id="toggle-emp-view"
+            data-testid="toggle-emp-view"
+            onClick={() => onUserChange('USER-E05')}
+            style={{
+              padding: 'var(--space-1) var(--space-3)',
+              fontSize: '12px',
+              fontWeight: !isHR ? 600 : 400,
+              backgroundColor: !isHR ? 'var(--color-surface)' : 'transparent',
+              color: !isHR ? 'var(--color-brand-accent)' : 'var(--color-text-secondary)',
+              border: !isHR ? '1px solid var(--color-border-interactive)' : '1px solid transparent',
+              borderRadius: 'var(--radius-button)',
+              boxShadow: !isHR ? 'var(--shadow-card)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Employee view
+          </button>
         </div>
 
         <button

@@ -111,7 +111,6 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       const res = await api.chat({
         userId: currentUser,
         message: text.trim(),
-        context: { scenario_num: currentScenario },
       });
 
       if ((res as any)?.error) {
@@ -154,7 +153,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       const res = await api.chat({
         userId: currentUser,
         action: actionName,
-        context: { scenario_num: currentScenario, ...actionPayload },
+        context: actionPayload || {},
       });
 
       if ((res as any)?.error) {
@@ -300,6 +299,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
                   onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
                   onActionClick={(act) => handleAction(act)}
+                  onSelectEmployee={(empId, task, name) => handleAction('select-employee', { employee_id: empId, task, name })}
                 />
               );
             })}

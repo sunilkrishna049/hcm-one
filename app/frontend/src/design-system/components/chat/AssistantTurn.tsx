@@ -25,6 +25,7 @@ interface AssistantTurnProps {
   onDisputeQuery?: (queryId: string) => void;
   onCloseQuery?: (queryId: string) => void;
   onActionClick?: (action: string) => void;
+  onSelectEmployee?: (employeeId: string, task?: string, name?: string) => void;
 }
 
 export const AssistantTurn: React.FC<AssistantTurnProps> = ({
@@ -43,6 +44,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   onDisputeQuery,
   onCloseQuery,
   onActionClick,
+  onSelectEmployee,
 }) => {
   // Epistemic certainty shown once per assistant reply:
   // Certainty labels appear only on replies that show calculated amounts.
@@ -102,6 +104,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
               onDisputeQuery={onDisputeQuery}
               onCloseQuery={onCloseQuery}
               onActionClick={onActionClick}
+              onSelectEmployee={onSelectEmployee}
             />
           ))}
         </div>

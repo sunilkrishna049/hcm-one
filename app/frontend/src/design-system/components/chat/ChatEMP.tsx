@@ -111,7 +111,6 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       const res = await api.chat({
         userId: currentUser,
         message: text.trim(),
-        context: { scenario_num: currentScenario },
       });
 
       if ((res as any)?.error) {
@@ -154,7 +153,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       const res = await api.chat({
         userId: currentUser,
         action: actionName,
-        context: { scenario_num: currentScenario, ...actionPayload },
+        context: actionPayload || {},
       });
 
       if ((res as any)?.error) {
@@ -224,7 +223,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
             </button>
             <div className="hcm-chat-user-badge">
               <User size={14} color="var(--color-brand-accent)" />
-              <span>{getUserDisplayName(currentUser)}</span>
+              <span>{getUserDisplayName(currentUser, true)}</span>
             </div>
           </div>
         </header>
@@ -254,6 +253,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
                   onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
                   onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
                   onActionClick={(act) => handleAction(act)}
+                  onSelectEmployee={(empId, task, name) => handleAction('select-employee', { employee_id: empId, task, name })}
                 />
               );
             })}

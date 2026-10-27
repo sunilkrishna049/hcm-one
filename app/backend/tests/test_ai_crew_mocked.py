@@ -46,7 +46,7 @@ class MockLLM:
 
         lower = message.lower()
         is_salary_drop = bool(re.search(
-            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|reduced this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower|pay.*lower|pay.*reduced|salary.*reduced|paisa kam|kam paise|salary.*cut|pay.*cut|less money)\b",
+            r"\b(why is my salary less|why did i get less|why is my pay less|less this month|reduced this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower|pay.*lower|pay.*reduced|salary.*reduced|salary.*cut|pay.*cut|less money)\b",
             lower
         ))
         if is_salary_drop or "september" in lower or "take-home" in lower or "drop" in lower or "less" in lower:
@@ -476,15 +476,15 @@ def test_10_casual_phrasings_for_neha_explain_salary_never_faq():
 
     casual_phrasings = [
         "why is my salary less this month?",
-        "pay kam kyun aaya",
+        "why did I get paid less?",
         "why did I get less money in September",
         "why is my take-home pay lower in September?",
         "my salary dropped this month",
-        "salary kam kyu aayi",
+        "why is my pay less this month",
         "why was my pay reduced this month",
         "cut in my salary this month",
         "why did i get less pay",
-        "paisa kam aaya iss mahine"
+        "take-home pay is lower this month"
     ]
 
     for phrasing in casual_phrasings:

@@ -12,6 +12,7 @@ import { QueryStatusCard } from './QueryStatusCard';
 import { RefusalCard } from './RefusalCard';
 import { FaqAnswerCard } from './FaqAnswerCard';
 import { ShowCalculationControl } from './ShowCalculationControl';
+import { EmployeePickerCard } from './EmployeePickerCard';
 
 interface CardRendererProps {
   card: any;
@@ -27,6 +28,7 @@ interface CardRendererProps {
   onDisputeQuery?: (queryId: string) => void;
   onCloseQuery?: (queryId: string) => void;
   onActionClick?: (action: string) => void;
+  onSelectEmployee?: (employeeId: string, task?: string, name?: string) => void;
 }
 
 export const CardRenderer: React.FC<CardRendererProps> = ({
@@ -43,6 +45,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onDisputeQuery,
   onCloseQuery,
   onActionClick,
+  onSelectEmployee,
 }) => {
   switch (card.type) {
     case 'proposal_summary':
@@ -108,6 +111,14 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         <ShowCalculationControl
           card={card}
           onShowCalculation={onShowCalculation || (() => {})}
+        />
+      );
+
+    case 'employee_picker':
+      return (
+        <EmployeePickerCard
+          card={card}
+          onSelectEmployee={onSelectEmployee}
         />
       );
 

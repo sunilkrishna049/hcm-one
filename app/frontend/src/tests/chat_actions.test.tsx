@@ -590,31 +590,25 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     expect(api.resetDemo).not.toHaveBeenCalled();
   });
 
-  it('10. Scenario picker pre-types question in composer without auto-sending', async () => {
+  it('10. Two-way toggle switches between HR view and Employee view with empty chat, and frontend never sends scenario_num', async () => {
     render(<App />);
 
-    // App opens to empty new chat for default HR01
+    // 1. App opens to empty new chat for default HR01 (Anita Desai)
     expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+    expect(screen.getByText('Anita Desai · HR Admin')).toBeInTheDocument();
+    // Headers must show name and role only, never IDs
+    expect(screen.queryByText(/HR01/)).not.toBeInTheDocument();
     expect(api.chat).not.toHaveBeenCalled();
 
-    // Select scenario 2: Arjun Rao
-    const scenarioSelect = screen.getByTestId('scenario-select');
-    fireEvent.change(scenarioSelect, { target: { value: '2' } });
-
-    // Pre-types scenario 2 question in composer without auto-sending
-    await waitFor(() => {
-      const composerTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
-      expect(composerTextarea.value).toBe("Prepare Arjun Rao's pending back-dated hike.");
-    });
-    expect(api.chat).not.toHaveBeenCalled();
-
-    // Now press Send or Enter to dispatch
+    // 2. Sending a message as HR must never send scenario_num
     (api.chat as any).mockResolvedValueOnce({
-      messages: [{ code: 'C03', text: 'Arjun Rao proposal ready.' }],
+      messages: [{ code: 'C03', text: 'Proposal ready.' }],
       cards: [],
       chips: [],
     });
 
+    const composerTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    fireEvent.change(composerTextarea, { target: { value: 'Calculate arrears' } });
     const sendBtn = screen.getByTestId('composer-send-btn');
     fireEvent.click(sendBtn);
 
@@ -622,9 +616,56 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       expect(api.chat).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'HR01',
-          message: "Prepare Arjun Rao's pending back-dated hike.",
+          message: 'Calculate arrears',
         })
       );
+      // Explicit proof: frontend NEVER sends scenario_num
+      const callArg = (api.chat as any).mock.calls[0][0];
+      expect(callArg.context?.scenario_num).toBeUndefined();
+    });
+
+    // 3. Switch to Employee view via two-way toggle
+    const empToggleBtn = screen.getByTestId('toggle-emp-view');
+    fireEvent.click(empToggleBtn);
+
+    // Switching toggle opens a new empty chat for Neha Gupta (USER-E05)
+    await waitFor(() => {
+      expect(screen.getByText('Hi Neha. What would you like to do today?')).toBeInTheDocument();
+      expect(screen.getByText('Neha Gupta · Employee')).toBeInTheDocument();
+      // Never IDs in header
+      expect(screen.queryByText(/USER-E05/)).not.toBeInTheDocument();
+    });
+
+    // 4. Sending a message as Employee must never send scenario_num
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C30', text: 'Your September take-home is lower.' }],
+      cards: [],
+      chips: [],
+    });
+
+    const empComposer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    fireEvent.change(empComposer, { target: { value: 'Why is my take-home pay lower in September?' } });
+    const empSendBtn = screen.getByTestId('composer-send-btn');
+    fireEvent.click(empSendBtn);
+
+    await waitFor(() => {
+      expect(api.chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'USER-E05',
+          message: 'Why is my take-home pay lower in September?',
+        })
+      );
+      const secondCallArg = (api.chat as any).mock.calls[1][0];
+      expect(secondCallArg.context?.scenario_num).toBeUndefined();
+    });
+
+    // 5. Switch back to HR view opens new empty chat
+    const hrToggleBtn = screen.getByTestId('toggle-hr-view');
+    fireEvent.click(hrToggleBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+      expect(screen.getByText('Anita Desai · HR Admin')).toBeInTheDocument();
     });
   });
 
@@ -716,56 +757,52 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
-  it('14. Composer: login switcher does not pre-type, scenario picker pre-types, composer empty after typed message and after chip', async () => {
+  it('14. Composer: view toggle does not pre-type, composer empty after typed message and after chip', async () => {
     render(<App />);
 
     const textarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
     expect(textarea.value).toBe('');
 
-    // 1. Switching login with login switcher does NOT pre-type anything
-    const userSelect = screen.getByTestId('user-select');
-    fireEvent.change(userSelect, { target: { value: 'USER-E05' } });
+    // 1. Switching view with two-way toggle does NOT pre-type anything
+    const empToggleBtn = screen.getByTestId('toggle-emp-view');
+    fireEvent.click(empToggleBtn);
 
     await waitFor(() => {
       const empTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
       expect(empTextarea.value).toBe('');
     });
 
-    // Switch to another user: still empty
-    fireEvent.change(userSelect, { target: { value: 'HR02' } });
+    // Switch back to HR view: still empty
+    const hrToggleBtn = screen.getByTestId('toggle-hr-view');
+    fireEvent.click(hrToggleBtn);
     await waitFor(() => {
       const hrTextarea = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
       expect(hrTextarea.value).toBe('');
     });
 
-    // 2. Scenario picker pre-types
-    const scenarioSelect = screen.getByTestId('scenario-select');
-    fireEvent.change(scenarioSelect, { target: { value: '9' } });
-
-    await waitFor(() => {
-      const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
-      expect(composer.value).toBe('Why is my September salary lower than August?');
-    });
-
-    // 3. After typed message is sent, composer must be empty
+    // 2. After typed message is sent, composer must be empty
     (api.chat as any).mockResolvedValueOnce({
-      messages: [{ code: 'C30', text: 'September pay lower than August' }],
+      messages: [{ code: 'C03', text: 'Proposal summary ready.' }],
       cards: [],
       chips: [{ label: 'What is LOP?', action: 'faq-lop', payload: {} }],
     });
+
+    const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'Calculate arrears' } });
+    expect(composer.value).toBe('Calculate arrears');
 
     const sendBtn = screen.getByTestId('composer-send-btn');
     fireEvent.click(sendBtn);
 
     await waitFor(() => {
-      const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
-      expect(composer.value).toBe('');
+      const composerAfterSend = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+      expect(composerAfterSend.value).toBe('');
     });
 
-    // 4. User types text into composer, then clicks a chip -> composer must be empty
-    const composer = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
-    fireEvent.change(composer, { target: { value: 'Some uncommitted text' } });
-    expect(composer.value).toBe('Some uncommitted text');
+    // 3. User types text into composer, then clicks a chip -> composer must be empty
+    const composerAfter = screen.getByTestId('composer-textarea') as HTMLTextAreaElement;
+    fireEvent.change(composerAfter, { target: { value: 'Some uncommitted text' } });
+    expect(composerAfter.value).toBe('Some uncommitted text');
 
     (api.chat as any).mockResolvedValueOnce({
       messages: [{ code: 'FAQ', text: 'Loss of pay explanation' }],

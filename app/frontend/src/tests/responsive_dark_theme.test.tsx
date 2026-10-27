@@ -69,7 +69,28 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
           );
         }
 
-        const sNum = body?.context?.scenario_num || 1;
+        const effectiveUserId = body?.user_id || body?.userId;
+        let sNum = body?.context?.scenario_num;
+        if (!sNum) {
+          const msg = (body?.message || '').toLowerCase();
+          if (msg.includes('priya') || msg.includes('sharma')) sNum = effectiveUserId === 'HR02' ? 12 : 1;
+          else if (msg.includes('arjun') || msg.includes('rao')) sNum = 2;
+          else if (msg.includes('kavya') || msg.includes('iyer')) sNum = 3;
+          else if (msg.includes('meera') || msg.includes('nair')) sNum = 5;
+          else if (msg.includes('annual') || msg.includes('sales') || msg.includes('bonus')) sNum = 4;
+          else if (msg.includes('rahul') || msg.includes('verma')) sNum = 6;
+          else if (msg.includes('lakshmi') || msg.includes('reddy')) sNum = 7;
+          else if (msg.includes('imran') || msg.includes('khan')) {
+            sNum = (msg.includes('calculation') || msg.includes('review') || msg.includes('breakdown')) ? 13 : 8;
+          } else if (msg.includes('september') && (msg.includes('lower') || msg.includes('salary') || msg.includes('pay'))) sNum = 9;
+          else if (msg.includes('tds')) sNum = 10;
+          else if (msg.includes('gross') || msg.includes('decrease') || msg.includes('basic pay')) sNum = 11;
+          else if (effectiveUserId === 'USER-E05' || effectiveUserId === 'USER-E01') sNum = 9;
+          else if (effectiveUserId === 'USER-E06') sNum = 10;
+          else if (effectiveUserId === 'USER-E16') sNum = 11;
+          else if (effectiveUserId === 'HR02') sNum = 12;
+          else sNum = 1;
+        }
         const resp = fixtures[String(sNum)] || fixtures['1'];
         return Promise.resolve(new Response(JSON.stringify(resp), { status: 200 }));
       }
@@ -219,8 +240,8 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     expect(screen.getByText('₹48,200')).toBeInTheDocument();
     expect(screen.getAllByText(/5,420/).length).toBeGreaterThan(0);
 
-    // Action: click "Show calculation" button
-    const showCalcBtns = screen.getAllByText('Show calculation');
+    // Action: click "Show calculation" or "Show breakdown" button
+    const showCalcBtns = screen.getAllByText(/Show (breakdown|calculation)/i);
     fireEvent.click(showCalcBtns[0]);
 
     // Verify sheet/panel opens
@@ -254,7 +275,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     expect(screen.getByText('₹42,780')).toBeInTheDocument();
 
     // Open sheet
-    const showCalcBtns = screen.getAllByText('Show calculation');
+    const showCalcBtns = screen.getAllByText(/Show (breakdown|calculation)/i);
     fireEvent.click(showCalcBtns[0]);
 
     await waitFor(() => {

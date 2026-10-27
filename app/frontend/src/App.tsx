@@ -75,8 +75,6 @@ export function App() {
       <TopDemoBar
         currentUser={currentUser}
         onUserChange={handleUserChange}
-        currentScenario={currentScenario}
-        onScenarioChange={handleScenarioChange}
         onResetDemo={handleResetDemo}
         isResetting={isResetting}
       />
@@ -87,7 +85,6 @@ export function App() {
           <ChatHR
             key={chatKey}
             currentUser={currentUser}
-            currentScenario={currentScenario}
             prefilledText={prefilledText}
             onClearPrefill={() => setPrefilledText('')}
             onNewChat={handleNewChat}
@@ -96,7 +93,6 @@ export function App() {
           <ChatEMP
             key={chatKey}
             currentUser={currentUser}
-            currentScenario={currentScenario}
             prefilledText={prefilledText}
             onClearPrefill={() => setPrefilledText('')}
             onNewChat={handleNewChat}

@@ -72,7 +72,10 @@ function getSpacedText(element: HTMLElement): string {
 }
 
 // Setup fetch mock to return real chat responses from fixtures
+let currentTestScenario = 1;
+
 beforeEach(() => {
+  currentTestScenario = 1;
   vi.spyOn(globalThis, 'fetch').mockImplementation((input: any, init?: any) => {
     const url = String(input);
 
@@ -85,7 +88,28 @@ beforeEach(() => {
           body = {};
         }
       }
-      const sNum = body?.context?.scenario_num || 1;
+      const effectiveUserId = body?.user_id || body?.userId;
+      let sNum = body?.context?.scenario_num;
+      if (!sNum) {
+        const msg = (body?.message || '').toLowerCase();
+        if (msg.includes('priya') || msg.includes('sharma')) sNum = effectiveUserId === 'HR02' ? 12 : 1;
+        else if (msg.includes('arjun') || msg.includes('rao')) sNum = 2;
+        else if (msg.includes('kavya') || msg.includes('iyer')) sNum = 3;
+        else if (msg.includes('meera') || msg.includes('nair')) sNum = 5;
+        else if (msg.includes('annual') || msg.includes('sales') || msg.includes('bonus')) sNum = 4;
+        else if (msg.includes('rahul') || msg.includes('verma')) sNum = 6;
+        else if (msg.includes('lakshmi') || msg.includes('reddy')) sNum = 7;
+        else if (msg.includes('imran') || msg.includes('khan')) {
+          sNum = (msg.includes('calculation') || msg.includes('review') || msg.includes('breakdown')) ? 13 : 8;
+        } else if (msg.includes('gross') || msg.includes('decrease') || msg.includes('basic pay') || msg.includes('pooja')) sNum = 11;
+        else if (msg.includes('tds')) sNum = 10;
+        else if (msg.includes('september') && (msg.includes('lower') || msg.includes('salary') || msg.includes('pay'))) sNum = 9;
+        else if (effectiveUserId === 'USER-E05') sNum = 9;
+        else if (effectiveUserId === 'USER-E06') sNum = 10;
+        else if (effectiveUserId === 'USER-E16') sNum = 11;
+        else if (effectiveUserId === 'HR02') sNum = 12;
+        else sNum = currentTestScenario || 1;
+      }
       const resp = fixtures[String(sNum)] || fixtures['1'];
       return Promise.resolve(new Response(JSON.stringify(resp), { status: 200 }));
     }
@@ -340,6 +364,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
         390, 1440, // frame widths
       ]);
 
+      currentTestScenario = sNum;
       let renderedResult;
       if ([1, 2, 3, 6, 12, 13].includes(sNum)) {
         renderedResult = render(

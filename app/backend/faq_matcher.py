@@ -41,8 +41,6 @@ class FAQMatcher:
         q = (query or "").lower().strip()
         personal_patterns = [
             r"\bmy (salary|pay|take[- ]?home|tds|tax|deduction|deductions|pf|net pay|earnings|payout)\b",
-            r"\b(salary|pay|take[- ]?home|net pay|paisa|paise) kam\b",
-            r"\bkam (kyun|kyu|aaya|aayi|mila|mile|paise|paisa)\b",
             r"\b(less|lower|reduced|cut|drop|dropped|decrease|decreased) (this month|in september|money)\b",
             r"\bwhy (is|did|was|am) (i|my) (salary|pay|take[- ]?home|money|net pay).*(less|lower|drop|dropped|reduced|decrease|cut)\b",
             r"\bwhy did i get less\b",
@@ -50,8 +48,7 @@ class FAQMatcher:
             r"\bwhy was i paid less\b",
             r"\bcut in (my )?salary\b",
             r"\bwhy is my salary less\b",
-            r"\bpay kam kyun\b",
-            r"\bkam kyun\b"
+            r"\bwhy is my pay less\b"
         ]
         return any(re.search(pat, q) for pat in personal_patterns)
 

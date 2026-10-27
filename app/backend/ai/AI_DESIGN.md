@@ -127,7 +127,7 @@ Under **DEC-041 (Guarded Natural Replies with Slot-Based Drafting)**:
 1. **Intake & UI Loading:** Client posts to `/api/chat`. The chat UI instantly shows a `"Thinking…"` loading state.
 2. **Pre-AI Authorization Gate:** If an employee asks about another employee's salary (Scenario 12), the server immediately returns pre-approved refusal `C10` without invoking CrewAI.
 3. **CrewAI Pipeline (20s Deadline):**
-   - **Classifier Agent (LLM):** Categorizes query into structured intent and entities (supports common transliterated Hinglish). Never extracts or emits numbers.
+   - **Classifier Agent (LLM):** Categorizes query into structured intent and entities (English only). Never extracts or emits numbers.
    - **Retrieval Agent (Deterministic Tools):** Calls existing scenario/FAQ builders; packages structured cards, panel data, and a turn-specific `facts_list` (whitelist of allowed slots and formatted strings).
    - **Drafting Agent (LLM):** Generates 1 to 3 sentences (max 60 words) using natural phrasing and slot tags `{...}`. Contains zero digits.
    - **Escalation Agent (Deterministic Tools):** Sets suggestion chips and ensures state mutation actions (Approve, Send, Resolve) require explicit human button clicks.
@@ -155,12 +155,12 @@ Under **DEC-041 (Guarded Natural Replies with Slot-Based Drafting)**:
 - **Role:** HCM One Payroll Intent Classifier
 - **Goal:** Accurately classify user queries into structured intents and entities without generating or extracting numbers.
 - **Execution Mode:** Invokes LLM (`gpt-4o-mini`, temperature=0.1, max_tokens=100).
-- **Hinglish & Casual Phrasing Support:**
-  - Understands common transliterated Hinglish:
-    * *"Arjun Rao ka hike review karo"* -> `review_hike`, Scenario 2
-    * *"Mera September ka take-home August se kam kyu aaya?"* -> `explain_salary`, Scenario 9
-    * *"Pooja ka gross to change nahi hua fir net kyu gira?"* -> `explain_deduction`, Scenario 11
-    * *"Sales team ka quarterly bonus calculate kardo"* -> `bonus_proposal`, Scenario 4
+- **Language Scope:**
+  - English only (Approved by: Project owner). Understands standard and casual enterprise English phrasing:
+    * *"Review back-dated hike for Arjun Rao"* -> `review_hike`, Scenario 2
+    * *"Why is my September take-home pay lower than August?"* -> `explain_salary`, Scenario 9
+    * *"Why did my take-home pay decrease when my gross did not change?"* -> `explain_deduction`, Scenario 11
+    * *"Prepare quarterly bonus run for Hyderabad sales team"* -> `bonus_proposal`, Scenario 4
 - **Prompt Injection Guard:** Sets `is_prompt_injection=True` on jailbreak or system prompt queries.
 - **Output (Pydantic Model):**
   ```python
@@ -427,8 +427,8 @@ Runtime guards are **100% mechanical**. They execute deterministic string matchi
    - **Wrong Numbers Shown:** Exactly **0** (Zero wrong numbers shown).
    - **Fallback Rate:** <= 15% across all valid test interactions.
    - **Cross-Employee Data Leaks:** Exactly **0** (Zero cross-employee data sent to the AI).
-2. **Hinglish Scope:**
-   - Supports common transliterated Hinglish phrases only (e.g., *"Priya ka hike proposal dikhao"*, *"Mera TDS kyu badh gaya?"*, *"calculate kardo"*).
+2. **Language Scope:**
+   - English only (Approved by: Project owner). Common transliterated Hinglish is removed across all components.
 3. **Bonus Choice Disambiguation & Session Memory:**
    - The user's bonus selection (Annual vs. Sales) is remembered within the active chat session state across subsequent turns.
    - Clicking `"New chat"` clears the session state and returns to the initial disambiguation prompt if an ambiguous query is asked again.
@@ -472,7 +472,7 @@ Managed in `app/backend/config.py`:
 - Test 7: Master switch `AI_MODE=false` routes directly to deterministic router.
 
 ### 9.2 30-Question Evaluation Suite (`app/backend/ai/eval_ai_crew.py`)
-Evaluates the live crew across 30 questions (Scenarios 1–13, casual phrasing, common transliterated Hinglish, glossary FAQs, and adversarial prompts) and reports:
+Evaluates the live crew across 30 questions (Scenarios 1–13, casual English, glossary FAQs, and adversarial prompts) and reports:
 - Intent Accuracy (Target >= 90%)
 - Guard Pass Rate
 - Fallback Trigger Rate (Target <= 15%)

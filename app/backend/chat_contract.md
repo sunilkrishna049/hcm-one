@@ -145,9 +145,10 @@ HCM One operates a single conversational API endpoint that serves both **`CHAT-H
               "send_confirmation",
               "query_status",
               "refusal_card",
-              "faq_answer"
+              "faq_answer",
+              "employee_picker"
             ],
-            "description": "Card component variant from the 14 design system specifications."
+            "description": "Card component variant from the 15 design system specifications."
           },
           "title": {
             "type": "string",

@@ -35,6 +35,7 @@ AI_MESSAGES = {
     "C30": "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
     "C31": "Hi {first_name}. What would you like to do today?",
     "C32": "This is a proposal for the recorded {bonus_type} for {period}.",
+    "C33": "I didn't quite get that. Here is what I can help with:",
 }
 
 

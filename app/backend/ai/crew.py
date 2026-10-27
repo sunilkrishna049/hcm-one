@@ -190,7 +190,7 @@ class PayrollAICrew:
                 classifier_agent = create_classifier_agent(llm)
                 classify_task = Task(
                     description=(
-                        f"Classify this payroll message: '{raw_msg}'.\n"
+                        f"Classify this English payroll message: '{raw_msg}'. (English only).\n"
                         f"User Role: {role}\n"
                         f"Allowed intents: {list(ALLOWED_INTENTS)}\n"
                         "Extract intent, scenario_num (1-13 if applicable), and entities (employee_name, month, bonus_type).\n"
@@ -488,7 +488,7 @@ class PayrollAICrew:
 
         # Casual phrasings and personal pay queries for Neha / salary explanation
         is_salary_drop = bool(re.search(
-            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+            r"\b(why is my salary less|why did i get less|why is my pay less|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
             lower_msg
         ))
         if is_salary_drop or "september" in lower_msg or "take-home" in lower_msg or "drop" in lower_msg or "less" in lower_msg:

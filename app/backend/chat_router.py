@@ -18,7 +18,8 @@ from .lifecycle import lifecycle
 RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
 _RULES_CACHE: Dict[str, dict] = {}
 
-EMPLOYEES_PATH = Path(__file__).resolve().parents[2] / "data" / "mock" / "employees.json"
+MOCK_DIR = Path(__file__).resolve().parents[2] / "data" / "mock"
+EMPLOYEES_PATH = MOCK_DIR / "employees.json"
 try:
     if EMPLOYEES_PATH.exists():
         _emp_data = json.loads(EMPLOYEES_PATH.read_text(encoding="utf-8"))
@@ -31,6 +32,82 @@ except Exception:
 
 def get_employee_name(employee_id: str) -> str:
     return EMPLOYEE_NAMES.get(employee_id, employee_id)
+
+
+def _load_mock_json(filename: str) -> list:
+    p = MOCK_DIR / filename
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def get_picker_employees_for_task(task: str, user: dict) -> list[dict]:
+    allowed_ids = set(user.get("allowed_employee_ids") or [])
+    all_employees = _load_mock_json("employees.json")
+    emp_map = {e["employee_id"]: e for e in all_employees}
+
+    if task in ("arrears", "hike"):
+        revisions = _load_mock_json("salary-revisions.json")
+        pending_revs = [r for r in revisions if r.get("status") == "pending HR proposal" and r.get("employee_id") in allowed_ids]
+        candidates = []
+        for r in pending_revs:
+            eid = r["employee_id"]
+            emp = emp_map.get(eid, {})
+            hike = r.get("hike_percent", 10)
+            eff = r.get("effective_date", "")
+            candidates.append({
+                "employee_id": eid,
+                "name": emp.get("name", eid),
+                "department": emp.get("department", ""),
+                "subtitle": f"Pending revision · {hike}% hike from {eff}"
+            })
+        return candidates
+
+    elif task in ("settlement", "full_and_final"):
+        exits = _load_mock_json("exits.json")
+        exit_candidates = [e for e in exits if e.get("employee_id") in allowed_ids]
+        candidates = []
+        for ex in exit_candidates:
+            eid = ex["employee_id"]
+            emp = emp_map.get(eid, {})
+            lwd = ex.get("last_working_day", "")
+            candidates.append({
+                "employee_id": eid,
+                "name": emp.get("name", eid),
+                "department": emp.get("department", ""),
+                "subtitle": f"Exit settlement · Last working day {lwd}"
+            })
+        return candidates
+
+    elif task == "salary":
+        candidates = []
+        for eid in sorted(allowed_ids):
+            emp = emp_map.get(eid)
+            if emp:
+                status_str = emp.get("employment_status", "active")
+                candidates.append({
+                    "employee_id": eid,
+                    "name": emp.get("name", eid),
+                    "department": emp.get("department", ""),
+                    "subtitle": f"{emp.get('department', '')} · {status_str.capitalize()}"
+                })
+        return candidates
+
+    return []
+
+
+def _extract_candidate_name(text: str) -> Optional[str]:
+    m = re.search(r"\b(?:for|of|employee)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)?)", text, re.IGNORECASE)
+    if m:
+        raw_val = m.group(1).strip()
+        stop = {"an", "the", "a", "all", "full", "final", "settlement", "arrears", "salary", "hike", "proposal", "calculation", "breakdown", "each"}
+        tokens = [t for t in raw_val.split() if t.lower() not in stop]
+        if tokens:
+            return " ".join(tokens)
+    return None
 
 
 def get_rule_file(filename: str) -> dict:
@@ -142,16 +219,16 @@ class ChatRouter:
             }
 
         if re.search(r"\bbank deposit\b|\bbank credit\b|\bbank account\b|\bcredited in bank\b", lower_msg):
+            chips = [{"label": "Draft a query for HR", "action": "draft-query", "payload": {}}]
+            if role == "Employee":
+                chips.append({"label": "Show my latest payslip change", "action": "explain-salary", "payload": {}})
             return {
                 "messages": [
                     {"code": "C21", "text": get_message("C21")},
                     {"code": "C28", "text": get_message("C28")}
                 ],
                 "cards": [],
-                "chips": [
-                    {"label": "Draft a query for HR", "action": "draft-query", "payload": {}},
-                    {"label": "Show my latest payslip change", "action": "explain-salary", "payload": {}}
-                ],
+                "chips": chips,
                 "state": {
                     "intent": "out_of_scope",
                     "role": role,
@@ -165,7 +242,17 @@ class ChatRouter:
         # 4. Action-Based Routing (Chips, Scenario Picker, Governance Buttons)
         if action:
             act = action.lower()
-            if act in ("scenario-1", "scenario-01"):
+            if act == "select-employee":
+                return self._handle_employee_selection(user, role, surface, context)
+            elif act in ("arrears-picker", "arrears", "calculate arrears"):
+                return self._handle_arrears_picker(user, role, surface)
+            elif act in ("settlement-picker", "settlement", "prepare settlement"):
+                return self._handle_settlement_picker(user, role, surface)
+            elif act in ("salary-picker", "show salary", "show an employee's salary"):
+                return self._handle_salary_picker(user, role, surface)
+            elif act in ("review-queries", "review payroll queries"):
+                return self._handle_hr_query_review(user, role, surface, context)
+            elif act in ("scenario-1", "scenario-01"):
                 return self._build_scenario_1(user, role, surface)
             elif act in ("scenario-2", "scenario-02"):
                 return self._build_scenario_2(user, role, surface)
@@ -199,9 +286,11 @@ class ChatRouter:
                 return self._handle_reject_proposal(user, role, surface, context)
             elif act in ("draft-query", "draft query", "draft a query for hr", "draft-query-for-hr"):
                 return self._handle_draft_query(user, role, surface, context)
+            elif act in ("draft-new-query", "draft new query", "draft a new query"):
+                return self._handle_draft_query(user, role, surface, {**context, "force_new": True})
             elif act in ("confirm-send-query", "send-query", "confirm and send", "send this query to hr", "send query with listed evidence"):
                 return self._handle_confirm_send_query(user, role, surface, context)
-            elif act in ("append-query", "add to open query", "add to existing query"):
+            elif act in ("append-query", "add to open query", "add to existing query", "add to my september query"):
                 return self._handle_append_query(user, role, surface, context)
             elif act in ("query-status", "check my query status"):
                 return self._handle_query_status(user, role, surface, context)
@@ -253,7 +342,7 @@ class ChatRouter:
             return self._handle_dispute_query(user, role, surface, context)
         if re.search(r"\b(close query|acknowledge and close)\b", lower_msg):
             return self._handle_close_query(user, role, surface, context)
-        if re.search(r"\b(show calculation|view full month breakdown)\b", lower_msg):
+        if re.search(r"\b(show calculation|view full month breakdown|show breakdown)\b", lower_msg):
             return self._handle_show_calculation(user, role, surface, context)
 
         # FAQ lookup priority for general definition questions
@@ -332,7 +421,7 @@ class ChatRouter:
 
         # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)
         is_salary_drop_query = bool(re.search(
-            r"\b(why is my salary less|why did i get less|pay kam|salary kam|kam kyu|kam kyun|kam aaya|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+            r"\b(why is my salary less|why did i get less|why is my pay less|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
             lower_msg
         ))
         if "neha" in lower_msg or "e05" in lower_msg or is_salary_drop_query or (
@@ -341,7 +430,30 @@ class ChatRouter:
         ):
             return self._build_scenario_9(user, role, surface)
 
+        # HR Tasks with Employee Picker (Part C)
+        if role == "HR Admin":
+            if re.search(r"\b(arrears|calculate arrears|prepare arrears|calculate hike|prepare hike)\b", lower_msg) or (
+                "hike" in lower_msg and not any(k in lower_msg for k in ("priya", "sharma", "arjun", "rao", "kavya", "iyer", "review"))
+            ):
+                cand_name = _extract_candidate_name(raw_msg)
+                return self._handle_arrears_picker(user, role, surface, cand_name)
+
+            if re.search(r"\b(full and final|f&f|prepare settlement|prepare full and final)\b", lower_msg) or (
+                "settlement" in lower_msg and not any(k in lower_msg for k in ("rahul", "verma", "lakshmi", "reddy", "imran", "khan", "review"))
+            ):
+                cand_name = _extract_candidate_name(raw_msg)
+                return self._handle_settlement_picker(user, role, surface, cand_name)
+
+            if re.search(r"\b(show.*salary|employee.*salary|salary of|view.*salary)\b", lower_msg) or lower_msg.strip() in ("salary", "show salary"):
+                cand_name = _extract_candidate_name(raw_msg)
+                return self._handle_salary_picker(user, role, surface, cand_name)
+
+            if re.search(r"\b(review.*queries|review payroll queries|pending queries)\b", lower_msg):
+                return self._handle_hr_query_review(user, role, surface, context)
+
         # Query Flows
+        if re.search(r"\b(draft a new query|draft new query)\b", lower_msg):
+            return self._handle_draft_query(user, role, surface, {**context, "force_new": True})
         if "draft" in lower_msg and "query" in lower_msg:
             return self._handle_draft_query(user, role, surface, context)
         if ("status" in lower_msg or "track" in lower_msg) and ("query" in lower_msg or "queries" in lower_msg):
@@ -1129,6 +1241,30 @@ class ChatRouter:
         old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
         new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
+        pf_cause = "PF deduction went up" if role == "Employee" else "PF ceiling change"
+        pf_detail = "PF wage limit raised from 17 Sep" if role == "Employee" else "Revised ceiling from 17 Sep"
+
+        open_queries = [
+            q for q in lifecycle.get_queries()
+            if q.get("employee_id") == "E05"
+            and "2026-09" in q.get("months", [])
+            and q.get("status") in ("In review", "Sent")
+        ]
+        if open_queries:
+            open_q = open_queries[0]
+            chips = [
+                {"label": "Show breakdown", "action": "show-calculation", "payload": {"scenario_num": 9}},
+                {"label": "Add to my September query", "action": "append-query", "payload": {"query_id": open_q["query_id"], "employee_id": "E05", "period": "2026-09"}},
+                {"label": "Draft a new query", "action": "draft-new-query", "payload": {"employee_id": "E05", "period": "2026-09", "force_new": True}},
+                {"label": "What is LOP?", "action": "faq-lop", "payload": {}}
+            ]
+        else:
+            chips = [
+                {"label": "Show breakdown", "action": "show-calculation", "payload": {"scenario_num": 9}},
+                {"label": "Draft a query for HR", "action": "draft-query", "payload": {"employee_id": "E05", "period": "2026-09"}},
+                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
+                {"label": "What is PF?", "action": "faq-pf", "payload": {}}
+            ]
 
         return {
             "messages": [
@@ -1158,18 +1294,13 @@ class ChatRouter:
                         "net_change": net_change,
                         "reasons": [
                             {"cause": "Loss of Pay (LOP)", "detail": "3 days unpaid leave", "amount": lop_amt},
-                            {"cause": "PF ceiling change", "detail": "Revised ceiling from 17 Sep", "amount": pf_amt}
+                            {"cause": pf_cause, "detail": pf_detail, "amount": pf_amt}
                         ],
                         "tds_change": tds_chg
                     }
                 }
             ],
-            "chips": [
-                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": 9}},
-                {"label": "Draft a query for HR", "action": "draft-query", "payload": {"employee_id": "E05", "period": "2026-09"}},
-                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "explain_salary_change",
                 "scenario_num": 9,
@@ -1463,27 +1594,24 @@ class ChatRouter:
         }
 
     def _build_unknown_fallback(self, role: str, surface: str) -> dict:
-        fallback_text = (
-            "I cannot answer that question in this demo. You can ask about recorded salary and tax "
-            "changes, full and final settlements, bonus eligibility, or choose a topic below:"
-        )
+        fallback_text = get_message("C33")
         if role == "HR Admin":
             chips = [
-                {"label": "Prepare Priya Sharma hike", "action": "scenario-1", "payload": {}},
+                {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
                 {"label": "Prepare team bonus proposal", "action": "scenario-4", "payload": {}},
-                {"label": "Prepare Rahul Verma settlement", "action": "scenario-6", "payload": {}},
-                {"label": "What is LOP?", "action": "faq-lop", "payload": {}}
+                {"label": "Prepare full and final settlement", "action": "settlement-picker", "payload": {}},
+                {"label": "Review payroll queries", "action": "review-queries", "payload": {}}
             ]
         else:
             chips = [
                 {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
+                {"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}},
                 {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
                 {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
             ]
         return {
             "messages": [
-                {"code": "FALLBACK", "text": fallback_text}
+                {"code": "C33", "text": fallback_text}
             ],
             "cards": [],
             "chips": chips,
@@ -1500,16 +1628,20 @@ class ChatRouter:
     def _build_faq_response(self, faq_entry: dict, confidence: float, role: str, surface: str) -> dict:
         if role == "HR Admin":
             chips = [
-                {"label": "Prepare Priya Sharma hike", "action": "scenario-1", "payload": {}},
+                {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
                 {"label": "What is PF?", "action": "faq-pf", "payload": {}},
                 {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
             ]
+            link_text = ""
+            url = ""
         else:
             chips = [
                 {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
                 {"label": "What is PF?", "action": "faq-pf", "payload": {}},
                 {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
             ]
+            link_text = faq_entry.get("link_text", "")
+            url = faq_entry.get("url", "")
         return {
             "messages": [
                 {"code": "FAQ", "text": "Here is the recorded meaning from the payroll glossary:"}
@@ -1524,8 +1656,8 @@ class ChatRouter:
                         "category": faq_entry.get("category", "Payroll Glossary"),
                         "question": faq_entry["question"],
                         "answer": faq_entry["answer"],
-                        "link_text": faq_entry.get("link_text", ""),
-                        "url": faq_entry.get("url", ""),
+                        "link_text": link_text,
+                        "url": url,
                         "confidence": confidence
                     }
                 }
@@ -1736,6 +1868,33 @@ class ChatRouter:
         emp_id = context.get("employee_id") or user.get("employee_id") or "E05"
         period = context.get("period") or "2026-09"
         desc = context.get("description") or "Please review my September attendance and LOP deduction."
+
+        if role == "Employee" and not context.get("force_new") and not context.get("description"):
+            open_queries = [
+                q for q in lifecycle.get_queries(employee_id=emp_id)
+                if q.get("status") in ("In review", "Sent")
+                and (not period or period in q.get("months", []))
+            ]
+            if open_queries:
+                target_q = open_queries[0]
+                return {
+                    "messages": [
+                        {"code": "C14", "text": get_message("C14")}
+                    ],
+                    "cards": [],
+                    "chips": [
+                        {"label": "Add to my September query", "action": "append-query", "payload": {"target_query_id": target_q["query_id"], "employee_id": emp_id, "period": period}},
+                        {"label": "Draft a new query", "action": "draft-new-query", "payload": {"employee_id": emp_id, "period": period, "force_new": True}}
+                    ],
+                    "state": {
+                        "intent": "clarify_open_query",
+                        "role": role,
+                        "surface": surface,
+                        "employee_id": emp_id,
+                        "panel": None
+                    }
+                }
+
         evidence = context.get("evidence") or [
             {"type": "payslip", "period": period, "source": f"PAY-{emp_id}-{period}"},
             {"type": "attendance", "period": period, "lop_days": 3, "source": f"ATT-{emp_id}-{period}"}
@@ -2140,6 +2299,171 @@ class ChatRouter:
                 "panel": panel_data
             }
         }
+
+    def _build_employee_picker(self, task: str, employees: list, prompt_text: str, role: str, surface: str) -> dict:
+        chips = [
+            {"label": emp["name"], "action": "select-employee", "payload": {"employee_id": emp["employee_id"], "task": task, "name": emp["name"]}}
+            for emp in employees[:4]
+        ]
+        return {
+            "messages": [
+                {"code": "C01", "text": prompt_text}
+            ],
+            "cards": [
+                {
+                    "id": f"card-picker-{task}",
+                    "type": "employee_picker",
+                    "title": "Select Employee",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "task": task,
+                        "prompt": prompt_text,
+                        "employees": employees
+                    }
+                }
+            ],
+            "chips": chips,
+            "state": {
+                "intent": f"{task}_picker",
+                "role": role,
+                "surface": surface,
+                "scenario_num": None,
+                "employee_id": None,
+                "panel": None
+            }
+        }
+
+    def _handle_arrears_picker(self, user: dict, role: str, surface: str, candidate_name: Optional[str] = None) -> dict:
+        candidates = get_picker_employees_for_task("arrears", user)
+        if candidate_name:
+            c_name_lower = candidate_name.lower().strip()
+            matches = [c for c in candidates if c_name_lower in c["name"].lower() or c["employee_id"].lower() == c_name_lower]
+            if len(matches) == 1:
+                return self._handle_employee_selection(user, role, surface, {"employee_id": matches[0]["employee_id"], "task": "arrears", "name": matches[0]["name"]})
+            elif len(matches) > 1:
+                return self._build_employee_picker(
+                    task="arrears",
+                    employees=matches,
+                    prompt_text=f"Which {candidate_name} do you mean? Please select one:",
+                    role=role,
+                    surface=surface
+                )
+            else:
+                return self._build_employee_picker(
+                    task="arrears",
+                    employees=candidates,
+                    prompt_text=f"I couldn't find an employee named {candidate_name}. Please select an employee from pending salary revisions:",
+                    role=role,
+                    surface=surface
+                )
+
+        return self._build_employee_picker(
+            task="arrears",
+            employees=candidates,
+            prompt_text="Please select an employee to calculate arrears for:",
+            role=role,
+            surface=surface
+        )
+
+    def _handle_settlement_picker(self, user: dict, role: str, surface: str, candidate_name: Optional[str] = None) -> dict:
+        candidates = get_picker_employees_for_task("settlement", user)
+        if candidate_name:
+            c_name_lower = candidate_name.lower().strip()
+            matches = [c for c in candidates if c_name_lower in c["name"].lower() or c["employee_id"].lower() == c_name_lower]
+            if len(matches) == 1:
+                return self._handle_employee_selection(user, role, surface, {"employee_id": matches[0]["employee_id"], "task": "settlement", "name": matches[0]["name"]})
+            elif len(matches) > 1:
+                return self._build_employee_picker(
+                    task="settlement",
+                    employees=matches,
+                    prompt_text=f"Which {candidate_name} do you mean? Please select one:",
+                    role=role,
+                    surface=surface
+                )
+            else:
+                return self._build_employee_picker(
+                    task="settlement",
+                    employees=candidates,
+                    prompt_text=f"I couldn't find an employee named {candidate_name}. Please select an employee with an exit record:",
+                    role=role,
+                    surface=surface
+                )
+
+        return self._build_employee_picker(
+            task="settlement",
+            employees=candidates,
+            prompt_text="Please select an employee to prepare full and final settlement for:",
+            role=role,
+            surface=surface
+        )
+
+    def _handle_salary_picker(self, user: dict, role: str, surface: str, candidate_name: Optional[str] = None) -> dict:
+        candidates = get_picker_employees_for_task("salary", user)
+        if candidate_name:
+            c_name_lower = candidate_name.lower().strip()
+            matches = [c for c in candidates if c_name_lower in c["name"].lower() or c["employee_id"].lower() == c_name_lower]
+            if len(matches) == 1:
+                return self._handle_employee_selection(user, role, surface, {"employee_id": matches[0]["employee_id"], "task": "salary", "name": matches[0]["name"]})
+            elif len(matches) > 1:
+                return self._build_employee_picker(
+                    task="salary",
+                    employees=matches,
+                    prompt_text=f"Which {candidate_name} do you mean? Please select one:",
+                    role=role,
+                    surface=surface
+                )
+            else:
+                return self._build_employee_picker(
+                    task="salary",
+                    employees=candidates,
+                    prompt_text=f"I couldn't find an employee named {candidate_name}. Please select an employee to view salary:",
+                    role=role,
+                    surface=surface
+                )
+
+        return self._build_employee_picker(
+            task="salary",
+            employees=candidates,
+            prompt_text="Please select an employee to view salary:",
+            role=role,
+            surface=surface
+        )
+
+    def _handle_employee_selection(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        emp_id = context.get("employee_id") or ""
+        task = context.get("task") or ""
+
+        if task in ("arrears", "hike"):
+            if emp_id == "E01":
+                return self._build_scenario_1(user, role, surface)
+            elif emp_id == "E02":
+                return self._build_scenario_2(user, role, surface)
+            elif emp_id == "E03":
+                return self._build_scenario_3(user, role, surface)
+            else:
+                return self._build_scenario_1(user, role, surface)
+
+        elif task in ("settlement", "full_and_final"):
+            if emp_id == "E10":
+                return self._build_scenario_6(user, role, surface)
+            elif emp_id == "E11":
+                return self._build_scenario_7(user, role, surface)
+            elif emp_id == "E12":
+                return self._build_scenario_8(user, role, surface)
+            else:
+                return self._build_scenario_6(user, role, surface)
+
+        elif task == "salary":
+            if emp_id == "E05":
+                return self._build_scenario_9(user, role, surface)
+            elif emp_id == "E06":
+                return self._build_scenario_10(user, role, surface)
+            elif emp_id == "E16":
+                return self._build_scenario_11(user, role, surface)
+            else:
+                return self._build_scenario_9(user, role, surface)
+
+        return self._build_scenario_1(user, role, surface)
 
 
 chat_router = ChatRouter()

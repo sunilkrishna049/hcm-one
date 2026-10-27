@@ -401,16 +401,43 @@ def test_out_of_scope_chat():
 
 
 def test_unknown_text_fallback():
-    res = client.post("/api/chat", json={
+    # Employee fallback: receives C33 and employee suggestion chips
+    res_emp = client.post("/api/chat", json={
         "user_id": "USER-E05",
         "message": "xyz random nonsense completely unknown query 123"
     })
-    assert res.status_code == 200
-    data = res.json()
-    assert data["state"]["intent"] == "unknown"
-    assert data["messages"][0]["code"] == "FALLBACK"
-    assert "cannot answer that question in this demo" in data["messages"][0]["text"]
-    assert len(data["chips"]) > 0
+    assert res_emp.status_code == 200
+    data_emp = res_emp.json()
+    assert data_emp["state"]["intent"] == "unknown"
+    assert data_emp["messages"][0]["code"] == "C33"
+    assert data_emp["messages"][0]["text"] == "I didn't quite get that. Here is what I can help with:"
+    assert "demo" not in data_emp["messages"][0]["text"].lower()
+    emp_labels = [c["label"] for c in data_emp["chips"]]
+    assert "Why is my take-home pay lower in September?" in emp_labels
+    assert "Why did my TDS increase?" in emp_labels
+    assert "What is LOP?" in emp_labels
+    assert "Draft a query for HR" in emp_labels
+    # Employee must never see settlements or bonus suggestions
+    assert not any("settlement" in l.lower() for l in emp_labels)
+    assert not any("bonus" in l.lower() for l in emp_labels)
+
+    # HR fallback: receives C33 and HR suggestion chips
+    res_hr = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "xyz random nonsense completely unknown query 123"
+    })
+    assert res_hr.status_code == 200
+    data_hr = res_hr.json()
+    assert data_hr["state"]["intent"] == "unknown"
+    assert data_hr["messages"][0]["code"] == "C33"
+    assert data_hr["messages"][0]["text"] == "I didn't quite get that. Here is what I can help with:"
+    assert "demo" not in data_hr["messages"][0]["text"].lower()
+    hr_labels = [c["label"] for c in data_hr["chips"]]
+    assert "Calculate arrears" in hr_labels
+    assert "Prepare team bonus proposal" in hr_labels
+    assert "Prepare full and final settlement" in hr_labels
+    assert "Review payroll queries" in hr_labels
+    assert "Why is my take-home pay lower in September?" not in hr_labels
 
 
 def test_chat_scenario_fixtures_freshness():

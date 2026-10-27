@@ -897,8 +897,8 @@
               "amount": -5000
             },
             {
-              "cause": "PF ceiling change",
-              "detail": "Revised ceiling from 17 Sep",
+              "cause": "PF deduction went up",
+              "detail": "PF wage limit raised from 17 Sep",
               "amount": -420
             }
           ],
@@ -908,28 +908,33 @@
     ],
     "chips": [
       {
-        "label": "Show calculation",
+        "label": "Show breakdown",
         "action": "show-calculation",
         "payload": {
           "scenario_num": 9
         }
       },
       {
-        "label": "Draft a query for HR",
-        "action": "draft-query",
+        "label": "Add to my September query",
+        "action": "append-query",
         "payload": {
+          "query_id": "QUERY-E05-SEPTEMBER",
           "employee_id": "E05",
           "period": "2026-09"
         }
       },
       {
-        "label": "What is LOP?",
-        "action": "faq-lop",
-        "payload": {}
+        "label": "Draft a new query",
+        "action": "draft-new-query",
+        "payload": {
+          "employee_id": "E05",
+          "period": "2026-09",
+          "force_new": true
+        }
       },
       {
-        "label": "What is PF?",
-        "action": "faq-pf",
+        "label": "What is LOP?",
+        "action": "faq-lop",
         "payload": {}
       }
     ],
