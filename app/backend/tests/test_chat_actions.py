@@ -12,13 +12,19 @@ import pytest
 
 from app.backend.main import app
 from app.backend.lifecycle import lifecycle
+import app.backend.config as backend_config
 
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def reset_store():
+def reset_store_and_deterministic_mode():
+    orig_ai_mode = backend_config.AI_MODE
+    backend_config.AI_MODE = False
     lifecycle.reset_demo()
+    yield
+    backend_config.AI_MODE = orig_ai_mode
+
 
 
 def test_approve_proposal_flow():

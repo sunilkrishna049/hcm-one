@@ -189,7 +189,7 @@ class ChatRouter:
             ("khan", "E12")
         ]
         for name, emp_id in other_employee_mentions:
-            if (name in lower_msg or emp_id.lower() in lower_msg) and emp_id not in allowed:
+            if (re.search(rf"\b{re.escape(name)}\b", lower_msg) or re.search(rf"\b{re.escape(emp_id.lower())}\b", lower_msg)) and emp_id not in allowed:
                 return self._build_scenario_12(user, role, surface)
 
         if role == "Employee":
@@ -353,25 +353,25 @@ class ChatRouter:
                     return self._build_faq_response(matched_faq, conf, role, surface)
 
         # Scenario 1 (Priya Sharma hike)
-        if "priya" in lower_msg or "sharma" in lower_msg or ("hike" in lower_msg and "lop" in lower_msg):
+        if re.search(r"\b(priya|sharma)\b", lower_msg) or ("hike" in lower_msg and "lop" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_1(user, role, surface)
 
         # Scenario 2 (Arjun Rao PF ceiling hike)
-        if "arjun" in lower_msg or "rao" in lower_msg or ("hike" in lower_msg and "ceiling" in lower_msg):
+        if re.search(r"\b(arjun|rao)\b", lower_msg) or ("hike" in lower_msg and "ceiling" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_2(user, role, surface)
 
         # Scenario 3 (Kavya Iyer missing attendance)
-        if "kavya" in lower_msg or "iyer" in lower_msg or ("hike" in lower_msg and "attendance" in lower_msg):
+        if re.search(r"\b(kavya|iyer)\b", lower_msg) or ("hike" in lower_msg and "attendance" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_3(user, role, surface)
 
         # Scenario 5 (Meera Nair missing rating)
-        if "meera" in lower_msg or "nair" in lower_msg or ("bonus" in lower_msg and "rating" in lower_msg):
+        if re.search(r"\b(meera|nair)\b", lower_msg) or ("bonus" in lower_msg and "rating" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_5(user, role, surface)
@@ -388,35 +388,35 @@ class ChatRouter:
                 return self._build_bonus_clarifying_question(role, surface)
 
         # Scenario 6 (Rahul Verma settlement)
-        if "rahul" in lower_msg or "verma" in lower_msg or ("settlement" in lower_msg and "gratuity" in lower_msg):
+        if re.search(r"\b(rahul|verma)\b", lower_msg) or ("settlement" in lower_msg and "gratuity" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_6(user, role, surface)
 
         # Scenario 7 (Lakshmi Reddy settlement)
-        if "lakshmi" in lower_msg or "reddy" in lower_msg or ("settlement" in lower_msg and "minimum service" in lower_msg):
+        if re.search(r"\b(lakshmi|reddy)\b", lower_msg) or ("settlement" in lower_msg and "minimum service" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_7(user, role, surface)
 
         # Scenario 8 (Imran Khan exit recovery)
-        if ("imran" in lower_msg or "khan" in lower_msg) and ("recovery" in lower_msg or "prepare" in lower_msg or "exit recovery" in lower_msg) and "calculation" not in lower_msg and "unresolved" not in lower_msg:
+        if re.search(r"\b(imran|khan)\b", lower_msg) and ("recovery" in lower_msg or "prepare" in lower_msg or "exit recovery" in lower_msg) and "calculation" not in lower_msg and "unresolved" not in lower_msg:
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_8(user, role, surface)
 
         # Scenario 13 (Imran Khan settlement review / breakdown / calculation)
-        if ("imran" in lower_msg or "khan" in lower_msg) and ("review" in lower_msg or "calculation" in lower_msg or "breakdown" in lower_msg or "unresolved" in lower_msg or "settlement" in lower_msg):
+        if re.search(r"\b(imran|khan)\b", lower_msg) and ("review" in lower_msg or "calculation" in lower_msg or "breakdown" in lower_msg or "unresolved" in lower_msg or "settlement" in lower_msg):
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied")
             return self._build_scenario_13(user, role, surface)
 
         # Scenario 11 (Pooja Das / gross did not change / basic pay / allowance)
-        if "pooja" in lower_msg or "e16" in lower_msg or "basic pay" in lower_msg or "allowance" in lower_msg or "gross did not change" in lower_msg or "no earning" in lower_msg or ("decrease" in lower_msg and "gross" in lower_msg):
+        if re.search(r"\b(pooja|e16)\b", lower_msg) or "basic pay" in lower_msg or "allowance" in lower_msg or "gross did not change" in lower_msg or "no earning" in lower_msg or ("decrease" in lower_msg and "gross" in lower_msg):
             return self._build_scenario_11(user, role, surface)
 
         # Scenario 10 (Siddharth Jain / TDS increase)
-        if "siddharth" in lower_msg or "e06" in lower_msg or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)):
+        if re.search(r"\b(siddharth|e06)\b", lower_msg) or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)):
             return self._build_scenario_10(user, role, surface)
 
         # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)

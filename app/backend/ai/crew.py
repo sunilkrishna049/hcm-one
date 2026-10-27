@@ -213,12 +213,14 @@ class PayrollAICrew:
 
             # Ambiguous bonus check -> show clarifying question card (only for team bonus without specific employee)
             if (
-                classifier_res.clarification_needed
-                or (
-                    classifier_res.intent == "bonus_proposal"
-                    and not classifier_res.entities.get("bonus_type")
-                    and classifier_res.scenario_num != 5
-                    and classifier_res.entities.get("employee_id") != "E09"
+                classifier_res.intent == "bonus_proposal"
+                and (
+                    classifier_res.clarification_needed
+                    or (
+                        not classifier_res.entities.get("bonus_type")
+                        and classifier_res.scenario_num != 5
+                        and classifier_res.entities.get("employee_id") != "E09"
+                    )
                 )
             ):
                 if "annual" not in lower_msg and "sales" not in lower_msg:
@@ -413,7 +415,9 @@ class PayrollAICrew:
                 return _router._build_scenario_2(user, role, surface)
             elif scenario_num == 3:
                 return _router._build_scenario_3(user, role, surface)
-            return _router._build_scenario_1(user, role, surface)
+            elif scenario_num == 1:
+                return _router._build_scenario_1(user, role, surface)
+            return None
         elif intent == "settlement_proposal":
             if scenario_num == 6:
                 return _router._build_scenario_6(user, role, surface)
@@ -423,7 +427,7 @@ class PayrollAICrew:
                 return _router._build_scenario_8(user, role, surface)
             elif scenario_num == 13:
                 return _router._build_scenario_13(user, role, surface)
-            return _router._build_scenario_8(user, role, surface)
+            return None
         elif intent == "settlement_review":
             return _router._build_scenario_13(user, role, surface)
         elif intent == "bonus_proposal":

@@ -67,6 +67,15 @@ class MockLLM:
                 "is_prompt_injection": False,
                 "clarification_needed": False
             }
+        if "arrears" in lower:
+            return {
+                "intent": "prepare_hike",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.95,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
         return {
             "intent": "unknown",
             "scenario_num": None,
@@ -636,4 +645,107 @@ def test_mocked_tests_write_to_temporary_ai_log(tmp_path):
     # Ensure prod log was untouched
     final_prod_size = prod_log.stat().st_size if prod_log.exists() else 0
     assert final_prod_size == initial_prod_size, "Production ai_runs.jsonl must not be modified by mocked tests"
+
+
+# 16. AI-on: HR "Calculate arrears" with no name -> employee picker
+def test_ai_on_hr_calculate_arrears_no_name_returns_employee_picker():
+    """AI-on: HR asks 'Calculate arrears' with no name -> classifier yields intent with no employee -> picker card."""
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Calculate arrears"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    card_types = [c.get("type") for c in data.get("cards", [])]
+    assert "employee_picker" in card_types
+    picker = next(c for c in data["cards"] if c["type"] == "employee_picker")
+    assert picker["data"]["task"] == "arrears"
+    emp_ids = [e["employee_id"] for e in picker["data"]["employees"]]
+    assert "E01" in emp_ids
+    assert "E02" in emp_ids
+
+
+# 17. AI-on: unknown text -> C33 with role-scoped chips (Employee and HR)
+def test_ai_on_unknown_text_returns_c33_with_role_scoped_chips():
+    """AI-on: Unknown text -> classifier yields unknown -> returns C33 with role-scoped chips (Employee and HR)."""
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    # Employee fallback
+    res_emp = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "completely unknown gibberish text 98765"
+    })
+    assert res_emp.status_code == 200
+    data_emp = res_emp.json()
+    assert data_emp["messages"][0]["code"] == "C33"
+    assert data_emp["messages"][0]["text"] == "I didn't quite get that. Here is what I can help with:"
+    assert "demo" not in data_emp["messages"][0]["text"].lower()
+    emp_labels = [c["label"] for c in data_emp["chips"]]
+    assert "Why is my take-home pay lower in September?" in emp_labels
+    assert "Why did my TDS increase?" in emp_labels
+    assert "What is LOP?" in emp_labels
+    assert "Draft a query for HR" in emp_labels
+    assert not any("settlement" in l.lower() for l in emp_labels)
+    assert not any("bonus" in l.lower() for l in emp_labels)
+
+    # HR fallback
+    res_hr = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "completely unknown gibberish text 98765"
+    })
+    assert res_hr.status_code == 200
+    data_hr = res_hr.json()
+    assert data_hr["messages"][0]["code"] == "C33"
+    assert data_hr["messages"][0]["text"] == "I didn't quite get that. Here is what I can help with:"
+    assert "demo" not in data_hr["messages"][0]["text"].lower()
+    hr_labels = [c["label"] for c in data_hr["chips"]]
+    assert "Calculate arrears" in hr_labels
+    assert "Prepare team bonus proposal" in hr_labels
+    assert "Prepare full and final settlement" in hr_labels
+    assert "Review payroll queries" in hr_labels
+    assert "Why is my take-home pay lower in September?" not in hr_labels
+
+
+# 18. AI-on: every C33 chip -> not "unknown", not C33
+def test_ai_on_every_c33_chip_resolves_valid_answer():
+    """AI-on: Every C33 chip clicked by HR or Employee must resolve to a valid answer (not unknown, not C33)."""
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+
+    # HR chips
+    res_hr = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "completely unknown gibberish text 98765"
+    })
+    for chip in res_hr.json().get("chips", []):
+        chip_res = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": chip["action"],
+            "context": chip.get("payload", {})
+        })
+        assert chip_res.status_code == 200
+        chip_data = chip_res.json()
+        assert chip_data["state"]["intent"] != "unknown"
+        assert not any(m["code"] == "C33" for m in chip_data.get("messages", []))
+
+    # Employee chips
+    res_emp = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "completely unknown gibberish text 98765"
+    })
+    for chip in res_emp.json().get("chips", []):
+        chip_res = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "action": chip["action"],
+            "context": chip.get("payload", {})
+        })
+        assert chip_res.status_code == 200
+        chip_data = chip_res.json()
+        assert chip_data["state"]["intent"] != "unknown"
+        assert not any(m["code"] == "C33" for m in chip_data.get("messages", []))
+
 
