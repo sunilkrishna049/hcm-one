@@ -3,7 +3,7 @@
   "dataset_name": "HCM One Payroll FAQ",
   "language": "en-IN",
   "updated_on": "2026-10-23",
-  "total_questions": 30,
+  "total_questions": 36,
   "fields": [
     "id",
     "category",
@@ -314,6 +314,66 @@
       "url": "/chat?action=intro",
       "audience": "both",
       "source": "output/06-ai-interaction/trust-explainability.md Section 6"
+    },
+    {
+      "id": "FAQ-PAY-31",
+      "category": "Glossary",
+      "question": "What is basic pay?",
+      "answer": "Basic pay is the core component of salary and forms part of the provident fund wage alongside dearness allowance.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "data/rules/pf-rules.json pf_wage_formula"
+    },
+    {
+      "id": "FAQ-PAY-32",
+      "category": "Glossary",
+      "question": "What is HRA?",
+      "answer": "House Rent Allowance is a salary earnings component that adjusts with attendance and general salary revisions.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "output/07-prototype/screen-specs.md Hike allocation rule"
+    },
+    {
+      "id": "FAQ-PAY-33",
+      "category": "Glossary",
+      "question": "What is special allowance?",
+      "answer": "Special allowance is an additional earnings component paid each month based on paid calendar days.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "output/07-prototype/screen-specs.md Hike allocation rule"
+    },
+    {
+      "id": "FAQ-PAY-34",
+      "category": "Glossary",
+      "question": "What is DA?",
+      "answer": "Dearness allowance is a salary component that is counted alongside basic pay to determine the provident fund wage.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "data/rules/pf-rules.json pf_wage_formula"
+    },
+    {
+      "id": "FAQ-PAY-35",
+      "category": "Glossary",
+      "question": "What is the difference between gross and net pay?",
+      "answer": "Gross pay is the total of all earned salary components before deductions, while net pay is the final take-home amount after deducting provident fund and tax.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "output/06-ai-interaction/conversation-design.md Section 3"
+    },
+    {
+      "id": "FAQ-PAY-36",
+      "category": "Glossary",
+      "question": "What is employer PF contribution?",
+      "answer": "Employer provident fund contribution is the matching share paid by the company, divided between the employee pension share and provident fund.",
+      "link_text": "",
+      "url": "",
+      "audience": "employee",
+      "source": "data/rules/pf-rules.json employer_contribution_rate_percent"
     }
   ]
 }

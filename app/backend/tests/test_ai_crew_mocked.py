@@ -45,6 +45,88 @@ class MockLLM:
             return self.custom_classify_response
 
         lower = message.lower()
+        if bool(re.search(r"\b(bonus|incentive)\b", lower)) or bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower)):
+            return {
+                "intent": "unrecorded_topic",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\b(june|april|may|july|november|december|january|february|march)\b.*\b(pay|salary|payslip)\b|\b(pay|salary|payslip)\b.*\b(june|april|may|july|november|december|january|february|march)\b", lower):
+            return {
+                "intent": "unrecorded_month",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\b(which|what)\b.*\btax regime\b|\bmy tax regime\b|\bregime am i in\b", lower):
+            return {
+                "intent": "tax_regime",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower):
+            return {
+                "intent": "query_status",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower):
+            return {
+                "intent": "compare_months",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower) or (lower.strip() in ("tds", "my tds"))) and not ("increase" in lower or "higher" in lower or "more" in lower):
+            return {
+                "intent": "tds_amount",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower):
+            return {
+                "intent": "lop_days",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw much pf\b", lower):
+            return {
+                "intent": "pf_amount",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b", lower):
+            return {
+                "intent": "payslip_breakdown",
+                "scenario_num": None,
+                "entities": {"month": "September 2026"},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+
         is_salary_drop = bool(re.search(
             r"\b(why is my salary less|why did i get less|why is my pay less|less this month|reduced this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower|pay.*lower|pay.*reduced|salary.*reduced|salary.*cut|pay.*cut|less money)\b",
             lower
@@ -686,11 +768,18 @@ def test_ai_on_unknown_text_returns_c33_with_role_scoped_chips():
     assert "demo" not in data_emp["messages"][0]["text"].lower()
     emp_labels = [c["label"] for c in data_emp["chips"]]
     assert "Why is my take-home pay lower in September?" in emp_labels
-    assert "Why did my TDS increase?" in emp_labels
     assert "What is LOP?" in emp_labels
     assert "Draft a query for HR" in emp_labels
+    assert "Why did my TDS increase?" not in emp_labels
     assert not any("settlement" in l.lower() for l in emp_labels)
     assert not any("bonus" in l.lower() for l in emp_labels)
+
+    # USER-E06 fallback includes TDS increase
+    res_e06 = client.post("/api/chat", json={
+        "user_id": "USER-E06",
+        "message": "completely unknown gibberish text 98765"
+    })
+    assert "Why did my TDS increase?" in [c["label"] for c in res_e06.json()["chips"]]
 
     # HR fallback
     res_hr = client.post("/api/chat", json={

@@ -414,12 +414,20 @@ def test_unknown_text_fallback():
     assert "demo" not in data_emp["messages"][0]["text"].lower()
     emp_labels = [c["label"] for c in data_emp["chips"]]
     assert "Why is my take-home pay lower in September?" in emp_labels
-    assert "Why did my TDS increase?" in emp_labels
     assert "What is LOP?" in emp_labels
     assert "Draft a query for HR" in emp_labels
+    assert "Why did my TDS increase?" not in emp_labels
     # Employee must never see settlements or bonus suggestions
     assert not any("settlement" in l.lower() for l in emp_labels)
     assert not any("bonus" in l.lower() for l in emp_labels)
+
+    # USER-E06 fallback includes TDS increase
+    res_e06 = client.post("/api/chat", json={
+        "user_id": "USER-E06",
+        "message": "xyz random nonsense completely unknown query 123"
+    })
+    assert res_e06.status_code == 200
+    assert "Why did my TDS increase?" in [c["label"] for c in res_e06.json()["chips"]]
 
     # HR fallback: receives C33 and HR suggestion chips
     res_hr = client.post("/api/chat", json={

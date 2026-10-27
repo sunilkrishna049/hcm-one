@@ -40,7 +40,7 @@ class FAQMatcher:
         """Personal questions about user's own pay must never route to FAQ answers."""
         q = (query or "").lower().strip()
         personal_patterns = [
-            r"\bmy (salary|pay|take[- ]?home|tds|tax|deduction|deductions|pf|net pay|earnings|payout)\b",
+            r"\bmy (salary|pay|take[- ]?home|tds|tax|deduction|deductions|pf|net pay|earnings|payout|query|attendance|lop|regime|bonus|october|june|september|august)\b",
             r"\b(less|lower|reduced|cut|drop|dropped|decrease|decreased) (this month|in september|money)\b",
             r"\bwhy (is|did|was|am) (i|my) (salary|pay|take[- ]?home|money|net pay).*(less|lower|drop|dropped|reduced|decrease|cut)\b",
             r"\bwhy did i get less\b",
@@ -48,7 +48,16 @@ class FAQMatcher:
             r"\bwhy was i paid less\b",
             r"\bcut in (my )?salary\b",
             r"\bwhy is my salary less\b",
-            r"\bwhy is my pay less\b"
+            r"\bwhy is my pay less\b",
+            r"\b(hw|how) much\b",
+            r"\bhow many\b",
+            r"\bwhy was there\b",
+            r"\bwill i get\b",
+            r"\bwhich tax regime\b",
+            r"\bwhat is my\b",
+            r"\bwhat'?s happening with\b",
+            r"\bexplain my\b",
+            r"\bcompare my\b",
         ]
         return any(re.search(pat, q) for pat in personal_patterns)
 
@@ -72,7 +81,7 @@ class FAQMatcher:
             r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b",
             lower_query
         ))
-        is_exact_acronym = bool(re.fullmatch(r"(lop|pf|epf|eps|tds|gratuity|arrears|leave encashment|notice recovery)", lower_query))
+        is_exact_acronym = bool(re.fullmatch(r"(lop|pf|epf|eps|tds|gratuity|arrears|leave encashment|notice recovery|hra|da|basic|special allowance)", lower_query))
         if not (is_def_style or is_exact_acronym):
             return None, 0.0
 
@@ -80,6 +89,12 @@ class FAQMatcher:
 
         # Direct acronym / keyword priority mappings for definition questions
         exact_triggers = [
+            (r"\bbasic( pay)?\b", "FAQ-PAY-31"),
+            (r"\bhra\b|\bhouse rent allowance\b", "FAQ-PAY-32"),
+            (r"\bspecial allowance\b", "FAQ-PAY-33"),
+            (r"\bda\b|\bdearness allowance\b", "FAQ-PAY-34"),
+            (r"\bgross vs net\b|\bgross and net\b|\bdifference between gross and net\b", "FAQ-PAY-35"),
+            (r"\bemployer pf\b|\bemployer.*contribution\b", "FAQ-PAY-36"),
             (r"\blop\b", "FAQ-PAY-01"),
             (r"\bepf\b", "FAQ-PAY-03"),
             (r"\beps\b", "FAQ-PAY-04"),

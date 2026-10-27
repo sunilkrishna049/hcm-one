@@ -1150,18 +1150,25 @@
     ],
     "chips": [
       {
-        "label": "Ask about my payroll",
-        "action": "explain-salary",
+        "label": "Calculate arrears",
+        "action": "arrears-picker",
         "payload": {}
       },
       {
-        "label": "What is LOP?",
-        "action": "faq-lop",
+        "label": "Prepare sales incentive proposal",
+        "action": "apply-selection",
+        "payload": {
+          "choice": "sales"
+        }
+      },
+      {
+        "label": "Prepare full and final settlement",
+        "action": "settlement-picker",
         "payload": {}
       },
       {
-        "label": "What is PF?",
-        "action": "faq-pf",
+        "label": "Review payroll queries",
+        "action": "review-queries",
         "payload": {}
       }
     ],

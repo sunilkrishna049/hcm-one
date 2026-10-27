@@ -36,6 +36,9 @@ AI_MESSAGES = {
     "C31": "Hi {first_name}. What would you like to do today?",
     "C32": "This is a proposal for the recorded {bonus_type} for {period}.",
     "C33": "I didn't quite get that. Here is what I can help with:",
+    "C34": "I don't have a record of that in your payroll data. You can raise a query with HR.",
+    "C35": "I can show your pay for {available_months} only.",
+    "C36": "{n} days of loss of pay were recorded in your {month} attendance. If that's not right, you can raise a query.",
 }
 
 
@@ -46,6 +49,8 @@ def get_message(code: str, **kwargs) -> str:
             kwargs["first_name"] = kwargs["first name"]
         if "bonus type" in kwargs and "bonus_type" not in kwargs:
             kwargs["bonus_type"] = kwargs["bonus type"]
+        if "available months" in kwargs and "available_months" not in kwargs:
+            kwargs["available_months"] = kwargs["available months"]
         try:
             return template.format(**kwargs)
         except KeyError:

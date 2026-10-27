@@ -131,6 +131,14 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C33):** "I didn't quite get that. Here is what I can help with:" (Approved by: Project owner).
 - **Suggestions:** Role-scoped suggestion chips: Employee never sees settlements or bonuses; HR sees HR tasks. Every chip shown must lead to a verified answer or task flow, never another fallback.
 
+### A06-16: Employee own-pay missing records, available months, and attendance LOP
+- **Approved wording (C34):** "I don't have a record of that in your payroll data. You can raise a query with HR." (Approved by: Project owner).
+  - Used for unrecorded personal topics: hike/arrears, bonus, October salary, CTC, leave balance, reimbursement, salary credit date, Form 16, PF balance.
+- **Approved wording (C35):** "I can show your pay for {available months} only." (Approved by: Project owner).
+  - Used when an employee asks for a month the engine does not have.
+- **Approved wording (C36):** "{n} days of loss of pay were recorded in your {month} attendance. If that's not right, you can raise a query." (Approved by: Project owner).
+  - Used for LOP inquiries. Never states or guesses why the employee was absent.
+
 ## 8. Example conversations (5)
 
 All five scripts use the fictional company Northwind Technologies and fictional participants. They are content examples, not observed conversations, executed tests, actual calculations or approvals. Each numerical slot is labeled **Illustrative example, not a calculation**. Slots are intentionally unfilled. In a working demo, authorized records and Calculation code must supply every numeric input reference and derived result; the AI must never fill them from imagination. Words such as "April" and "May" identify fictional example periods, not real employee dates. No rate, amount, due date or confidence score is asserted here. (GR-3.1–GR-3.2, GR-8.1; conversation skill; BRD C-3)

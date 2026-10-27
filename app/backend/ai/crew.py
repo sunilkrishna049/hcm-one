@@ -415,10 +415,24 @@ class PayrollAICrew:
             return None
         elif intent == "settlement_review":
             return _router._build_scenario_13(user, role, surface)
-        elif intent == "bonus_proposal":
-            if scenario_num == 5:
-                return _router._build_scenario_5(user, role, surface)
-            return _router._build_scenario_4(user, role, surface, bonus_type_key=bonus_key or "annual_performance_bonus")
+        elif intent == "payslip_breakdown":
+            return _router._build_payslip_breakdown(user, role, surface, month="2026-09")
+        elif intent == "pf_amount":
+            return _router._build_pf_amount(user, role, surface, month="2026-09")
+        elif intent == "tds_amount":
+            return _router._build_tds_amount(user, role, surface, month="2026-09")
+        elif intent == "lop_days":
+            return _router._build_lop_days(user, role, surface, month="2026-09")
+        elif intent == "compare_months":
+            return _router._build_compare_months(user, role, surface)
+        elif intent == "query_status":
+            return _router._handle_query_status(user, role, surface, {})
+        elif intent == "tax_regime":
+            return _router._build_tax_regime(user, role, surface)
+        elif intent == "unrecorded_topic":
+            return _router._build_unrecorded_topic(user, role, surface)
+        elif intent == "unrecorded_month":
+            return _router._build_unrecorded_month(user, role, surface)
         return None
 
     def _execute_classifier(self, task: Task, message: str, role: str, user: dict, context: dict) -> ClassifierOutput:
@@ -475,6 +489,34 @@ class PayrollAICrew:
         if "imran" in lower_msg:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
 
+        # Tax advice out of scope
+        if re.search(r"\btax regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*\btax regime\b|\btax investment\b|\bshould i choose (new|old)\b", lower_msg):
+            return validate_classifier_output({"intent": "out_of_scope", "scenario_num": None}, user)
+
+        if (lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
+            return validate_classifier_output({"intent": "faq_question", "scenario_num": None}, user)
+
+        # Part C intents for signed-in employee
+        if role == "Employee":
+            if bool(re.search(r"\b(bonus|incentive)\b", lower_msg)) or bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower_msg)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower_msg)) or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya"))):
+                return validate_classifier_output({"intent": "unrecorded_topic", "scenario_num": None}, user)
+            if re.search(r"\b(june|april|may|july|november|december|january|february|march)\b.*\b(pay|salary|payslip)\b|\b(pay|salary|payslip)\b.*\b(june|april|may|july|november|december|january|february|march)\b", lower_msg):
+                return validate_classifier_output({"intent": "unrecorded_month", "scenario_num": None}, user)
+            if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
+                return validate_classifier_output({"intent": "tax_regime", "scenario_num": None}, user)
+            if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
+                return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
+            if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower_msg):
+                return validate_classifier_output({"intent": "compare_months", "scenario_num": None}, user)
+            if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
+                return validate_classifier_output({"intent": "tds_amount", "scenario_num": None}, user)
+            if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower_msg):
+                return validate_classifier_output({"intent": "lop_days", "scenario_num": None}, user)
+            if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw much pf\b", lower_msg):
+                return validate_classifier_output({"intent": "pf_amount", "scenario_num": None}, user)
+            if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b", lower_msg):
+                return validate_classifier_output({"intent": "payslip_breakdown", "scenario_num": None}, user)
+
         # Casual phrasings and personal pay queries for Neha / salary explanation
         allowed = set(user.get("allowed_employee_ids") or [])
         is_salary_drop = bool(re.search(
@@ -490,8 +532,6 @@ class PayrollAICrew:
         if "gross" in lower_msg:
             sc = 11 if ((role == "HR Admin" and "E16" in allowed) or user.get("employee_id") == "E16") else None
             return validate_classifier_output({"intent": "explain_deduction", "scenario_num": sc}, user)
-        if (lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
-            return validate_classifier_output({"intent": "faq_question", "scenario_num": None}, user)
 
         sc_num = context.get("scenario_num")
         return validate_classifier_output({"intent": "unknown", "scenario_num": sc_num}, user)

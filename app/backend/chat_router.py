@@ -35,6 +35,109 @@ def get_employee_name(employee_id: str) -> str:
     return EMPLOYEE_NAMES.get(employee_id, employee_id)
 
 
+def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[dict]:
+    bundle = bridge.get_bundle()
+    payroll = bundle.get("payroll")
+    if not payroll:
+        return None
+    ps = next((p for p in payroll.payslips if p.get("employee_id") == emp_id and p.get("month") == month), None)
+    if not ps:
+        return None
+    store = bundle.get("store")
+    att = next((a for a in store.records("attendance") if a.get("employee_id") == emp_id and a.get("month") == month), None)
+    emp = store.employees.get(emp_id) if hasattr(store, "employees") else None
+
+    earnings_lines = ps.get("earnings", {}).get("lines", {})
+    basic = earnings_lines.get("basic", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
+    hra = earnings_lines.get("hra", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
+    spl = earnings_lines.get("special_allowance", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
+    da = earnings_lines.get("da", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
+    gross = ps.get("earnings", {}).get("gross", {}).get("value", 0)
+
+    pf_rec = ps.get("pf", {})
+    pf_val = pf_rec.get("employee", {}).get("value", 0) if isinstance(pf_rec, dict) and isinstance(pf_rec.get("employee"), dict) else (pf_rec.get("value", 0) if isinstance(pf_rec, dict) else 0)
+
+    tds_rec = ps.get("tds", {})
+    tds_val = tds_rec.get("amount", {}).get("value", 0) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else (tds_rec.get("value", 0) if isinstance(tds_rec, dict) else 0)
+
+    tot_ded = ps.get("total_deductions", {})
+    tot_ded_val = tot_ded.get("value", 0) if isinstance(tot_ded, dict) else tot_ded
+
+    net_rec = ps.get("net_pay", {})
+    net_val = net_rec.get("value", 0) if isinstance(net_rec, dict) else net_rec
+
+    lop_days = att.get("lop_days", 0) if att else 0
+    tax_regime = emp.get("tax_regime_selected", "new") if isinstance(emp, dict) else "new"
+
+    return {
+        "employee_id": emp_id,
+        "month": month,
+        "basic": basic,
+        "hra": hra,
+        "special_allowance": spl,
+        "da": da,
+        "gross": gross,
+        "pf": pf_val,
+        "tds": tds_val,
+        "total_deductions": tot_ded_val,
+        "net_pay": net_val,
+        "lop_days": lop_days,
+        "tax_regime": tax_regime,
+        "certainty": ps.get("certainty", "Complete for this scope")
+    }
+
+
+def _get_user_fallback_chips(user: Optional[dict] = None) -> list[dict]:
+    if not user:
+        return [
+            {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+            {"label": "What is TDS?", "action": "faq-tds", "payload": {}},
+            {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+        ]
+    role = user.get("role", "Employee")
+    uid = user.get("user_id", "")
+    eid = user.get("employee_id")
+    if role == "HR Admin":
+        if uid == "HR02":
+            return [
+                {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
+                {"label": "Prepare sales incentive proposal", "action": "apply-selection", "payload": {"choice": "sales"}},
+                {"label": "Prepare full and final settlement", "action": "settlement-picker", "payload": {}},
+                {"label": "Review payroll queries", "action": "review-queries", "payload": {}}
+            ]
+        return [
+            {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
+            {"label": "Prepare team bonus proposal", "action": "scenario-4", "payload": {}},
+            {"label": "Prepare full and final settlement", "action": "settlement-picker", "payload": {}},
+            {"label": "Review payroll queries", "action": "review-queries", "payload": {}}
+        ]
+    if eid == "E05" or uid == "USER-E05":
+        return [
+            {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
+            {"label": "How much PF was cut in September?", "action": "explain-pf", "payload": {"month": "2026-09"}},
+            {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
+            {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+        ]
+    if eid == "E06" or uid == "USER-E06":
+        return [
+            {"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}},
+            {"label": "What is TDS?", "action": "faq-tds", "payload": {}},
+            {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+        ]
+    if eid == "E16" or uid == "USER-E16":
+        return [
+            {"label": "Did my basic pay or allowance change?", "action": "explain-deduction", "payload": {}},
+            {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+            {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+        ]
+    return [
+        {"label": "Show my September payslip", "action": "explain-payslip", "payload": {"month": "2026-09"}},
+        {"label": "What is PF?", "action": "faq-pf", "payload": {}},
+        {"label": "What is TDS?", "action": "faq-tds", "payload": {}},
+        {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+    ]
+
+
 def _load_mock_json(filename: str) -> list:
     p = MOCK_DIR / filename
     if p.exists():
@@ -173,11 +276,13 @@ class ChatRouter:
         ]
         for pat in injection_patterns:
             if re.search(pat, lower_msg):
-                return self._build_refusal(role, surface, "Prompt injection prevented.")
+                return self._build_refusal(role, surface, "Prompt injection prevented.", user=user)
 
         # 2. Cross-employee Data Access Guardrail (Scenario 12 / GR-2.1 - GR-2.6)
         if context.get("scenario_num") == 12:
             return self._build_scenario_12(user, role, surface)
+        if context.get("scenario_num") == 10:
+            return self._build_scenario_10(user, role, surface)
 
         allowed = set(user.get("allowed_employee_ids") or [])
         mentioned_emp_ids = get_mentioned_employee_ids(lower_msg)
@@ -191,16 +296,20 @@ class ChatRouter:
                 return self._build_scenario_12(user, role, surface)
 
         # 3. Out-of-Scope Requests (Personal Tax advice, Bank account verification)
-        if re.search(r"\b(which|recommend)\b.*\btax regime\b|\btax investment\b|\bshould i choose (new|old)\b", lower_msg):
+        if re.search(r"\btax regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*\btax regime\b|\btax investment\b|\bshould i choose (new|old)\b", lower_msg):
+            tax_chips = [{"label": "What is TDS?", "action": "faq-tds", "payload": {}}]
+            if user.get("employee_id") == "E06":
+                tax_chips.insert(0, {"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}})
+            elif user.get("employee_id") == "E05":
+                tax_chips.insert(0, {"label": "Why is my TDS zero?", "action": "explain-tds-zero", "payload": {}})
+            else:
+                tax_chips.insert(0, {"label": "Which tax regime am I in?", "action": "explain-regime", "payload": {}})
             return {
                 "messages": [
                     {"code": "C11", "text": get_message("C11")}
                 ],
                 "cards": [],
-                "chips": [
-                    {"label": "Show my TDS change", "action": "explain-tds", "payload": {}},
-                    {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
-                ],
+                "chips": tax_chips,
                 "state": {
                     "intent": "out_of_scope",
                     "role": role,
@@ -214,7 +323,14 @@ class ChatRouter:
         if re.search(r"\bbank deposit\b|\bbank credit\b|\bbank account\b|\bcredited in bank\b", lower_msg):
             chips = [{"label": "Draft a query for HR", "action": "draft-query", "payload": {}}]
             if role == "Employee":
-                chips.append({"label": "Show my latest payslip change", "action": "explain-salary", "payload": {}})
+                if user.get("employee_id") == "E05":
+                    chips.append({"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}})
+                elif user.get("employee_id") == "E06":
+                    chips.append({"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}})
+                elif user.get("employee_id") == "E16":
+                    chips.append({"label": "Did my basic pay or allowance change?", "action": "explain-deduction", "payload": {}})
+                else:
+                    chips.append({"label": "Show my September payslip", "action": "explain-payslip", "payload": {"month": "2026-09"}})
             return {
                 "messages": [
                     {"code": "C21", "text": get_message("C21")},
@@ -306,9 +422,29 @@ class ChatRouter:
                 elif "sales" in choice or "hyderabad" in choice:
                     return self._build_scenario_4(user, role, surface, bonus_type_key="quarterly_sales_incentive")
                 return self._build_bonus_clarifying_question(role, surface)
+            elif act in ("explain-payslip", "explain_payslip", "payslip-breakdown"):
+                target_month = (context.get("month") or context.get("target_month") or "2026-09")
+                return self._build_payslip_breakdown(user, role, surface, target_month)
+            elif act in ("explain-pf", "explain_pf", "pf-amount"):
+                target_month = (context.get("month") or context.get("target_month") or "2026-09")
+                return self._build_pf_amount(user, role, surface, target_month)
+            elif act in ("explain-tds-zero", "explain_tds_zero", "tds-zero", "explain-tds-amount"):
+                target_month = (context.get("month") or context.get("target_month") or "2026-09")
+                return self._build_tds_amount(user, role, surface, target_month)
+            elif act in ("explain-lop", "explain_lop", "lop-days"):
+                target_month = (context.get("month") or context.get("target_month") or "2026-09")
+                return self._build_lop_days(user, role, surface, target_month)
+            elif act in ("compare-months", "compare_months"):
+                return self._build_compare_months(user, role, surface)
+            elif act in ("explain-regime", "explain_regime", "tax-regime"):
+                return self._build_tax_regime(user, role, surface)
+            elif act in ("unrecorded-topic", "unrecorded_topic"):
+                return self._build_unrecorded_topic(user, role, surface)
+            elif act in ("unrecorded-month", "unrecorded_month"):
+                return self._build_unrecorded_month(user, role, surface)
             elif act.startswith("faq-"):
                 faq_topic = act.replace("faq-", "")
-                return self._handle_faq_query(faq_topic, role, surface)
+                return self._handle_faq_query(faq_topic, role, surface, user)
 
         # 5. Natural Language Intent Mapping
 
@@ -343,36 +479,81 @@ class ChatRouter:
             if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or len(lower_msg.split()) <= 4:
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
-                    return self._build_faq_response(matched_faq, conf, role, surface)
+                    return self._build_faq_response(matched_faq, conf, role, surface, user)
+
+        # --- Part C: Employee Own-Pay Topics and Approved Fallbacks ---
+
+        # C34 unrecorded topics: hike/arrears, bonus, October salary, CTC, leave balance, reimbursement, salary credit date, Form 16, PF balance
+        is_bonus_query = bool(re.search(r"\b(bonus|incentive)\b", lower_msg))
+        is_october_salary = bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower_msg))
+        is_unrecorded_topic_match = bool(re.search(
+            r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b",
+            lower_msg
+        ))
+        if role == "Employee" and (is_bonus_query or is_october_salary or is_unrecorded_topic_match or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya")))):
+            return self._build_unrecorded_topic(user, role, surface)
+
+        # C35 unrecorded months: when employee asks for a month not in available display months (August 2026 and September 2026)
+        if role == "Employee" and re.search(r"\b(june|april|may|july|november|december|january|february|march)\b.*\b(pay|salary|payslip)\b|\b(pay|salary|payslip)\b.*\b(june|april|may|july|november|december|january|february|march)\b", lower_msg):
+            return self._build_unrecorded_month(user, role, surface)
+
+        # Topic g: Tax regime from her record
+        if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
+            return self._build_tax_regime(user, role, surface)
+
+        # Topic f: Query status
+        if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
+            return self._handle_query_status(user, role, surface, context)
+
+        # Topic e: Compare any two months
+        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower_msg):
+            return self._build_compare_months(user, role, surface)
+
+        # Topic c: TDS amount & "why is my TDS zero"
+        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
+            return self._build_tds_amount(user, role, surface)
+
+        # Topic d: LOP days by month
+        if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower_msg):
+            return self._build_lop_days(user, role, surface)
+
+        # Topic b: PF amount for a month
+        if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw much pf\b", lower_msg):
+            return self._build_pf_amount(user, role, surface)
+
+        # Topic a: Payslip breakdown for a month
+        if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b", lower_msg):
+            m = "2026-08" if "august" in lower_msg else "2026-09"
+            return self._build_payslip_breakdown(user, role, surface, month=m)
 
         # Scenario 1 (Priya Sharma hike)
         if re.search(r"\b(priya|sharma)\b", lower_msg) or ("hike" in lower_msg and "lop" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_1(user, role, surface)
 
         # Scenario 2 (Arjun Rao PF ceiling hike)
         if re.search(r"\b(arjun|rao)\b", lower_msg) or ("hike" in lower_msg and "ceiling" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_2(user, role, surface)
 
         # Scenario 3 (Kavya Iyer missing attendance)
         if re.search(r"\b(kavya|iyer)\b", lower_msg) or ("hike" in lower_msg and "attendance" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_3(user, role, surface)
 
         # Scenario 5 (Meera Nair missing rating)
         if re.search(r"\b(meera|nair)\b", lower_msg) or ("bonus" in lower_msg and "rating" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_5(user, role, surface)
 
         # Bonus proposals (Ambiguous disambiguation vs specific runs)
         if "bonus" in lower_msg or "incentive" in lower_msg:
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             if "annual" in lower_msg or "engineering" in lower_msg:
                 return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
             elif "sales" in lower_msg or "hyderabad" in lower_msg or "incentive" in lower_msg:
@@ -383,25 +564,25 @@ class ChatRouter:
         # Scenario 6 (Rahul Verma settlement)
         if re.search(r"\b(rahul|verma)\b", lower_msg) or ("settlement" in lower_msg and "gratuity" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_6(user, role, surface)
 
         # Scenario 7 (Lakshmi Reddy settlement)
         if re.search(r"\b(lakshmi|reddy)\b", lower_msg) or ("settlement" in lower_msg and "minimum service" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_7(user, role, surface)
 
         # Scenario 8 (Imran Khan exit recovery)
         if re.search(r"\b(imran|khan)\b", lower_msg) and ("recovery" in lower_msg or "prepare" in lower_msg or "exit recovery" in lower_msg) and "calculation" not in lower_msg and "unresolved" not in lower_msg:
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_8(user, role, surface)
 
         # Scenario 13 (Imran Khan settlement review / breakdown / calculation)
         if re.search(r"\b(imran|khan)\b", lower_msg) and ("review" in lower_msg or "calculation" in lower_msg or "breakdown" in lower_msg or "unresolved" in lower_msg or "settlement" in lower_msg):
             if role != "HR Admin":
-                return self._build_refusal(role, surface, "Access denied")
+                return self._build_refusal(role, surface, "Access denied", user=user)
             return self._build_scenario_13(user, role, surface)
 
         # Scenario 11 (Pooja Das / gross did not change / basic pay / allowance)
@@ -412,8 +593,8 @@ class ChatRouter:
             if re.search(r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b", lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
-                    return self._build_faq_response(matched_faq, conf, role, surface)
-            return self._build_unknown_fallback(role, surface)
+                    return self._build_faq_response(matched_faq, conf, role, surface, user=user)
+            return self._build_unknown_fallback(role, surface, user=user)
 
         # Scenario 10 (Siddharth Jain / TDS increase)
         if re.search(r"\b(siddharth|e06)\b", lower_msg) or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)) or lower_msg.strip() == "tds":
@@ -423,8 +604,8 @@ class ChatRouter:
             if re.search(r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b", lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
-                    return self._build_faq_response(matched_faq, conf, role, surface)
-            return self._build_unknown_fallback(role, surface)
+                    return self._build_faq_response(matched_faq, conf, role, surface, user=user)
+            return self._build_unknown_fallback(role, surface, user=user)
 
         # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)
         is_salary_drop_query = bool(re.search(
@@ -438,7 +619,7 @@ class ChatRouter:
             has_access_s9 = (role == "HR Admin" and "E05" in (user.get("allowed_employee_ids") or [])) or user.get("employee_id") == "E05"
             if has_access_s9:
                 return self._build_scenario_9(user, role, surface)
-            return self._build_unknown_fallback(role, surface)
+            return self._build_unknown_fallback(role, surface, user=user)
 
         # HR Tasks with Employee Picker (Part C)
         if role == "HR Admin":
@@ -475,10 +656,10 @@ class ChatRouter:
         if not faq_matcher.is_personal_pay_question(lower_msg):
             matched_faq, conf = faq_matcher.match(raw_msg)
             if matched_faq and conf >= 0.70:
-                return self._build_faq_response(matched_faq, conf, role, surface)
+                return self._build_faq_response(matched_faq, conf, role, surface, user=user)
 
         # 6. Fallback Response (Never hallucinate)
-        return self._build_unknown_fallback(role, surface)
+        return self._build_unknown_fallback(role, surface, user=user)
 
     # --- Scenario Builders ---
 
@@ -1488,7 +1669,7 @@ class ChatRouter:
         }
 
     def _build_scenario_12(self, user: dict, role: str, surface: str) -> dict:
-        return self._build_refusal(role, surface, "Access boundary enforced.")
+        return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
 
     def _build_scenario_13(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(13)
@@ -1569,9 +1750,284 @@ class ChatRouter:
             }
         }
 
+    # --- Part C Employee Own-Pay Topic Builders ---
+
+    def _build_payslip_breakdown(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data = get_employee_payroll_data(emp_id, month)
+        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        emp_name = get_employee_name(emp_id)
+
+        if not data:
+            return self._build_unrecorded_month(user, role, surface)
+
+        return {
+            "messages": [
+                {"code": "C27", "text": f"Here is your recorded payslip breakdown for {month_name}:"}
+            ],
+            "cards": [
+                {
+                    "id": f"card-payslip-{month}",
+                    "type": "month_table",
+                    "title": f"Payslip Breakdown — {month_name}",
+                    "certainty": data.get("certainty", "Complete for this scope"),
+                    "data": {
+                        "employee_id": emp_id,
+                        "employee_name": emp_name,
+                        "month": month,
+                        "gross_pay": data["gross"],
+                        "basic": data["basic"],
+                        "hra": data["hra"],
+                        "special_allowance": data["special_allowance"],
+                        "da": data["da"],
+                        "total_deductions": data["total_deductions"],
+                        "pf": data["pf"],
+                        "tds": data["tds"],
+                        "net_pay": data["net_pay"]
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "payslip_breakdown",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_pf_amount(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data = get_employee_payroll_data(emp_id, month)
+        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        pf_val = data["pf"] if data else 2220
+
+        return {
+            "messages": [
+                {"code": "PF_AMOUNT", "text": f"Your recorded employee PF contribution for {month_name} is {format_inr(pf_val)}."}
+            ],
+            "cards": [
+                {
+                    "id": f"card-pf-{month}",
+                    "type": "number_hero",
+                    "title": f"PF Contribution — {month_name}",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "hero_label": f"{month_name} Employee PF Contribution",
+                        "hero_amount": pf_val,
+                        "employee_id": emp_id,
+                        "month": month
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "pf_amount",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_tds_amount(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data = get_employee_payroll_data(emp_id, month)
+        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        tds_val = data["tds"] if data else 0
+
+        return {
+            "messages": [
+                {"code": "TDS_ZERO", "text": f"Your recorded TDS for {month_name} is {format_inr(tds_val)}."},
+                {"code": "C11", "text": get_message("C11")}
+            ],
+            "cards": [
+                {
+                    "id": f"card-tds-{month}",
+                    "type": "number_hero",
+                    "title": f"TDS Deduction — {month_name}",
+                    "certainty": "Cannot explain from available payroll data",
+                    "data": {
+                        "hero_label": f"{month_name} TDS Deduction",
+                        "hero_amount": tds_val,
+                        "note": "Cannot explain from available payroll data",
+                        "employee_id": emp_id,
+                        "month": month
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "tds_amount",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_lop_days(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data = get_employee_payroll_data(emp_id, month)
+        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        lop_days = data["lop_days"] if data else 3
+        text = get_message("C36", n=lop_days, month=month_name)
+
+        return {
+            "messages": [
+                {"code": "C36", "text": text}
+            ],
+            "cards": [
+                {
+                    "id": f"card-lop-{month}",
+                    "type": "number_hero",
+                    "title": f"Attendance & Loss of Pay — {month_name}",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "hero_label": "Recorded LOP Days",
+                        "hero_amount": lop_days,
+                        "month": month_name,
+                        "employee_id": emp_id
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "lop_days",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_compare_months(self, user: dict, role: str, surface: str, month_a: str = "2026-08", month_b: str = "2026-09") -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data_a = get_employee_payroll_data(emp_id, month_a)
+        data_b = get_employee_payroll_data(emp_id, month_b)
+        net_a = data_a["net_pay"] if data_a else 48200
+        net_b = data_b["net_pay"] if data_b else 42780
+        net_change = net_b - net_a
+        direction = "lower" if net_change < 0 else "higher"
+        name_a = "August 2026" if month_a == "2026-08" else month_a
+        name_b = "September 2026" if month_b == "2026-09" else month_b
+
+        return {
+            "messages": [
+                {"code": "C30", "text": f"Your {name_b} take-home is {format_inr(abs(net_change))} {direction} than {name_a}. The main recorded reasons are below."}
+            ],
+            "cards": [
+                {
+                    "id": f"card-compare-{month_a}-{month_b}",
+                    "type": "number_hero",
+                    "title": f"{name_a} vs {name_b} Pay Comparison",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "hero_label": "Net Pay Change",
+                        "hero_amount": net_change,
+                        "previous_month_label": f"{name_a} Take-Home",
+                        "previous_month_amount": net_a,
+                        "current_month_label": f"{name_b} Take-Home",
+                        "current_month_amount": net_b,
+                        "employee_id": emp_id
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "compare_months",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_tax_regime(self, user: dict, role: str, surface: str) -> dict:
+        emp_id = user.get("employee_id") or "E05"
+        data = get_employee_payroll_data(emp_id, "2026-09")
+        regime_raw = data.get("tax_regime", "new") if data else "new"
+        regime_label = "New tax regime" if regime_raw == "new" else "Old tax regime"
+
+        return {
+            "messages": [
+                {"code": "TAX_REGIME", "text": f"Your employee record indicates you are under the {regime_label} for Tax Year 2026-27."},
+                {"code": "C11", "text": get_message("C11")}
+            ],
+            "cards": [
+                {
+                    "id": "card-tax-regime",
+                    "type": "certainty_label",
+                    "title": "Recorded Tax Regime",
+                    "certainty": "Complete for this scope",
+                    "data": {
+                        "tax_regime": regime_label,
+                        "tax_year": "2026-27",
+                        "employee_id": emp_id
+                    }
+                }
+            ],
+            "chips": _get_user_fallback_chips(user),
+            "state": {
+                "intent": "tax_regime",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": emp_id,
+                "panel": None
+            }
+        }
+
+    def _build_unrecorded_topic(self, user: dict, role: str, surface: str) -> dict:
+        return {
+            "messages": [
+                {"code": "C34", "text": get_message("C34")}
+            ],
+            "cards": [],
+            "chips": [
+                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+            ] + [c for c in _get_user_fallback_chips(user) if c.get("action") != "draft-query"][:2],
+            "state": {
+                "intent": "unrecorded_topic",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": user.get("employee_id"),
+                "panel": None
+            }
+        }
+
+    def _build_unrecorded_month(self, user: dict, role: str, surface: str) -> dict:
+        available_str = "August 2026 and September 2026"
+        return {
+            "messages": [
+                {"code": "C35", "text": get_message("C35", available_months=available_str)}
+            ],
+            "cards": [],
+            "chips": [
+                {"label": "Show my September payslip", "action": "explain-payslip", "payload": {"month": "2026-09"}},
+                {"label": "Show my August payslip", "action": "explain-payslip", "payload": {"month": "2026-08"}},
+                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
+            ],
+            "state": {
+                "intent": "unrecorded_month",
+                "scenario_num": None,
+                "role": role,
+                "surface": surface,
+                "employee_id": user.get("employee_id"),
+                "panel": None
+            }
+        }
+
     # --- Refusal, Fallback & FAQ Responses ---
 
-    def _build_refusal(self, role: str, surface: str, reason: str = "") -> dict:
+    def _build_refusal(self, role: str, surface: str, reason: str = "", user: Optional[dict] = None) -> dict:
         return {
             "messages": [
                 {"code": "C10", "text": get_message("C10")}
@@ -1588,11 +2044,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": [
-                {"label": "Ask about my payroll", "action": "explain-salary", "payload": {}},
-                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}}
-            ],
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "other_employee_data",
                 "role": role,
@@ -1603,28 +2055,14 @@ class ChatRouter:
             }
         }
 
-    def _build_unknown_fallback(self, role: str, surface: str) -> dict:
+    def _build_unknown_fallback(self, role: str, surface: str, user: Optional[dict] = None) -> dict:
         fallback_text = get_message("C33")
-        if role == "HR Admin":
-            chips = [
-                {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
-                {"label": "Prepare team bonus proposal", "action": "scenario-4", "payload": {}},
-                {"label": "Prepare full and final settlement", "action": "settlement-picker", "payload": {}},
-                {"label": "Review payroll queries", "action": "review-queries", "payload": {}}
-            ]
-        else:
-            chips = [
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
-                {"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}},
-                {"label": "What is LOP?", "action": "faq-lop", "payload": {}},
-                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
-            ]
         return {
             "messages": [
                 {"code": "C33", "text": fallback_text}
             ],
             "cards": [],
-            "chips": chips,
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "unknown",
                 "role": role,
@@ -1635,23 +2073,9 @@ class ChatRouter:
             }
         }
 
-    def _build_faq_response(self, faq_entry: dict, confidence: float, role: str, surface: str) -> dict:
-        if role == "HR Admin":
-            chips = [
-                {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
-                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
-            ]
-            link_text = ""
-            url = ""
-        else:
-            chips = [
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}},
-                {"label": "What is PF?", "action": "faq-pf", "payload": {}},
-                {"label": "What is TDS?", "action": "faq-tds", "payload": {}}
-            ]
-            link_text = faq_entry.get("link_text", "")
-            url = faq_entry.get("url", "")
+    def _build_faq_response(self, faq_entry: dict, confidence: float, role: str, surface: str, user: Optional[dict] = None) -> dict:
+        link_text = "" if role == "HR Admin" else faq_entry.get("link_text", "")
+        url = "" if role == "HR Admin" else faq_entry.get("url", "")
         return {
             "messages": [
                 {"code": "FAQ", "text": "Here is the recorded meaning from the payroll glossary:"}
@@ -1672,7 +2096,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": chips,
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "faq_question",
                 "role": role,
@@ -1683,19 +2107,19 @@ class ChatRouter:
             }
         }
 
-    def _handle_faq_query(self, topic: str, role: str, surface: str) -> dict:
+    def _handle_faq_query(self, topic: str, role: str, surface: str, user: Optional[dict] = None) -> dict:
         entry, conf = faq_matcher.match(f"what is {topic}")
         if not entry:
             entry, conf = faq_matcher.match(topic)
         if entry:
-            return self._build_faq_response(entry, conf, role, surface)
-        return self._build_unknown_fallback(role, surface)
+            return self._build_faq_response(entry, conf, role, surface, user)
+        return self._build_unknown_fallback(role, surface, user)
 
     # --- Governance & Query Handlers ---
 
     def _handle_approve_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
-            return self._build_refusal(role, surface, "Only HR Admin can approve proposals.")
+            return self._build_refusal(role, surface, "Only HR Admin can approve proposals.", user=user)
         s_num = context.get("scenario_num", 1)
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
         version = int(context.get("version", 1))
@@ -1779,7 +2203,7 @@ class ChatRouter:
 
     def _handle_edit_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
-            return self._build_refusal(role, surface, "Only HR Admin can edit proposals.")
+            return self._build_refusal(role, surface, "Only HR Admin can edit proposals.", user=user)
         s_num = context.get("scenario_num", 1)
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
         line = context.get("line", "gross_arrears")
@@ -1835,7 +2259,7 @@ class ChatRouter:
 
     def _handle_reject_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
-            return self._build_refusal(role, surface, "Only HR Admin can reject proposals.")
+            return self._build_refusal(role, surface, "Only HR Admin can reject proposals.", user=user)
         s_num = context.get("scenario_num", 1)
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
         reason = context.get("reason", "Documentation incomplete or unverified.")
@@ -1988,10 +2412,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": [
-                {"label": "Check my query status", "action": "query-status", "payload": {}},
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}}
-            ],
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "query_status",
                 "role": role,
@@ -2101,10 +2522,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": [
-                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}},
-                {"label": "Why is my take-home pay lower in September?", "action": "explain-salary", "payload": {}}
-            ],
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "query_status",
                 "role": role,
@@ -2115,7 +2533,8 @@ class ChatRouter:
         }
 
     def _handle_hr_query_review(self, user: dict, role: str, surface: str, context: dict) -> dict:
-        queries = lifecycle.get_queries()
+        allowed = set(user.get("allowed_employee_ids") or [])
+        queries = [q for q in lifecycle.get_queries() if q.get("employee_id") in allowed]
         return {
             "messages": [
                 {"code": "HR_QUERY_LIST", "text": f"Here are the recorded employee queries ({len(queries)} total):"}
@@ -2130,7 +2549,7 @@ class ChatRouter:
                     }
                 }
             ],
-            "chips": [],
+            "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "hr_query_review",
                 "role": role,

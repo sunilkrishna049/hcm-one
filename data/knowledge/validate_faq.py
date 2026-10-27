@@ -56,8 +56,8 @@ def validate_faq():
     if total_q != len(questions):
         errors.append(f"total_questions ({total_q}) does not match questions list length ({len(questions)})")
 
-    if not (25 <= len(questions) <= 30):
-        errors.append(f"Expected 25 to 30 questions, found {len(questions)}")
+    if not (25 <= len(questions) <= 40):
+        errors.append(f"Expected 25 to 40 questions, found {len(questions)}")
 
     seen_ids = set()
     categories = {}
