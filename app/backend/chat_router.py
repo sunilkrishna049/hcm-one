@@ -14,6 +14,7 @@ from .auth import USERS, check_employee_access
 from .engine_bridge import bridge
 from .faq_matcher import faq_matcher
 from .lifecycle import lifecycle
+from .permissions import get_mentioned_employee_ids, enforce_reply_permissions
 
 RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
 _RULES_CACHE: Dict[str, dict] = {}
@@ -145,6 +146,11 @@ def format_inr(amount: Optional[float | int]) -> str:
 
 class ChatRouter:
     def handle_chat(self, user_id: str, message: str = "", action: Optional[str] = None, context: Optional[dict] = None) -> dict:
+        user = USERS.get(user_id, USERS.get("HR01", {}))
+        result = self._handle_chat_internal(user_id=user_id, message=message, action=action, context=context)
+        return enforce_reply_permissions(result, user)
+
+    def _handle_chat_internal(self, user_id: str, message: str = "", action: Optional[str] = None, context: Optional[dict] = None) -> dict:
         context = context or {}
         if user_id not in USERS:
             user = USERS.get("HR01")
@@ -174,22 +180,9 @@ class ChatRouter:
             return self._build_scenario_12(user, role, surface)
 
         allowed = set(user.get("allowed_employee_ids") or [])
-        other_employee_mentions = [
-            ("priya", "E01"),
-            ("sharma", "E01"),
-            ("arjun", "E02"),
-            ("rao", "E02"),
-            ("kavya", "E03"),
-            ("iyer", "E03"),
-            ("rahul", "E10"),
-            ("verma", "E10"),
-            ("lakshmi", "E11"),
-            ("reddy", "E11"),
-            ("imran", "E12"),
-            ("khan", "E12")
-        ]
-        for name, emp_id in other_employee_mentions:
-            if (re.search(rf"\b{re.escape(name)}\b", lower_msg) or re.search(rf"\b{re.escape(emp_id.lower())}\b", lower_msg)) and emp_id not in allowed:
+        mentioned_emp_ids = get_mentioned_employee_ids(lower_msg)
+        for emp_id in mentioned_emp_ids:
+            if emp_id not in allowed:
                 return self._build_scenario_12(user, role, surface)
 
         if role == "Employee":
@@ -413,11 +406,25 @@ class ChatRouter:
 
         # Scenario 11 (Pooja Das / gross did not change / basic pay / allowance)
         if re.search(r"\b(pooja|e16)\b", lower_msg) or "basic pay" in lower_msg or "allowance" in lower_msg or "gross did not change" in lower_msg or "no earning" in lower_msg or ("decrease" in lower_msg and "gross" in lower_msg):
-            return self._build_scenario_11(user, role, surface)
+            has_access_s11 = (role == "HR Admin" and "E16" in (user.get("allowed_employee_ids") or [])) or user.get("employee_id") == "E16"
+            if has_access_s11:
+                return self._build_scenario_11(user, role, surface)
+            if re.search(r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b", lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
+                matched_faq, conf = faq_matcher.match(raw_msg)
+                if matched_faq and conf >= 0.70:
+                    return self._build_faq_response(matched_faq, conf, role, surface)
+            return self._build_unknown_fallback(role, surface)
 
         # Scenario 10 (Siddharth Jain / TDS increase)
-        if re.search(r"\b(siddharth|e06)\b", lower_msg) or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)):
-            return self._build_scenario_10(user, role, surface)
+        if re.search(r"\b(siddharth|e06)\b", lower_msg) or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)) or lower_msg.strip() == "tds":
+            has_access_s10 = (role == "HR Admin" and "E06" in (user.get("allowed_employee_ids") or [])) or user.get("employee_id") == "E06"
+            if has_access_s10:
+                return self._build_scenario_10(user, role, surface)
+            if re.search(r"\b(what is|what are|what does\b.*\bmean|meaning of|definition of|define)\b", lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
+                matched_faq, conf = faq_matcher.match(raw_msg)
+                if matched_faq and conf >= 0.70:
+                    return self._build_faq_response(matched_faq, conf, role, surface)
+            return self._build_unknown_fallback(role, surface)
 
         # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)
         is_salary_drop_query = bool(re.search(
@@ -428,7 +435,10 @@ class ChatRouter:
             ("take-home" in lower_msg or "salary" in lower_msg or "payslip" in lower_msg)
             and ("lower" in lower_msg or "drop" in lower_msg or "change" in lower_msg or "september" in lower_msg or "less" in lower_msg)
         ):
-            return self._build_scenario_9(user, role, surface)
+            has_access_s9 = (role == "HR Admin" and "E05" in (user.get("allowed_employee_ids") or [])) or user.get("employee_id") == "E05"
+            if has_access_s9:
+                return self._build_scenario_9(user, role, surface)
+            return self._build_unknown_fallback(role, surface)
 
         # HR Tasks with Employee Picker (Part C)
         if role == "HR Admin":

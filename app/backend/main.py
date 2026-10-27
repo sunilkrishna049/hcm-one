@@ -14,6 +14,7 @@ from .engine_bridge import bridge
 from .lifecycle import lifecycle
 from .chat_router import chat_router
 from .ai.crew import ai_crew
+from .permissions import enforce_reply_permissions
 
 
 
@@ -529,11 +530,13 @@ class ChatRequest(BaseModel):
 def handle_chat_endpoint(req: ChatRequest, user: dict = Depends(get_current_user)):
     """Unified chat endpoint executing AI Crew / deterministic router per chat_contract.md."""
     target_user_id = req.user_id or user.get("user_id", "HR01")
-    return ai_crew.handle_chat(
+    target_user = USERS.get(target_user_id, user)
+    reply = ai_crew.handle_chat(
         user_id=target_user_id,
         message=req.message or "",
         action=req.action,
         context=req.context or {}
     )
+    return enforce_reply_permissions(reply, target_user)
 
 

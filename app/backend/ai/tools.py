@@ -32,6 +32,26 @@ def get_payroll_scenario_data(scenario_num: int, user_id: str = "HR01", bonus_ty
             "facts_list": {}
         }
 
+    scenario_owners = {
+        1: "E01", 2: "E02", 3: "E03", 5: "E09",
+        6: "E10", 7: "E11", 8: "E12", 9: "E05",
+        10: "E06", 11: "E16", 13: "E12"
+    }
+    owner = scenario_owners.get(scenario_num)
+    allowed = set(user.get("allowed_employee_ids") or [])
+    if owner and owner not in allowed:
+        return {
+            "authorized": False,
+            "response": _router._build_scenario_12(user, role, surface),
+            "facts_list": {}
+        }
+    if scenario_num == 4 and role != "HR Admin":
+        return {
+            "authorized": False,
+            "response": _router._build_scenario_12(user, role, surface),
+            "facts_list": {}
+        }
+
     # Execute deterministic scenario builder
     method_name = f"_build_scenario_{scenario_num}"
     if not hasattr(_router, method_name):
