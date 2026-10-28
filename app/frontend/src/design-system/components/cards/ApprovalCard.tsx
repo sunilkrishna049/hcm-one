@@ -10,6 +10,9 @@ interface ApprovalCardProps {
     certainty?: string;
     data: {
       scope_label?: string;
+      employee_name?: string | null;
+      employee_id?: string | null;
+      period?: string | null;
       notice?: string;
       actions?: string[];
       status?: 'pending' | 'approved' | 'rejected' | 'edited' | string;
@@ -49,10 +52,8 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
     .replace(/^Approved:\s*/i, '')
     .trim();
 
-  let scopeDisplay = '';
-  if (cleanScope) {
-    scopeDisplay = isApproved ? `Approved: ${cleanScope}` : `You're approving: ${cleanScope}`;
-  }
+  const prefix = isApproved ? 'Approved:' : "You're approving:";
+  const hasStructuredScope = Boolean(d.employee_name || d.employee_id || d.period);
 
   const approverName = d.approver ? getUserDisplayName(d.approver) : 'Anita Desai';
 
@@ -69,9 +70,27 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
       </div>
 
       <div className="hcm-card-body">
-        {scopeDisplay && (
+        {(hasStructuredScope || cleanScope) && (
           <div className="hcm-approval-scope">
-            <strong>{scopeDisplay}</strong>
+            <strong>
+              {prefix}{' '}
+              {hasStructuredScope ? (
+                <>
+                  {d.employee_name && <span>{d.employee_name}</span>}
+                  {d.employee_id && (
+                    <>
+                      {' · '}
+                      <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                        {d.employee_id}
+                      </span>
+                    </>
+                  )}
+                  {d.period && <> · {d.period}</>}
+                </>
+              ) : (
+                cleanScope
+              )}
+            </strong>
           </div>
         )}
 

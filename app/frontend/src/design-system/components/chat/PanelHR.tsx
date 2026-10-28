@@ -50,7 +50,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
 
   if (!isOpen) return null;
 
-  const title = data?.title || 'Calculation Proof & Month Breakdown';
+  const title = data?.title || 'Calculation proof & month breakdown';
   const months = data?.months || [];
   const components = data?.components || [];
   const formulas = data?.formulas || [];

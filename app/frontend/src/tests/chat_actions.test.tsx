@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
 import { App } from '../App';
+import { CardRenderer } from '../design-system/components/cards/CardRenderer';
 import { api } from '../services/api';
 
 vi.mock('../services/api', () => ({
@@ -421,7 +422,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
         scenario_num: 1,
         role: 'HR',
         panel: {
-          title: 'Calculation Proof & Month Breakdown',
+          title: 'Calculation proof & month breakdown',
           months: [{ month: '2026-04', old_gross: 120000, revised_gross: 132000, diff: 12000, paid_days: 30, lop_days: 0 }],
         },
       },
@@ -438,7 +439,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('panel-hr')).toBeInTheDocument();
-      expect(screen.getByText('Calculation Proof & Month Breakdown')).toBeInTheDocument();
+      expect(screen.getByText('Calculation proof & month breakdown')).toBeInTheDocument();
     });
   });
 
@@ -684,7 +685,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
               'Annual performance bonus, FY 2025-26, Engineering',
               'Q2 Sales incentive, Hyderabad Sales',
             ],
-            selected_choice: 'Annual performance bonus, FY 2025-26, Engineering',
+            selected_choice: null,
           },
         },
       ],
@@ -700,10 +701,36 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     fireEvent.click(screen.getByText('Prepare a bonus proposal'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('Which bonus type do you mean?').length).toBeGreaterThanOrEqual(1);
+      // Question shown once (no duplicate title and body text)
+      expect(screen.getAllByText('Which bonus type do you mean?').length).toBe(1);
       expect(screen.getAllByText('Annual performance bonus, FY 2025-26, Engineering').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Q2 Sales incentive, Hyderabad Sales').length).toBeGreaterThanOrEqual(1);
+      // No "Apply Selection and Recalculate" button anywhere
+      expect(screen.queryByText(/Apply Selection and Recalculate/i)).not.toBeInTheDocument();
     });
+
+    // Mock API response for immediate send on tapping option
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C32', text: 'This is a proposal for the recorded Annual performance bonus for FY 2025-26.' }],
+      cards: [],
+      chips: [],
+    });
+
+    const cardEl = screen.getByTestId('card-card-clarify-bonus');
+    const choiceChipBtn = within(cardEl).getByRole('button', { name: 'Annual performance bonus, FY 2025-26, Engineering' });
+    fireEvent.click(choiceChipBtn);
+
+    // Tapping immediately dispatches selection
+    expect(api.chat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'apply-selection',
+        context: expect.objectContaining({ choice: 'Annual performance bonus, FY 2025-26, Engineering' }),
+      })
+    );
+
+    // After selection the chosen option stays highlighted and card is locked
+    expect(choiceChipBtn).toHaveClass('hcm-choice-selected');
+    expect(choiceChipBtn).toBeDisabled();
   });
 
   it('12. Bonus proposal card displays "Known Eligible Gross" with certainty, and eligible list with E03 (tax incomplete)', async () => {
@@ -933,6 +960,130 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     // Verify whole employee chat container has zero employee codes
     expect(container.textContent).not.toMatch(/\bE0[1-9]\b/);
     expect(container.textContent).not.toMatch(/\bE1[0-6]\b/);
+  });
+
+  it('16. Every button inside any card uses our component class (no browser-default buttons)', () => {
+    const testCards = [
+      {
+        id: 'card-approval',
+        type: 'approval_card',
+        title: 'Approval',
+        data: {
+          employee_name: 'Priya Sharma',
+          employee_id: 'E01',
+          period: 'Apr–Sep 2026',
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      },
+      {
+        id: 'card-clarify',
+        type: 'clarifying_question',
+        title: 'Which bonus type do you mean?',
+        data: {
+          choices: ['Annual performance bonus', 'Q2 Sales incentive'],
+          selected_choice: null,
+        },
+      },
+      {
+        id: 'card-picker',
+        type: 'employee_picker',
+        title: 'Select employee',
+        data: {
+          employees: [{ employee_id: 'E01', name: 'Priya Sharma' }],
+        },
+      },
+      {
+        id: 'card-draft',
+        type: 'query_draft',
+        title: 'Query draft',
+        data: {
+          draft: {
+            category: 'Discrepancy',
+            months: ['2026-09'],
+            description: 'Draft description',
+          },
+          notice: 'Send query notice',
+        },
+      },
+      {
+        id: 'card-status',
+        type: 'query_status',
+        title: 'Query status',
+        data: {
+          queries: [
+            { query_id: 'Q1', status: 'Sent', description: 'Test 1' },
+            { query_id: 'Q2', status: 'In review', description: 'Test 2' },
+          ],
+        },
+      },
+      {
+        id: 'card-status-resolved',
+        type: 'query_status',
+        title: 'Query status resolved',
+        data: {
+          query_id: 'Q3',
+          status: 'Resolved',
+          description: 'Test 3',
+        },
+      },
+      {
+        id: 'card-faq',
+        type: 'faq_answer',
+        title: 'FAQ',
+        data: {
+          answer: 'Test answer',
+          link_text: 'View policy',
+          link_action: 'view-policy',
+        },
+      },
+      {
+        id: 'card-calc',
+        type: 'show_calculation',
+        title: 'Calculation',
+        data: {},
+      },
+    ];
+
+    const { container } = render(
+      <div>
+        {testCards.map((card) => (
+          <CardRenderer
+            key={card.id}
+            card={card}
+            onApprove={() => {}}
+            onEdit={() => {}}
+            onReject={() => {}}
+            onApplySelection={() => {}}
+            onSendQuery={() => {}}
+            onCancelQueryDraft={() => {}}
+            onTakeIntoReview={() => {}}
+            onResolveQuery={() => {}}
+            onDisputeQuery={() => {}}
+            onCloseQuery={() => {}}
+            onShowCalculation={() => {}}
+            onSelectEmployee={() => {}}
+          />
+        ))}
+      </div>
+    );
+
+    const buttons = container.querySelectorAll('button');
+    expect(buttons.length).toBeGreaterThan(0);
+
+    const allowedComponentClasses = [
+      'hcm-button',
+      'hcm-choice-chip',
+      'hcm-suggestion-chip',
+      'hcm-employee-picker-item',
+    ];
+
+    buttons.forEach((btn) => {
+      const className = btn.className || '';
+      expect(className.trim().length).toBeGreaterThan(0);
+      const usesComponentClass = allowedComponentClasses.some((cls) => className.includes(cls));
+      expect(usesComponentClass).toBe(true);
+    });
   });
 });
 

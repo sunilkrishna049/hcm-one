@@ -301,7 +301,7 @@ def test_show_calculation_action():
     data = resp.json()
     assert data["state"]["open_panel"] is True
     assert data["state"]["panel"] is not None
-    assert "Calculation Proof" in data["state"]["panel"]["title"]
+    assert "Calculation proof" in data["state"]["panel"]["title"]
 
 
 def test_suggestion_chips_role_scoping():

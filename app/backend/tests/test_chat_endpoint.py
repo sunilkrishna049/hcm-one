@@ -122,8 +122,11 @@ def test_ambiguous_bonus_request_clarifying_question():
         "Q2 Sales incentive, Hyderabad Sales"
     ]
     assert clarify_card["data"]["choices"] == expected_choices
-    # Verify no assumption was made
+    # Verify no assumption was made: waits for HR to choose, never picks a bonus type on its own
     assert data["state"]["scenario_num"] is None
+    assert clarify_card["data"].get("selected_choice") is None
+    assert "proposal_summary" not in cards
+    assert "approval_card" not in cards
 
 
 def test_bonus_selection_dispatches_proposal():

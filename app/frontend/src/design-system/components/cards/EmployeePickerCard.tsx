@@ -69,6 +69,7 @@ export const EmployeePickerCard: React.FC<EmployeePickerCardProps> = ({
           <button
             key={emp.employee_id}
             type="button"
+            className="hcm-employee-picker-item"
             data-testid={`employee-item-${emp.employee_id}`}
             onClick={() => onSelectEmployee?.(emp.employee_id, task, emp.name)}
             style={{

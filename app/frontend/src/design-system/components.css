@@ -2042,3 +2042,88 @@
   color: var(--color-brand-accent);
 }
 
+/* --- Choice Chips (Clarifying / Choice Cards) using tokens only --- */
+.hcm-choice-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.hcm-choice-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-interactive);
+  border-radius: var(--radius-button);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-align: left;
+}
+
+.hcm-choice-chip:hover:not(:disabled) {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-brand-accent);
+  color: var(--color-text-primary);
+}
+
+.hcm-choice-chip:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.hcm-choice-chip.hcm-choice-selected {
+  background-color: var(--color-brand-tint);
+  border-color: var(--color-brand-accent);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.hcm-choice-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hcm-choice-chip.hcm-choice-selected:disabled {
+  opacity: 1;
+  background-color: var(--color-brand-tint);
+  border-color: var(--color-brand-accent);
+  color: var(--color-text-primary);
+  cursor: default;
+}
+
+/* --- Employee Picker Item using tokens only --- */
+.hcm-employee-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-hover);
+  border: 1px solid var(--color-border-interactive);
+  border-radius: var(--radius-button);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-table);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.hcm-employee-picker-item:hover {
+  background-color: var(--color-surface-elevated);
+  border-color: var(--color-brand-accent);
+}
+
+.hcm-employee-picker-item:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+

@@ -113,6 +113,9 @@
         "title": "Approval",
         "certainty": "Complete for this scope",
         "data": {
+          "employee_name": "Priya Sharma",
+          "employee_id": "E01",
+          "period": "Apr–Sep 2026",
           "scope_label": "Priya Sharma · Apr–Sep 2026",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
@@ -142,7 +145,7 @@
       "employee_id": "E01",
       "certainty": "Complete for this scope",
       "panel": {
-        "title": "Calculation Proof & Month Breakdown",
+        "title": "Calculation proof & month breakdown",
         "employee_name": "Priya Sharma",
         "employee_id": "E01",
         "months": [
@@ -283,6 +286,9 @@
         "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
+          "employee_name": "Arjun Rao",
+          "employee_id": "E02",
+          "period": "September 2026",
           "scope_label": "Arjun Rao · E02 · September 2026",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
@@ -370,6 +376,9 @@
         "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
+          "employee_name": "Kavya Iyer",
+          "employee_id": "E03",
+          "period": null,
           "scope_label": "Kavya Iyer · E03",
           "notice": "Cannot approve an incomplete proposal while required records are missing.",
           "actions": [],
@@ -465,6 +474,9 @@
         "title": "HR authorization",
         "certainty": "Needs HR decision",
         "data": {
+          "employee_name": null,
+          "employee_id": null,
+          "period": "FY 2025-26",
           "scope_label": "Annual performance bonus • 6 employees evaluated",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
@@ -499,7 +511,7 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": null,
-      "certainty": "Complete for this scope",
+      "certainty": "Incomplete",
       "panel": {
         "title": "Bonus eligibility & scope roster",
         "formulas": [
@@ -545,6 +557,9 @@
         "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
+          "employee_name": "Meera Nair",
+          "employee_id": "E09",
+          "period": null,
           "scope_label": "Meera Nair · E09",
           "notice": "Cannot approve bonus without verified performance rating.",
           "actions": [],
@@ -638,6 +653,9 @@
         "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
+          "employee_name": "Rahul Verma",
+          "employee_id": "E10",
+          "period": "Exit Settlement",
           "scope_label": "Rahul Verma · E10 · Exit Settlement",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
@@ -729,6 +747,9 @@
         "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
+          "employee_name": "Lakshmi Reddy",
+          "employee_id": "E11",
+          "period": null,
           "scope_label": "Lakshmi Reddy · E11",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
@@ -829,6 +850,9 @@
         "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
+          "employee_name": "Imran Khan",
+          "employee_id": "E12",
+          "period": null,
           "scope_label": "Imran Khan · E12",
           "notice": "Cannot approve an incomplete settlement while clearance is pending.",
           "actions": [],
@@ -1248,6 +1272,9 @@
         "title": "Partial authorization",
         "certainty": "Incomplete",
         "data": {
+          "employee_name": "Imran Khan",
+          "employee_id": "E12",
+          "period": null,
           "scope_label": "Imran Khan · E12",
           "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
           "actions": [

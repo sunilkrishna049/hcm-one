@@ -905,6 +905,9 @@ class ChatRouter:
                     "title": "Approval",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
+                        "employee_name": "Priya Sharma",
+                        "employee_id": "E01",
+                        "period": "Apr–Sep 2026",
                         "scope_label": "Priya Sharma · Apr–Sep 2026",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
@@ -924,7 +927,7 @@ class ChatRouter:
                 "employee_id": "E01",
                 "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "Calculation Proof & Month Breakdown",
+                    "title": "Calculation proof & month breakdown",
                     "employee_name": "Priya Sharma",
                     "employee_id": "E01",
                     "months": [
@@ -1013,6 +1016,9 @@ class ChatRouter:
                     "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
+                        "employee_name": "Arjun Rao",
+                        "employee_id": "E02",
+                        "period": "September 2026",
                         "scope_label": "Arjun Rao · E02 · September 2026",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
@@ -1093,6 +1099,9 @@ class ChatRouter:
                     "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
+                        "employee_name": "Kavya Iyer",
+                        "employee_id": "E03",
+                        "period": None,
                         "scope_label": "Kavya Iyer · E03",
                         "notice": "Cannot approve an incomplete proposal while required records are missing.",
                         "actions": [],
@@ -1142,7 +1151,7 @@ class ChatRouter:
                             "Annual performance bonus, FY 2025-26, Engineering",
                             "Q2 Sales incentive, Hyderabad Sales"
                         ],
-                        "selected_choice": "Annual performance bonus, FY 2025-26, Engineering"
+                        "selected_choice": None
                     }
                 }
             ],
@@ -1242,6 +1251,9 @@ class ChatRouter:
                     "title": "HR authorization",
                     "certainty": "Needs HR decision",
                     "data": {
+                        "employee_name": None,
+                        "employee_id": None,
+                        "period": display_period,
                         "scope_label": f"{display_bonus_type} • {len(req.get('employees', []))} employees evaluated",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
@@ -1260,7 +1272,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": None,
-                "certainty": gross_certainty,
+                "certainty": r.get("certainty", "Incomplete"),
                 "panel": {
                     "title": "Bonus eligibility & scope roster",
                     "formulas": emp_formulas,
@@ -1300,6 +1312,9 @@ class ChatRouter:
                     "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
+                        "employee_name": "Meera Nair",
+                        "employee_id": "E09",
+                        "period": None,
                         "scope_label": "Meera Nair · E09",
                         "notice": "Cannot approve bonus without verified performance rating.",
                         "actions": [],
@@ -1376,6 +1391,9 @@ class ChatRouter:
                     "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
+                        "employee_name": "Rahul Verma",
+                        "employee_id": "E10",
+                        "period": "Exit Settlement",
                         "scope_label": "Rahul Verma · E10 · Exit Settlement",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
@@ -1452,6 +1470,9 @@ class ChatRouter:
                     "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
+                        "employee_name": "Lakshmi Reddy",
+                        "employee_id": "E11",
+                        "period": None,
                         "scope_label": "Lakshmi Reddy · E11",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
@@ -1532,6 +1553,9 @@ class ChatRouter:
                     "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
+                        "employee_name": "Imran Khan",
+                        "employee_id": "E12",
+                        "period": None,
                         "scope_label": "Imran Khan · E12",
                         "notice": "Cannot approve an incomplete settlement while clearance is pending.",
                         "actions": [],
@@ -1876,6 +1900,9 @@ class ChatRouter:
                     "title": "Partial authorization",
                     "certainty": "Incomplete",
                     "data": {
+                        "employee_name": "Imran Khan",
+                        "employee_id": "E12",
+                        "period": None,
                         "scope_label": "Imran Khan · E12",
                         "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
                         "actions": ["Approve verified lines only", "Edit with reason", "Reject proposal"],
@@ -2386,20 +2413,45 @@ class ChatRouter:
         status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name}"
 
         scope_base = f"{get_employee_name('E01')} · Apr–Sep 2026"
+        emp_id = "E01"
+        emp_name = get_employee_name("E01")
+        period_str = "Apr–Sep 2026"
+
         if s_num == 2:
-            scope_base = f"{get_employee_name('E02')} · Apr–Sep 2026"
+            scope_base = f"{get_employee_name('E02')} · September 2026"
+            emp_id = "E02"
+            emp_name = get_employee_name("E02")
+            period_str = "September 2026"
         elif s_num == 3:
             scope_base = f"{get_employee_name('E03')} · Apr–Sep 2026"
+            emp_id = "E03"
+            emp_name = get_employee_name("E03")
+            period_str = "Apr–Sep 2026"
         elif s_num == 4:
             scope_base = "Engineering & Sales · FY 2025-26 Bonus"
+            emp_id = None
+            emp_name = "Engineering & Sales"
+            period_str = "FY 2025-26 Bonus"
         elif s_num == 5:
             scope_base = f"{get_employee_name('E09')} · FY 2025-26 Bonus"
+            emp_id = "E09"
+            emp_name = get_employee_name("E09")
+            period_str = "FY 2025-26 Bonus"
         elif s_num == 6:
             scope_base = f"{get_employee_name('E10')} · Settlement"
+            emp_id = "E10"
+            emp_name = get_employee_name("E10")
+            period_str = "Exit Settlement"
         elif s_num == 7:
             scope_base = f"{get_employee_name('E11')} · Settlement"
-        elif s_num == 8:
+            emp_id = "E11"
+            emp_name = get_employee_name("E11")
+            period_str = "Settlement"
+        elif s_num in (8, 13):
             scope_base = f"{get_employee_name('E12')} · Settlement"
+            emp_id = "E12"
+            emp_name = get_employee_name("E12")
+            period_str = "Settlement"
 
         return {
             "messages": [],
@@ -2416,7 +2468,10 @@ class ChatRouter:
                         "approver": approver_name,
                         "approved_at": approved_time,
                         "status_badge": status_badge,
-                        "scope_label": f"Approved: {scope_base}"
+                        "scope_label": f"Approved: {scope_base}",
+                        "employee_name": emp_name,
+                        "employee_id": emp_id,
+                        "period": period_str
                     }
                 }
             ],

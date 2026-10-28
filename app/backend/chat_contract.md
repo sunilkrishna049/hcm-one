@@ -168,7 +168,7 @@ HCM One operates a single conversational API endpoint that serves both **`CHAT-H
           },
           "data": {
             "type": "object",
-            "description": "Deterministic payroll figures, breakdown tables, sources, or rule citations bound from engine.",
+            "description": "Deterministic payroll figures, breakdown tables, sources, or rule citations bound from engine. For approval_card, contains employee_name, employee_id, and period as separate fields alongside scope_label to allow muted styling of employee identifiers.",
             "additionalProperties": true
           }
         }
@@ -223,7 +223,14 @@ HCM One operates a single conversational API endpoint that serves both **`CHAT-H
         "certainty": {
           "type": ["string", "null"],
           "description": "Engine certainty level for the reply when payroll numbers are stated, or null when no payroll numbers appear.",
-          "enum": ["Complete for this scope", "Incomplete", null]
+          "enum": [
+            "Complete for this scope",
+            "Incomplete",
+            "Rule not verified",
+            "Needs HR decision",
+            "Cannot explain from available payroll data",
+            null
+          ]
         },
         "panel": {
           "type": ["object", "null"],

@@ -27,8 +27,9 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
   onSendQuery,
   onCancel,
 }) => {
-  const { draft, notice } = card.data;
-  const [description, setDescription] = useState(draft.description || '');
+  const draft = card.data.draft || {};
+  const notice = card.data.notice;
+  const [description, setDescription] = useState(draft.description || (card.data as any).description || '');
 
   return (
     <div className="hcm-rich-card hcm-card-query-draft" data-testid={`card-${card.id}`}>
@@ -46,7 +47,7 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
           </div>
           <div className="hcm-kv-item">
             <span className="hcm-kv-label">Target months</span>
-            <span className="tnum">{draft.months.map((m: string) => formatHumanDate(m)).join(', ')}</span>
+            <span className="tnum">{(draft.months || []).map((m: string) => formatHumanDate(m)).join(', ')}</span>
           </div>
         </div>
 
@@ -64,7 +65,7 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
         <div className="hcm-evidence-section" style={{ marginTop: 'var(--space-3)' }}>
           <span className="hcm-kv-label">Attached sourced evidence:</span>
           <ul className="hcm-evidence-list">
-            {draft.evidence.map((ev, i) => (
+            {(draft.evidence || []).map((ev, i) => (
               <li key={i} className="hcm-evidence-item">
                 <span className="hcm-tech-id">{ev.source}</span>
                 <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', marginLeft: 'var(--space-2)' }}>

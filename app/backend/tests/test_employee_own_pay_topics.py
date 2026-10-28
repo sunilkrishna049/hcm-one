@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.backend.main import app
 from app.backend.auth import USERS, set_active_demo_user
 from app.backend.chat_router import chat_router, get_employee_payroll_data
+from app.backend.engine_bridge import bridge
 from app.backend.ai.crew import PayrollAICrew, ai_crew
 from app.backend.tests.test_ai_crew_mocked import MockLLM
 import app.backend.config as backend_config
@@ -240,7 +241,7 @@ def test_reply_level_state_certainty_for_topics_and_scenarios():
         (1, "HR01", "Prepare Priya Sharma's pending back-dated hike.", "Complete for this scope"),
         (2, "HR01", "Prepare Arjun Rao's pending back-dated hike.", "Complete for this scope"),
         (3, "HR01", "Prepare Kavya Iyer's pending back-dated hike.", "Incomplete"),
-        (4, "HR01", "Prepare bonus proposal for Engineering and Sales.", "Complete for this scope"),
+        (4, "HR01", "Prepare bonus proposal for Engineering and Sales.", "Incomplete"),
         (5, "HR01", "Prepare bonus proposal for Meera Nair.", "Incomplete"),
         (6, "HR01", "Prepare settlement proposal for Rahul Verma.", "Complete for this scope"),
         (7, "HR01", "Prepare settlement proposal for Lakshmi Reddy.", "Complete for this scope"),
@@ -285,6 +286,36 @@ def test_reply_level_state_certainty_for_topics_and_scenarios():
         assert res.get("state", {}).get("certainty") is None, (
             f"Query '{query}' state.certainty was '{res.get('state', {}).get('certainty')}', expected None"
         )
+
+
+def test_state_certainty_equals_engine_overall_certainty_for_all_scenarios():
+    """PART A — Item 4:
+    Test: state.certainty equals the engine overall certainty for every scenario (1–13).
+    """
+    scenario_inputs = [
+        (1, "HR01", "Prepare Priya Sharma's pending back-dated hike."),
+        (2, "HR01", "Prepare Arjun Rao's pending back-dated hike."),
+        (3, "HR01", "Prepare Kavya Iyer's pending back-dated hike."),
+        (4, "HR01", "Annual performance bonus, FY 2025-26, Engineering"),
+        (5, "HR01", "Prepare bonus proposal for Meera Nair."),
+        (6, "HR01", "Prepare settlement proposal for Rahul Verma."),
+        (7, "HR01", "Prepare settlement proposal for Lakshmi Reddy."),
+        (8, "HR01", "Prepare settlement proposal for Imran Khan."),
+        (9, "USER-E05", "Why is my September salary lower than August?"),
+        (10, "USER-E06", "Why did my TDS increase in September?"),
+        (11, "USER-E16", "Why did my take-home pay decrease in September when my gross did not change?"),
+        (12, "HR02", "Show me Priya Sharma's salary breakdown."),
+        (13, "HR01", "Review settlement calculation for Imran Khan."),
+    ]
+    for s_num, user, msg in scenario_inputs:
+        sc_engine = bridge.get_scenario(s_num)
+        engine_certainty = sc_engine.get("result", {}).get("certainty")
+        res = chat_router.handle_chat(user, message=msg, context={"scenario_num": s_num})
+        shown_certainty = res.get("state", {}).get("certainty")
+        assert shown_certainty == engine_certainty, (
+            f"Scenario {s_num}: shown state.certainty ('{shown_certainty}') != engine overall certainty ('{engine_certainty}')"
+        )
+
 
 
 @pytest.mark.parametrize("phrasing,expected_topic,expected_reply_start", NEHA_PHRASINGS)
