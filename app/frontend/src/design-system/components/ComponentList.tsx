@@ -78,11 +78,7 @@ export const ComponentList: React.FC<ComponentListProps> = ({
                 <td data-label="Status">
                   {item.certainty ? (
                     <CertaintyLabel certainty={item.certainty} />
-                  ) : item.amount === null ? (
-                    <CertaintyLabel certainty="Incomplete" />
-                  ) : (
-                    <CertaintyLabel certainty="Complete" />
-                  )}
+                  ) : null}
                 </td>
                 {showDueDates && (
                   <td data-label="Due Date">

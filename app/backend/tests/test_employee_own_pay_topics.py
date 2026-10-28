@@ -317,6 +317,104 @@ def test_state_certainty_equals_engine_overall_certainty_for_all_scenarios():
         )
 
 
+def test_static_guard_no_get_certainty_defaults_in_chat_router():
+    """Guard test: chat_router.py has no .get('certainty', <label>) or invented certainty defaults."""
+    import re
+    with open("app/backend/chat_router.py", encoding="utf-8") as f:
+        content = f.read()
+
+    # Check for .get("certainty", <default>)
+    matches = re.findall(r'\.get\(\s*["\']certainty["\']\s*,\s*["\'][^"\']+["\']\s*\)', content)
+    assert not matches, f"Found .get('certainty', default) in chat_router.py: {matches}"
+
+    # Check for .get("<field>_certainty", <default>)
+    matches_field = re.findall(r'\.get\(\s*["\'][a-z_]*certainty["\']\s*,\s*["\'][^"\']+["\']\s*\)', content)
+    assert not matches_field, f"Found .get('*_certainty', default) in chat_router.py: {matches_field}"
+
+    # Check for hardcoded certainty string literals in dicts
+    matches_literal = re.findall(r'["\']certainty["\']\s*:\s*["\'](Complete for this scope|Incomplete|Needs HR decision|Permission denied)["\']', content)
+    assert not matches_literal, f"Found hardcoded certainty literal in chat_router.py: {matches_literal}"
+
+
+def test_guard_certainty_integrity_all_replies():
+    """Guard test: for every scenario, employee topic, FAQ and canned reply, every
+    certainty label anywhere in the reply (state and cards) must exist in the
+    engine source for that reply; otherwise fail.
+    """
+    # 1. Scenarios 1 to 13
+    for s_num in range(1, 14):
+        sc_engine = bridge.get_scenario(s_num)
+        engine_cert = sc_engine.get("result", {}).get("certainty")
+        user = "HR01"
+        if s_num == 9:
+            user = "USER-E05"
+        elif s_num == 10:
+            user = "USER-E06"
+        elif s_num == 11:
+            user = "USER-E16"
+        elif s_num == 12:
+            user = "HR02"
+
+        res = chat_router.handle_chat(user, action=f"scenario-{s_num}", context={"scenario_num": s_num})
+
+        # State certainty
+        state_cert = res.get("state", {}).get("certainty")
+        if s_num == 12:
+            assert state_cert is None, f"Scenario 12 state.certainty should be None, got {state_cert}"
+        else:
+            assert state_cert == engine_cert, f"Scenario {s_num} state.certainty {state_cert} != engine {engine_cert}"
+
+        # Card certainties
+        for card in res.get("cards", []):
+            c_cert = card.get("certainty")
+            if c_cert is not None:
+                assert c_cert == engine_cert or c_cert in str(sc_engine.get("result", {})), (
+                    f"Card {card.get('id')} has certainty '{c_cert}' not found in engine result for scenario {s_num}"
+                )
+
+    # 2. Employee Topics
+    topics = [
+        ("Explain my September pay.", "payslip_breakdown", "certainty"),
+        ("How much PF was cut?", "pf_amount", "pf_certainty"),
+        ("Why is my TDS zero?", "tds_amount", "tds_certainty"),
+        ("How many LOP days do I have?", "lop_days", "lop_certainty"),
+        ("Compare my August and September pay.", "compare_months", "net_pay_certainty"),
+        ("Which tax regime am I in?", "tax_regime", "tax_regime_certainty"),
+    ]
+    data_e05 = get_employee_payroll_data("E05", "2026-09")
+    for query, expected_intent, engine_field in topics:
+        res = chat_router.handle_chat("USER-E05", message=query)
+        expected_cert = data_e05.get(engine_field)
+        state_cert = res.get("state", {}).get("certainty")
+        assert state_cert == expected_cert, f"Topic '{query}' state.certainty '{state_cert}' != expected '{expected_cert}'"
+        for card in res.get("cards", []):
+            if "certainty" in card:
+                assert card["certainty"] == expected_cert, (
+                    f"Topic '{query}' card '{card.get('id')}' certainty '{card['certainty']}' != expected '{expected_cert}'"
+                )
+
+    # 3. Non-calculating replies (FAQ, canned, greetings, C33, C34, C35, choices, pickers)
+    no_cert_cases = [
+        ("USER-E05", "What is basic pay?", {}),
+        ("USER-E05", "What is HRA?", {}),
+        ("USER-E05", "hello", {}),
+        ("USER-E05", "Will I get a bonus this year?", {}),
+        ("USER-E05", "What is my October salary?", {}),
+        ("HR02", "Show me Priya Sharma's salary breakdown.", {}),
+        ("HR01", "", {"action": "arrears-picker"}),
+        ("HR01", "prepare a bonus proposal", {}),
+    ]
+    for user, query, kwargs in no_cert_cases:
+        res = chat_router.handle_chat(user, message=query, **kwargs)
+        assert res.get("state", {}).get("certainty") is None, (
+            f"Query '{query}' {kwargs} state.certainty must be None, got '{res.get('state', {}).get('certainty')}'"
+        )
+        for card in res.get("cards", []):
+            assert card.get("certainty") is None, (
+                f"Query '{query}' {kwargs} card '{card.get('id')}' has certainty '{card.get('certainty')}', must be None"
+            )
+
+
 
 @pytest.mark.parametrize("phrasing,expected_topic,expected_reply_start", NEHA_PHRASINGS)
 def test_part_e_neha_phrasings_intent_and_reply(phrasing, expected_topic, expected_reply_start):

@@ -76,7 +76,7 @@ def get_payroll_scenario_data(scenario_num: int, user_id: str = "HR01", bonus_ty
         "chips": res.get("chips", []),
         "state": res.get("state", {}),
         "facts_list": facts,
-        "certainty_label": res.get("cards", [{}])[0].get("certainty", "Complete for this scope") if res.get("cards") else "Complete for this scope"
+        "certainty_label": res.get("cards", [{}])[0].get("certainty") if res.get("cards") else res.get("state", {}).get("certainty")
     }
 
 

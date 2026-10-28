@@ -4,10 +4,13 @@ Zero dynamic LLM calls. All payroll figures come from engine_bridge (data/genera
 """
 from datetime import datetime, timezone
 import json
+import logging
 from pathlib import Path
 import re
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 from .ai_messages import get_message
 from .auth import USERS, check_employee_access
@@ -29,6 +32,20 @@ try:
         EMPLOYEE_NAMES = {}
 except Exception:
     EMPLOYEE_NAMES = {}
+
+
+def _get_engine_certainty(obj: Optional[dict], field_name: str = "certainty") -> Optional[str]:
+    """Read certainty directly from engine output; never invent a default label.
+    Logs a masked warning if the value is missing or empty.
+    """
+    if not isinstance(obj, dict):
+        logger.warning("Masked warning: Engine result object is missing or non-dict; certainty cannot be read.")
+        return None
+    val = obj.get(field_name)
+    if val is None or val == "":
+        logger.warning(f"Masked warning: Engine certainty field '{field_name}' is missing; no badge displayed.")
+        return None
+    return str(val)
 
 
 MONTH_NAMES = {
@@ -149,11 +166,11 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
 
     pf_rec = ps.get("pf", {})
     pf_val = pf_rec.get("employee", {}).get("value", 0) if isinstance(pf_rec, dict) and isinstance(pf_rec.get("employee"), dict) else (pf_rec.get("value", 0) if isinstance(pf_rec, dict) else 0)
-    pf_certainty = pf_rec.get("certainty") or (pf_rec.get("employee", {}).get("certainty") if isinstance(pf_rec.get("employee"), dict) else None) or ps.get("certainty", "Complete for this scope")
+    pf_certainty = _get_engine_certainty(pf_rec) or (_get_engine_certainty(pf_rec.get("employee")) if isinstance(pf_rec, dict) else None)
 
     tds_rec = ps.get("tds", {})
     tds_val = tds_rec.get("amount", {}).get("value", 0) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else (tds_rec.get("value", 0) if isinstance(tds_rec, dict) else 0)
-    tds_certainty = tds_rec.get("certainty") or (tds_rec.get("amount", {}).get("certainty") if isinstance(tds_rec.get("amount"), dict) else None) or ps.get("certainty", "Complete for this scope")
+    tds_certainty = (_get_engine_certainty(tds_rec.get("amount")) if isinstance(tds_rec, dict) else None) or _get_engine_certainty(tds_rec)
     tds_formula = tds_rec.get("amount", {}).get("formula") if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else "Remaining yearly tax divided by remaining tax-year months including the current month"
     tds_rules = tds_rec.get("amount", {}).get("rule_ids", []) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else []
 
@@ -162,9 +179,14 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
 
     net_rec = ps.get("net_pay", {})
     net_val = net_rec.get("value", 0) if isinstance(net_rec, dict) else net_rec
+    net_pay_certainty = _get_engine_certainty(net_rec) if isinstance(net_rec, dict) else None
 
     lop_days = att.get("lop_days", 0) if att else 0
+    paid_days_rec = ps.get("earnings", {}).get("paid_days", {})
+    lop_certainty = _get_engine_certainty(paid_days_rec) if isinstance(paid_days_rec, dict) else None
+
     tax_regime = emp.get("tax_regime_selected", "new") if isinstance(emp, dict) else "new"
+    tax_regime_certainty = _get_engine_certainty(tds_rec.get("taxable_income")) if isinstance(tds_rec, dict) else _get_engine_certainty(ps)
 
     return {
         "employee_id": emp_id,
@@ -182,9 +204,12 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
         "tds_rules": tds_rules,
         "total_deductions": tot_ded_val,
         "net_pay": net_val,
+        "net_pay_certainty": net_pay_certainty,
         "lop_days": lop_days,
+        "lop_certainty": lop_certainty,
         "tax_regime": tax_regime,
-        "certainty": ps.get("certainty", "Complete for this scope")
+        "tax_regime_certainty": tax_regime_certainty,
+        "certainty": _get_engine_certainty(ps)
     }
 
 
@@ -838,6 +863,7 @@ class ChatRouter:
             f"keeping contributions capped before and after the revision."
         )
 
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -847,7 +873,7 @@ class ChatRouter:
                     "id": "card-prop-s1",
                     "type": "proposal_summary",
                     "title": "Proposal summary",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Priya Sharma",
                         "employee_id": "E01",
@@ -864,7 +890,7 @@ class ChatRouter:
                     "id": "card-numbers-s1",
                     "type": "number_cards",
                     "title": "Arrears & tax breakdown",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Expected net arrears",
                         "hero_amount": t["net_arrears"]["value"],
@@ -882,7 +908,7 @@ class ChatRouter:
                     "id": "card-months-s1",
                     "type": "month_table",
                     "title": "Affected months summary",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "months": [
                             {
@@ -903,7 +929,7 @@ class ChatRouter:
                     "id": "card-approval-s1",
                     "type": "approval_card",
                     "title": "Approval",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Priya Sharma",
                         "employee_id": "E01",
@@ -925,7 +951,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E01",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Calculation proof & month breakdown",
                     "employee_name": "Priya Sharma",
@@ -974,6 +1000,7 @@ class ChatRouter:
         prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 39600)
         hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
         eff_date = disp.get("effective_date", {}).get("value", "2026-08-01")
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C03", "text": get_message("C03")}
@@ -983,7 +1010,7 @@ class ChatRouter:
                     "id": "card-prop-s2",
                     "type": "proposal_summary",
                     "title": "Proposal summary",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Arjun Rao",
                         "employee_id": "E02",
@@ -1000,7 +1027,7 @@ class ChatRouter:
                     "id": "card-numbers-s2",
                     "type": "number_cards",
                     "title": "Arrears & PF impact",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Expected net arrears",
                         "hero_amount": t["net_arrears"]["value"],
@@ -1014,7 +1041,7 @@ class ChatRouter:
                     "id": "card-approval-s2",
                     "type": "approval_card",
                     "title": "HR authorization",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Arjun Rao",
                         "employee_id": "E02",
@@ -1036,7 +1063,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E02",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "September 2026 PF dual-segment proof",
                     "employee_name": "Arjun Rao",
@@ -1061,6 +1088,7 @@ class ChatRouter:
         r = sc["result"]
         aug_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-08"), 4800)
         sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), 4800)
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C07", "text": "The required attendance record for 2026-07 is missing. I cannot explain a complete result for this scope."}
@@ -1070,7 +1098,7 @@ class ChatRouter:
                     "id": "card-prop-s3",
                     "type": "proposal_summary",
                     "title": "Incomplete proposal summary",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Kavya Iyer",
                         "employee_id": "E03",
@@ -1083,7 +1111,7 @@ class ChatRouter:
                     "id": "card-numbers-s3",
                     "type": "number_cards",
                     "title": "Known monthly differences",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Expected net arrears",
                         "hero_amount": None,
@@ -1097,7 +1125,7 @@ class ChatRouter:
                     "id": "card-approval-s3",
                     "type": "approval_card",
                     "title": "HR authorization (blocked)",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Kavya Iyer",
                         "employee_id": "E03",
@@ -1118,7 +1146,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E03",
-                "certainty": r.get("certainty", "Incomplete"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Missing attendance proof",
                     "employee_name": "Kavya Iyer",
@@ -1144,7 +1172,6 @@ class ChatRouter:
                     "id": "card-clarify-bonus",
                     "type": "clarifying_question",
                     "title": "Which bonus type do you mean?",
-                    "certainty": "Needs HR decision",
                     "data": {
                         "question": "Which bonus type do you mean?",
                         "choices": [
@@ -1165,6 +1192,7 @@ class ChatRouter:
                 "surface": surface,
                 "scenario_num": None,
                 "employee_id": None,
+                "certainty": None,
                 "panel": None
             }
         }
@@ -1172,10 +1200,11 @@ class ChatRouter:
     def _build_scenario_4(self, user: dict, role: str, surface: str, bonus_type_key: str = "annual_performance_bonus") -> dict:
         sc = bridge.get_scenario(4)
         r = sc["result"]
+        eng_cert = _get_engine_certainty(r)
 
         req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == bonus_type_key), r["bonus_requests"][0])
         gross_total = req["known_eligible_gross"]["value"]
-        gross_certainty = req["known_eligible_gross"].get("certainty", "Complete for this scope")
+        gross_certainty = _get_engine_certainty(req.get("known_eligible_gross"))
 
         # Copy engine's own counts and lists directly (no counting in router or frontend)
         agg = req.get("aggregates", {})
@@ -1226,7 +1255,7 @@ class ChatRouter:
                     "id": "card-bonus-s4",
                     "type": "proposal_summary",
                     "title": card_title,
-                    "certainty": gross_certainty,
+                    "certainty": eng_cert,
                     "data": {
                         "proposal_type": f"{display_bonus_type} ({display_period})",
                         "eligible_count": eligible_count,
@@ -1242,14 +1271,14 @@ class ChatRouter:
                             e["employee_id"]: get_employee_name(e["employee_id"])
                             for e in req.get("employees", [])
                         },
-                        "status": "Needs HR decision"
+                        "status": "Needs HR approval; not applied"
                     }
                 },
                 {
                     "id": "card-approval-s4",
                     "type": "approval_card",
                     "title": "HR authorization",
-                    "certainty": "Needs HR decision",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": None,
                         "employee_id": None,
@@ -1272,7 +1301,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": None,
-                "certainty": r.get("certainty", "Incomplete"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Bonus eligibility & scope roster",
                     "formulas": emp_formulas,
@@ -1288,6 +1317,7 @@ class ChatRouter:
     def _build_scenario_5(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(5)
         r = sc["result"]
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C07", "text": "The required performance record for FY 2025-26 is missing. I cannot explain a complete result for this scope."}
@@ -1297,7 +1327,7 @@ class ChatRouter:
                     "id": "card-bonus-s5",
                     "type": "proposal_summary",
                     "title": "Employee bonus evaluation",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Meera Nair",
                         "employee_id": "E09",
@@ -1310,7 +1340,7 @@ class ChatRouter:
                     "id": "card-approval-s5",
                     "type": "approval_card",
                     "title": "HR authorization (blocked)",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Meera Nair",
                         "employee_id": "E09",
@@ -1331,7 +1361,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E09",
-                "certainty": r.get("certainty", "Incomplete"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Missing performance record",
                     "formulas": [
@@ -1350,6 +1380,7 @@ class ChatRouter:
         sc = bridge.get_scenario(6)
         r = sc["result"]
         c = r["components"]
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [],
             "cards": [
@@ -1357,7 +1388,7 @@ class ChatRouter:
                     "id": "card-settlement-s6",
                     "type": "proposal_summary",
                     "title": "Full & final settlement proposal",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Rahul Verma",
                         "employee_id": "E10",
@@ -1370,7 +1401,7 @@ class ChatRouter:
                     "id": "card-components-s6",
                     "type": "component_list",
                     "title": "Settlement components ledger",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Final net settlement",
                         "hero_amount": r["final_net"]["value"],
@@ -1389,7 +1420,7 @@ class ChatRouter:
                     "id": "card-approval-s6",
                     "type": "approval_card",
                     "title": "HR authorization",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Rahul Verma",
                         "employee_id": "E10",
@@ -1412,7 +1443,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E10",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Settlement proof & component ledger",
                     "employee_name": "Rahul Verma",
@@ -1438,6 +1469,7 @@ class ChatRouter:
         r = sc["result"]
         c = r["components"]
         grat_amt = c.get("gratuity", {}).get("amount", {}).get("value", 0)
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [],
             "cards": [
@@ -1445,7 +1477,7 @@ class ChatRouter:
                     "id": "card-settlement-s7",
                     "type": "proposal_summary",
                     "title": "Full & final settlement proposal",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Lakshmi Reddy",
                         "employee_id": "E11",
@@ -1457,7 +1489,7 @@ class ChatRouter:
                     "id": "card-components-s7",
                     "type": "component_list",
                     "title": "Settlement components",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "components": [
                             {"name": "Gratuity", "amount": grat_amt, "status": "Ineligible", "note": "Close to minimum service: Continuous service less than 5-year requirement"}
@@ -1468,7 +1500,7 @@ class ChatRouter:
                     "id": "card-approval-s7",
                     "type": "approval_card",
                     "title": "HR authorization",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Lakshmi Reddy",
                         "employee_id": "E11",
@@ -1490,7 +1522,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E11",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Gratuity service eligibility proof",
                     "formulas": [
@@ -1512,6 +1544,7 @@ class ChatRouter:
         notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
         advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
         recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
@@ -1522,7 +1555,7 @@ class ChatRouter:
                     "id": "card-settlement-s8",
                     "type": "proposal_summary",
                     "title": "Incomplete settlement proposal",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
@@ -1534,7 +1567,7 @@ class ChatRouter:
                     "id": "card-components-s8",
                     "type": "component_list",
                     "title": "Recovery line items",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Final net",
                         "hero_amount": None,
@@ -1551,7 +1584,7 @@ class ChatRouter:
                     "id": "card-approval-s8",
                     "type": "approval_card",
                     "title": "HR authorization (blocked)",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
@@ -1572,7 +1605,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E12",
-                "certainty": r.get("certainty", "Incomplete"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Asset clearance status",
                     "formulas": [
@@ -1636,6 +1669,7 @@ class ChatRouter:
                 {"label": "What is PF?", "action": "faq-pf", "payload": {}}
             ]
 
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
@@ -1646,7 +1680,7 @@ class ChatRouter:
                     "id": "card-hero-s9",
                     "type": "number_hero",
                     "title": "Take-home pay comparison",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "September take-home",
                         "hero_amount": after_net,
@@ -1659,7 +1693,7 @@ class ChatRouter:
                     "id": "card-reasons-s9",
                     "type": "reason_list",
                     "title": "Ranked by effect on take-home pay",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "net_change": net_change,
                         "reasons": [
@@ -1677,7 +1711,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E05",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "September pay breakdown",
                     "formulas": [
@@ -1713,6 +1747,7 @@ class ChatRouter:
         rules_ver = tax_rules.get("rules_version", "Northwind demo rules v1")
         tax_year = tax_rules.get("tax_year", {}).get("value", {}).get("year", "2026-27")
 
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C30", "text": f"Your September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."},
@@ -1724,7 +1759,7 @@ class ChatRouter:
                     "id": "card-hero-s10",
                     "type": "number_hero",
                     "title": "TDS deduction increase",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "September TDS deduction",
                         "hero_amount": after_tds,
@@ -1735,7 +1770,7 @@ class ChatRouter:
                     "id": "card-reasons-s10",
                     "type": "reason_list",
                     "title": "Ranked by effect on take-home pay",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "reasons": [
                             {"cause": "Prior employer declaration", "detail": "Declared income added to yearly projection", "amount": prior_tds_amt},
@@ -1755,7 +1790,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E06",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Tax calculation proof",
                     "formulas": [
@@ -1792,6 +1827,7 @@ class ChatRouter:
         pf_rate = pf_rules.get("employee_contribution_rate_percent", {}).get("value", 12)
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
 
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
@@ -1803,7 +1839,7 @@ class ChatRouter:
                     "id": "card-hero-s11",
                     "type": "number_hero",
                     "title": "Take-home pay change",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Take-home net change",
                         "hero_amount": net_change,
@@ -1814,7 +1850,7 @@ class ChatRouter:
                     "id": "card-reasons-s11",
                     "type": "reason_list",
                     "title": "Main recorded reasons",
-                    "certainty": r.get("certainty", "Complete for this scope"),
+                    "certainty": eng_cert,
                     "data": {
                         "reasons": [
                             {"cause": "PF ceiling change", "detail": "Revised ceiling from 17 Sep", "amount": pf_amt}
@@ -1832,7 +1868,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E16",
-                "certainty": r.get("certainty", "Complete for this scope"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Earnings & deduction proof",
                     "formulas": [
@@ -1860,6 +1896,7 @@ class ChatRouter:
         recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
         notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
         advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
+        eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -1869,7 +1906,7 @@ class ChatRouter:
                     "id": "card-settlement-s13",
                     "type": "proposal_summary",
                     "title": "Settlement breakdown (unresolved component)",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
@@ -1881,7 +1918,7 @@ class ChatRouter:
                     "id": "card-components-s13",
                     "type": "component_list",
                     "title": "Settlement ledger lines",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "hero_label": "Final net",
                         "hero_amount": None,
@@ -1898,7 +1935,7 @@ class ChatRouter:
                     "id": "card-approval-s13",
                     "type": "approval_card",
                     "title": "Partial authorization",
-                    "certainty": "Incomplete",
+                    "certainty": eng_cert,
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
@@ -1920,7 +1957,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E12",
-                "certainty": r.get("certainty", "Incomplete"),
+                "certainty": eng_cert,
                 "panel": {
                     "title": "Settlement line review",
                     "formulas": [
@@ -1951,33 +1988,35 @@ class ChatRouter:
 
         month_name = format_month_label(month)
         emp_name = get_employee_name(emp_id)
+        cert = _get_engine_certainty(data)
+
+        card = {
+            "id": f"card-payslip-{month}",
+            "type": "month_table",
+            "title": f"Payslip · {month_name}",
+            "data": {
+                "employee_id": emp_id,
+                "employee_name": emp_name,
+                "month": month,
+                "gross_pay": data["gross"],
+                "basic": data["basic"],
+                "hra": data["hra"],
+                "special_allowance": data["special_allowance"],
+                "da": data["da"],
+                "total_deductions": data["total_deductions"],
+                "pf": data["pf"],
+                "tds": data["tds"],
+                "net_pay": data["net_pay"]
+            }
+        }
+        if cert:
+            card["certainty"] = cert
 
         return {
             "messages": [
                 {"code": "C39", "text": get_message("C39", month=month_name)}
             ],
-            "cards": [
-                {
-                    "id": f"card-payslip-{month}",
-                    "type": "month_table",
-                    "title": f"Payslip · {month_name}",
-                    "certainty": data.get("certainty", "Complete for this scope"),
-                    "data": {
-                        "employee_id": emp_id,
-                        "employee_name": emp_name,
-                        "month": month,
-                        "gross_pay": data["gross"],
-                        "basic": data["basic"],
-                        "hra": data["hra"],
-                        "special_allowance": data["special_allowance"],
-                        "da": data["da"],
-                        "total_deductions": data["total_deductions"],
-                        "pf": data["pf"],
-                        "tds": data["tds"],
-                        "net_pay": data["net_pay"]
-                    }
-                }
-            ],
+            "cards": [card],
             "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "payslip_breakdown",
@@ -1985,7 +2024,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": data.get("certainty", "Complete for this scope") if data else "Complete for this scope",
+                "certainty": cert,
                 "panel": None
             }
         }
@@ -2001,21 +2040,24 @@ class ChatRouter:
         month_name = format_month_label(month)
         pf_val = data["pf"] if data else 2220
         amount_str = format_inr(pf_val)
+        cert = _get_engine_certainty(data, "pf_certainty")
 
         cards = []
         if pf_val != 0:
-            cards.append({
+            c = {
                 "id": f"card-pf-{month}",
                 "type": "number_hero",
                 "title": f"PF contribution — {month_name}",
-                "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
                 "data": {
                     "hero_label": f"{month_name} employee PF contribution",
                     "hero_amount": pf_val,
                     "employee_id": emp_id,
                     "month": month
                 }
-            })
+            }
+            if cert:
+                c["certainty"] = cert
+            cards.append(c)
 
         return {
             "messages": [
@@ -2029,7 +2071,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
+                "certainty": cert,
                 "panel": None
             }
         }
@@ -2046,7 +2088,7 @@ class ChatRouter:
         tds_val = data["tds"] if data else 0
         amount_str = format_inr(tds_val)
 
-        engine_certainty = data.get("tds_certainty", "Complete for this scope") if data else "Complete for this scope"
+        engine_certainty = _get_engine_certainty(data, "tds_certainty")
         tds_formula = data.get("tds_formula", "Remaining yearly tax divided by remaining tax-year months including the current month") if data else "Remaining yearly tax divided by remaining tax-year months including the current month"
         tds_rules = data.get("tds_rules", []) if data else []
 
@@ -2082,18 +2124,20 @@ class ChatRouter:
 
         cards = []
         if tds_val != 0:
-            cards.append({
+            c = {
                 "id": f"card-tds-{month}",
                 "type": "number_hero",
                 "title": f"TDS deduction — {month_name}",
-                "certainty": engine_certainty,
                 "data": {
                     "hero_label": f"{month_name} TDS deduction",
                     "hero_amount": tds_val,
                     "employee_id": emp_id,
                     "month": month
                 }
-            })
+            }
+            if engine_certainty:
+                c["certainty"] = engine_certainty
+            cards.append(c)
 
         return {
             "messages": [
@@ -2125,21 +2169,24 @@ class ChatRouter:
         month_name = format_month_label(month)
         lop_days = data["lop_days"] if data else 3
         text = get_message("C36", n=lop_days, month=month_name)
+        cert = _get_engine_certainty(data, "lop_certainty")
 
         cards = []
         if lop_days != 0:
-            cards.append({
+            c = {
                 "id": f"card-lop-{month}",
                 "type": "number_hero",
                 "title": f"Attendance & loss of pay — {month_name}",
-                "certainty": "Complete for this scope",
                 "data": {
                     "hero_label": "Recorded LOP days",
                     "hero_amount": lop_days,
                     "month": month_name,
                     "employee_id": emp_id
                 }
-            })
+            }
+            if cert:
+                c["certainty"] = cert
+            cards.append(c)
 
         return {
             "messages": [
@@ -2153,7 +2200,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": "Complete for this scope",
+                "certainty": cert,
                 "panel": None
             }
         }
@@ -2168,28 +2215,34 @@ class ChatRouter:
         direction = "lower" if net_change < 0 else "higher"
         name_a = format_month_label(month_a)
         name_b = format_month_label(month_b)
+        cert_a = _get_engine_certainty(data_a, "net_pay_certainty")
+        cert_b = _get_engine_certainty(data_b, "net_pay_certainty")
+        cert = cert_b if (cert_a and cert_b and cert_a == cert_b) else (cert_b or cert_a)
+
+        cards = []
+        comp_card = {
+            "id": f"card-compare-{month_a}-{month_b}",
+            "type": "number_hero",
+            "title": f"{name_a} vs {name_b} pay comparison",
+            "data": {
+                "hero_label": "Net pay change",
+                "hero_amount": net_change,
+                "previous_month_label": f"{name_a} take-home",
+                "previous_month_amount": net_a,
+                "current_month_label": f"{name_b} take-home",
+                "current_month_amount": net_b,
+                "employee_id": emp_id
+            }
+        }
+        if cert:
+            comp_card["certainty"] = cert
+        cards.append(comp_card)
 
         return {
             "messages": [
                 {"code": "C30", "text": f"Your {name_b} take-home is {format_inr(abs(net_change))} {direction} than {name_a}. The main recorded reasons are below."}
             ],
-            "cards": [
-                {
-                    "id": f"card-compare-{month_a}-{month_b}",
-                    "type": "number_hero",
-                    "title": f"{name_a} vs {name_b} pay comparison",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "hero_label": "Net pay change",
-                        "hero_amount": net_change,
-                        "previous_month_label": f"{name_a} take-home",
-                        "previous_month_amount": net_a,
-                        "current_month_label": f"{name_b} take-home",
-                        "current_month_amount": net_b,
-                        "employee_id": emp_id
-                    }
-                }
-            ],
+            "cards": cards,
             "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "compare_months",
@@ -2197,7 +2250,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": "Complete for this scope",
+                "certainty": cert,
                 "panel": None
             }
         }
@@ -2206,24 +2259,26 @@ class ChatRouter:
         emp_id = user.get("employee_id") or "E05"
         data = get_employee_payroll_data(emp_id, "2026-09")
         regime_raw = (data.get("tax_regime") or "new").lower() if data else "new"
+        cert = _get_engine_certainty(data, "tax_regime_certainty")
+
+        reg_card = {
+            "id": "card-tax-regime",
+            "type": "certainty_label",
+            "title": "Recorded tax regime",
+            "data": {
+                "tax_regime": regime_raw,
+                "tax_year": "2026-27",
+                "employee_id": emp_id
+            }
+        }
+        if cert:
+            reg_card["certainty"] = cert
 
         return {
             "messages": [
                 {"code": "C41", "text": get_message("C41", regime=regime_raw, tax_year="2026-27")}
             ],
-            "cards": [
-                {
-                    "id": "card-tax-regime",
-                    "type": "certainty_label",
-                    "title": "Recorded tax regime",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "tax_regime": regime_raw,
-                        "tax_year": "2026-27",
-                        "employee_id": emp_id
-                    }
-                }
-            ],
+            "cards": [reg_card],
             "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "tax_regime",
@@ -2231,7 +2286,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": "Complete for this scope",
+                "certainty": cert,
                 "panel": None
             }
         }
@@ -2297,7 +2352,6 @@ class ChatRouter:
                     "id": "card-refusal",
                     "type": "refusal_card",
                     "title": "Permission denied",
-                    "certainty": "Permission denied",
                     "data": {
                         "message": get_message("C10"),
                         "reason": reason
@@ -2384,9 +2438,13 @@ class ChatRouter:
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
         version = int(context.get("version", 1))
 
+        existing_prop = lifecycle.get_proposal(prop_id)
+        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
+        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
-            "certainty": "Complete for this scope",
+            "certainty": prop_cert,
             "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
         })
 
@@ -2498,9 +2556,13 @@ class ChatRouter:
         proposed_value = context.get("proposed_value", 70000)
         reason = context.get("reason", "Adjusted attendance records for June")
 
+        existing_prop = lifecycle.get_proposal(prop_id)
+        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
+        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
-            "certainty": "Complete for this scope",
+            "certainty": prop_cert,
             "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
         })
 
@@ -2511,27 +2573,29 @@ class ChatRouter:
             proposed_value=proposed_value,
             reason=reason
         )
+
+        edit_card = {
+            "id": f"card-edit-{prop_id}",
+            "type": "proposal_summary",
+            "title": "Revised proposal summary",
+            "data": {
+                "proposal_id": prop_id,
+                "status": "Revised",
+                "version": res["version"],
+                "edited_line": line,
+                "proposed_value": proposed_value,
+                "reason": reason,
+                "notice": get_message("C05")
+            }
+        }
+        if prop_cert:
+            edit_card["certainty"] = prop_cert
+
         return {
             "messages": [
                 {"code": "C05", "text": get_message("C05")}
             ],
-            "cards": [
-                {
-                    "id": f"card-edit-{prop_id}",
-                    "type": "proposal_summary",
-                    "title": "Revised proposal summary",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "proposal_id": prop_id,
-                        "status": "Revised",
-                        "version": res["version"],
-                        "edited_line": line,
-                        "proposed_value": proposed_value,
-                        "reason": reason,
-                        "notice": get_message("C05")
-                    }
-                }
-            ],
+            "cards": [edit_card],
             "chips": [
                 {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}
             ],
@@ -2541,6 +2605,7 @@ class ChatRouter:
                 "surface": surface,
                 "scenario_num": s_num,
                 "version": res["version"],
+                "certainty": prop_cert,
                 "panel": None
             }
         }
@@ -2552,36 +2617,44 @@ class ChatRouter:
         prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
         reason = context.get("reason", "Documentation incomplete or unverified.")
 
+        existing_prop = lifecycle.get_proposal(prop_id)
+        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
+        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
-            "certainty": "Complete for this scope",
+            "certainty": prop_cert,
             "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
         })
 
         res = lifecycle.reject_proposal(proposal_id=prop_id, actor=user, reason=reason)
+
+        reject_card = {
+            "id": f"card-reject-{prop_id}",
+            "type": "approval_card",
+            "title": "Proposal rejected",
+            "data": {
+                "proposal_id": prop_id,
+                "status": "rejected",
+                "status_badge": "Rejected • Not approved for payroll",
+                "notice": "This proposal has been rejected and will not be applied to payroll."
+            }
+        }
+        if prop_cert:
+            reject_card["certainty"] = prop_cert
+
         return {
             "messages": [
                 {"code": "REJECTED", "text": "The proposal has been rejected."}
             ],
-            "cards": [
-                {
-                    "id": f"card-reject-{prop_id}",
-                    "type": "approval_card",
-                    "title": "Proposal rejected",
-                    "data": {
-                        "proposal_id": prop_id,
-                        "status": "rejected",
-                        "status_badge": "Rejected • Not approved for payroll",
-                        "notice": "This proposal has been rejected and will not be applied to payroll."
-                    }
-                }
-            ],
+            "cards": [reject_card],
             "chips": [],
             "state": {
                 "intent": "reject_proposal",
                 "role": role,
                 "surface": surface,
                 "scenario_num": s_num,
+                "certainty": prop_cert,
                 "panel": None
             }
         }
@@ -3060,7 +3133,6 @@ class ChatRouter:
                     "id": f"card-picker-{task}",
                     "type": "employee_picker",
                     "title": "Select employee",
-                    "certainty": "Complete for this scope",
                     "data": {
                         "task": task,
                         "prompt": prompt_text,

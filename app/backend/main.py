@@ -353,7 +353,7 @@ def get_scenario(scenario_id: str, user: dict = Depends(get_current_user)):
     if proposal_id:
         runtime_proposal = lifecycle.get_or_create_proposal(proposal_id, {
             "status": data["result"].get("proposal_status", "Calculated; needs HR approval"),
-            "certainty": data["result"].get("certainty", "Complete for this scope"),
+            "certainty": data["result"].get("certainty"),
             "scope": {"employee_id": meta["employee_id"], "scenario_id": scenario_id},
             "data": data["result"]
         })

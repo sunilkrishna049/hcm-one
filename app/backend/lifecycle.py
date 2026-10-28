@@ -78,6 +78,10 @@ class LifecycleStore:
 
     # --- Proposals ---
 
+    def get_proposal(self, proposal_id: str) -> Optional[dict]:
+        proposals = _read_json(PROPOSALS_FILE, {})
+        return proposals.get(proposal_id)
+
     def get_or_create_proposal(self, proposal_id: str, default_data: dict) -> dict:
         proposals = _read_json(PROPOSALS_FILE, {})
         if proposal_id not in proposals:
@@ -85,7 +89,7 @@ class LifecycleStore:
                 "proposal_id": proposal_id,
                 "current_version": 1,
                 "status": default_data.get("status", "Calculated; needs HR approval"),
-                "certainty": default_data.get("certainty", "Complete for this scope"),
+                "certainty": default_data.get("certainty"),
                 "scope": default_data.get("scope", {}),
                 "versions": {
                     "1": {

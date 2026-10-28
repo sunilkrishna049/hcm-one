@@ -430,7 +430,7 @@
         "id": "card-bonus-s4",
         "type": "proposal_summary",
         "title": "Team bonus run summary",
-        "certainty": "Complete for this scope",
+        "certainty": "Incomplete",
         "data": {
           "proposal_type": "Annual performance bonus (FY 2025-26)",
           "eligible_count": 4,
@@ -465,14 +465,14 @@
             "E08": "Vikram Singh",
             "E09": "Meera Nair"
           },
-          "status": "Needs HR decision"
+          "status": "Needs HR approval; not applied"
         }
       },
       {
         "id": "card-approval-s4",
         "type": "approval_card",
         "title": "HR authorization",
-        "certainty": "Needs HR decision",
+        "certainty": "Incomplete",
         "data": {
           "employee_name": null,
           "employee_id": null,
@@ -1176,7 +1176,6 @@
         "id": "card-refusal",
         "type": "refusal_card",
         "title": "Permission denied",
-        "certainty": "Permission denied",
         "data": {
           "message": "I cannot provide that information. I can help with payroll records you are authorized to access.",
           "reason": "Access boundary enforced."

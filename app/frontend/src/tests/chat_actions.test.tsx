@@ -678,7 +678,6 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
           id: 'card-clarify-bonus',
           type: 'clarifying_question',
           title: 'Which bonus type do you mean?',
-          certainty: 'Needs HR decision',
           data: {
             question: 'Which bonus type do you mean?',
             choices: [
@@ -746,7 +745,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
           id: 'card-bonus-s4',
           type: 'proposal_summary',
           title: 'Team Bonus Run Summary',
-          certainty: 'Complete for this scope',
+          certainty: 'Incomplete',
           data: {
             proposal_type: 'Annual performance bonus (FY 2025-26)',
             eligible_count: 4,
@@ -757,7 +756,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
             eligible: ['E01', 'E03', 'E04', 'E07'],
             not_eligible: [{ employee_id: 'E08', reason: 'On notice at the time of calculation' }],
             needs_input: [{ employee_id: 'E09', reason: 'Performance record missing' }],
-            status: 'Needs HR decision',
+            status: 'Needs HR approval; not applied',
           },
         },
       ],
