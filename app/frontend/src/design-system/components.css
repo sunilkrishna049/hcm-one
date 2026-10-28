@@ -23,11 +23,20 @@
   white-space: nowrap;
 }
 
-.hcm-button:disabled {
+.hcm-button:disabled,
+.hcm-button-disabled {
   background-color: var(--color-disabled-surface);
   color: var(--color-disabled-text);
+  opacity: 0.5;
   cursor: not-allowed;
   border-color: transparent;
+}
+
+.hcm-approval-blocked-note {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-status-warning-text);
+  line-height: var(--line-height-normal);
 }
 
 .hcm-button-primary {

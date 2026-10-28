@@ -530,6 +530,32 @@ def test_static_guard_no_scenario_1_or_priya_fallbacks():
                 if pattern in line and "DEFAULT_PROPOSALS" not in line and "test" not in str(fpath):
                     pytest.fail(f"Forbidden fallback pattern '{pattern}' found at {fpath.name}:{line_num}: {line}")
 
+    # Also check frontend components (excluding test directory and TopDemoBar demo selector)
+    frontend_src = base_dir / "frontend" / "src"
+    frontend_files = [
+        f for f in frontend_src.rglob("*")
+        if f.is_file() and "tests" not in f.parts and f.name != "TopDemoBar.tsx" and f.suffix in (".ts", ".tsx")
+    ]
+
+    frontend_forbidden = [
+        "?? 1",
+        "currentScenario = 1",
+        "currentScenario = 9",
+        "defaultScenario = 1",
+        "defaultScenario: 1",
+        "PROP-SCENARIO-1",
+    ]
+
+    for fpath in frontend_files:
+        content = fpath.read_text(encoding="utf-8")
+        for line_num, line in enumerate(content.splitlines(), start=1):
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("/*"):
+                continue
+            for pattern in frontend_forbidden:
+                if pattern in line:
+                    pytest.fail(f"Forbidden frontend fallback pattern '{pattern}' found at {fpath.name}:{line_num}: {line}")
+
 
 def test_approval_integrity_for_all_proposals():
     """Tests approval integrity across all proposals:

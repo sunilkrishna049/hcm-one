@@ -61,9 +61,18 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   const approverName = d.approver ? getUserDisplayName(d.approver) : 'Anita Desai';
 
   // Option A: "Approve proposal for payroll" is disabled when certainty is not "Complete for this scope"
+  // Item 3: If a card has no proposal_id or version, the Approve button is disabled.
   const isComplete = card.certainty === 'Complete for this scope';
-  const isApprovalDisabled = Boolean(d.disabled || (card.certainty && !isComplete));
-  const blockingReason = d.blocking_reason || d.disabled_label || (card.certainty && !isComplete ? `Scope is ${card.certainty}; required inputs pending.` : undefined);
+  const hasValidProposal = Boolean(d.proposal_id && d.version !== undefined && d.version !== null);
+  const isApprovalDisabled = Boolean(d.disabled || (card.certainty && !isComplete) || !hasValidProposal);
+
+  const missingIdentifierReason = !d.proposal_id
+    ? 'Proposal identifier is missing.'
+    : (d.version === undefined || d.version === null)
+    ? 'Proposal version is missing.'
+    : undefined;
+
+  const blockingReason = d.blocking_reason || d.disabled_label || missingIdentifierReason || (card.certainty && !isComplete ? `Scope is ${card.certainty}; required inputs pending.` : undefined);
 
   // Heading: plain heading without dev labels
   const heading = card.title === 'HR Authorization' || card.title === 'HR authorization' || !card.title ? 'Approval' : card.title;
@@ -116,7 +125,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               ✓ Approved and ready for payroll
             </div>
             <div style={{ fontSize: '12px', opacity: 0.9 }}>
-              Version {d.version ?? 1} • Approver: {approverName} • {formatLocalTime(d.approved_at || new Date())}
+              Version {d.version} • Approver: {approverName} • {formatLocalTime(d.approved_at || new Date())}
             </div>
           </div>
         )}
@@ -149,10 +158,11 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
           <div className="hcm-approval-actions">
             <button
               type="button"
-              className="hcm-button hcm-button-primary"
-              onClick={isApprovalDisabled ? undefined : () => onApprove?.({ proposal_id: d.proposal_id, version: d.version ?? 1 })}
+              className={`hcm-button hcm-button-primary ${isApprovalDisabled ? 'hcm-button-disabled' : ''}`}
+              onClick={isApprovalDisabled ? undefined : () => onApprove?.({ proposal_id: d.proposal_id, version: d.version })}
               disabled={isApprovalDisabled}
-              style={isApprovalDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+              aria-disabled={isApprovalDisabled ? 'true' : undefined}
+              aria-describedby={isApprovalDisabled && blockingReason ? `approval-reason-${card.id}` : undefined}
               data-testid={isApprovalDisabled ? "approval-button-disabled" : "approval-button"}
               title={isApprovalDisabled ? blockingReason : undefined}
             >
@@ -161,14 +171,14 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
             <button
               type="button"
               className="hcm-button hcm-button-secondary"
-              onClick={() => onEdit?.({ proposal_id: d.proposal_id, version: d.version ?? 1, reason: 'Adjusted by HR' })}
+              onClick={() => onEdit?.({ proposal_id: d.proposal_id, version: d.version, reason: 'Adjusted by HR' })}
             >
               Edit with reason
             </button>
             <button
               type="button"
               className="hcm-button hcm-button-danger"
-              onClick={() => onReject?.({ proposal_id: d.proposal_id, version: d.version ?? 1, reason: 'Rejected by HR' })}
+              onClick={() => onReject?.({ proposal_id: d.proposal_id, version: d.version, reason: 'Rejected by HR' })}
             >
               Reject proposal
             </button>
@@ -177,14 +187,22 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
 
         {/* Option A Note: Reason from engine data why approval is disabled */}
         {isApprovalDisabled && !isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && blockingReason && (
-          <div className="hcm-approval-blocked-note" data-testid="approval-disabled-note" style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-status-warning-text)' }}>
+          <div
+            id={`approval-reason-${card.id}`}
+            className="hcm-approval-blocked-note"
+            data-testid="approval-disabled-note"
+          >
             <span>{blockingReason}</span>
           </div>
         )}
 
         {/* When actions have been removed after an action is taken */}
         {d.actions && d.actions.length === 0 && d.disabled_label && !isApproved && !isRejected && !isEdited && (
-          <div className="hcm-approval-blocked-note" data-testid="approval-disabled-note">
+          <div
+            id={`approval-reason-${card.id}`}
+            className="hcm-approval-blocked-note"
+            data-testid="approval-disabled-note"
+          >
             <span>{d.disabled_label}</span>
           </div>
         )}

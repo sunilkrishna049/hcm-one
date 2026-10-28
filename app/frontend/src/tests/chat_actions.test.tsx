@@ -36,6 +36,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
             actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
             status: 'pending',
             proposal_id: 'PROP-SCENARIO-1',
+            version: 1,
           },
         },
       ],
@@ -80,6 +81,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
         expect.objectContaining({
           userId: 'HR01',
           action: 'approve',
+          context: { proposal_id: 'PROP-SCENARIO-1', version: 1 },
         })
       );
     });
@@ -118,6 +120,8 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
             notice: 'Notice text',
             actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
             status: 'pending',
+            proposal_id: 'PROP-SCENARIO-1',
+            version: 1,
           },
         },
       ],
@@ -169,6 +173,8 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
             notice: 'Notice text',
             actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
             status: 'pending',
+            proposal_id: 'PROP-SCENARIO-1',
+            version: 1,
           },
         },
       ],
@@ -1082,6 +1088,153 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       expect(className.trim().length).toBeGreaterThan(0);
       const usesComponentClass = allowedComponentClasses.some((cls) => className.includes(cls));
       expect(usesComponentClass).toBe(true);
+    });
+  });
+
+  describe('Approval Integrity & Exact Proposal ID Tests', () => {
+    it('17. Clicking Approve on Priya\'s card sends her exact proposal_id and version', async () => {
+      const mockApprove = vi.fn();
+      const priyaCard = {
+        id: 'card-approval-s1',
+        type: 'approval_card',
+        title: 'Approval',
+        certainty: 'Complete for this scope',
+        data: {
+          employee_name: 'Priya Sharma',
+          employee_id: 'E01',
+          period: 'Apr–Sep 2026',
+          scope_label: 'Priya Sharma · Apr–Sep 2026',
+          proposal_id: 'PROP-SCENARIO-1',
+          version: 1,
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      };
+
+      render(<CardRenderer card={priyaCard} onApprove={mockApprove} />);
+      const approveBtn = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+      expect(approveBtn).not.toBeDisabled();
+      fireEvent.click(approveBtn);
+
+      expect(mockApprove).toHaveBeenCalledTimes(1);
+      expect(mockApprove).toHaveBeenCalledWith({
+        proposal_id: 'PROP-SCENARIO-1',
+        version: 1,
+      });
+    });
+
+    it('18. Clicking Approve on the Sales incentive card sends its exact proposal_id and version', async () => {
+      const mockApprove = vi.fn();
+      const salesCard = {
+        id: 'card-approval-s4-sales',
+        type: 'approval_card',
+        title: 'Approval',
+        certainty: 'Complete for this scope',
+        data: {
+          scope_label: 'Q2 Sales incentive · Hyderabad Sales · Q2 2026-27',
+          proposal_id: 'PROP-SCENARIO-4-SALES',
+          version: 1,
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      };
+
+      render(<CardRenderer card={salesCard} onApprove={mockApprove} />);
+      const approveBtn = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+      expect(approveBtn).not.toBeDisabled();
+      fireEvent.click(approveBtn);
+
+      expect(mockApprove).toHaveBeenCalledTimes(1);
+      expect(mockApprove).toHaveBeenCalledWith({
+        proposal_id: 'PROP-SCENARIO-4-SALES',
+        version: 1,
+      });
+    });
+
+    it('19. On the Annual performance bonus card, Approve is disabled, reason is visible, and clicking it sends nothing', async () => {
+      const mockApprove = vi.fn();
+      const annualCard = {
+        id: 'card-approval-s4-annual',
+        type: 'approval_card',
+        title: 'HR authorization',
+        certainty: 'Incomplete',
+        data: {
+          scope_label: 'Annual performance bonus · Engineering · FY 2025-26',
+          proposal_id: 'PROP-SCENARIO-4-ANNUAL',
+          version: 1,
+          disabled: true,
+          blocking_reason: "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      };
+
+      render(<CardRenderer card={annualCard} onApprove={mockApprove} />);
+      const approveBtn = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+
+      // 1. Button is disabled
+      expect(approveBtn).toBeDisabled();
+      expect(approveBtn).toHaveClass('hcm-button-disabled');
+      expect(approveBtn).toHaveAttribute('aria-disabled', 'true');
+      expect(approveBtn).toHaveAttribute('aria-describedby', 'approval-reason-card-approval-s4-annual');
+
+      // 2. Reason is visible with matching id
+      const note = screen.getByTestId('approval-disabled-note');
+      expect(note).toBeInTheDocument();
+      expect(note).toHaveAttribute('id', 'approval-reason-card-approval-s4-annual');
+      expect(note).toHaveTextContent("2 items need input: Meera Nair's rating, Kavya Iyer's tax");
+
+      // 3. Clicking sends nothing
+      fireEvent.click(approveBtn);
+      expect(mockApprove).not.toHaveBeenCalled();
+    });
+
+    it('20. If a card has no proposal_id or version, the Approve button is disabled and clicking it sends nothing', async () => {
+      const mockApprove = vi.fn();
+
+      // Case A: Missing proposal_id
+      const cardNoId = {
+        id: 'card-no-id',
+        type: 'approval_card',
+        title: 'Approval',
+        certainty: 'Complete for this scope',
+        data: {
+          version: 1,
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      };
+
+      const { unmount } = render(<CardRenderer card={cardNoId} onApprove={mockApprove} />);
+      const btnNoId = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+      expect(btnNoId).toBeDisabled();
+      expect(btnNoId).toHaveClass('hcm-button-disabled');
+      expect(screen.getByTestId('approval-disabled-note')).toHaveTextContent(/Proposal identifier is missing/i);
+      fireEvent.click(btnNoId);
+      expect(mockApprove).not.toHaveBeenCalled();
+
+      unmount();
+
+      // Case B: Missing version
+      const cardNoVersion = {
+        id: 'card-no-version',
+        type: 'approval_card',
+        title: 'Approval',
+        certainty: 'Complete for this scope',
+        data: {
+          proposal_id: 'PROP-SCENARIO-1',
+          actions: ['Approve proposal for payroll', 'Edit with reason', 'Reject proposal'],
+          status: 'pending',
+        },
+      };
+
+      render(<CardRenderer card={cardNoVersion} onApprove={mockApprove} />);
+      const btnNoVersion = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+      expect(btnNoVersion).toBeDisabled();
+      expect(btnNoVersion).toHaveClass('hcm-button-disabled');
+      expect(screen.getByTestId('approval-disabled-note')).toHaveTextContent(/Proposal version is missing/i);
+      fireEvent.click(btnNoVersion);
+      expect(mockApprove).not.toHaveBeenCalled();
     });
   });
 });
