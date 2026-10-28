@@ -134,11 +134,10 @@ def test_part_c_employee_own_pay_topics_match_engine(ai_mode):
     assert res_b["messages"][0]["code"] == "C37"
     assert res_b["messages"][0]["text"] == "Your PF deduction for September 2026 is ₹2,220."
 
-    # Topic c: TDS amount & why TDS is zero
+    # Topic c: TDS amount & why TDS is zero (no number_hero card when amount is 0)
     res_c = crew.handle_chat(user_id, message="Why is my TDS zero?")
     assert res_c["state"]["intent"] == "tds_amount"
-    assert res_c["cards"][0]["data"]["hero_amount"] == 0
-    assert res_c["cards"][0]["certainty"] == "Complete for this scope"
+    assert len(res_c.get("cards", [])) == 0, "No number_hero card sent when TDS amount is 0"
     assert res_c["messages"][0]["code"] == "C38"
     assert res_c["messages"][0]["text"] == "Your tax deducted (TDS) for September 2026 is ₹0. It's worked out as your remaining yearly tax divided by the months left in the tax year."
     # C11 must not appear on factual question
@@ -213,6 +212,14 @@ def test_certainty_label_equals_engine_certainty():
         ("Which tax regime am I in?", "tax_regime", "Complete for this scope"),
     ]:
         res = chat_router.handle_chat("USER-E05", message=topic_query)
+        if topic_query == "Why is my TDS zero?":
+            assert len(res.get("cards", [])) == 0, "No card sent for TDS 0"
+            res_nonzero = chat_router.handle_chat("USER-E06", message="Why did my TDS increase in September?")
+            assert res_nonzero.get("cards")
+            for card in res_nonzero["cards"]:
+                assert card.get("certainty") == expected_certainty
+            continue
+
         assert res.get("cards"), f"No card returned for '{topic_query}'"
         for card in res["cards"]:
             assert card.get("certainty") == expected_certainty, (

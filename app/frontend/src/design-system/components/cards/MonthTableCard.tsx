@@ -46,60 +46,71 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
           <h4 className="hcm-card-title">{card.title}</h4>
         </div>
         <div className="hcm-table-container">
-          <table className="hcm-table">
+          <table className="hcm-table hcm-payslip-table">
             <tbody>
-              {d.gross_pay !== undefined && (
-                <tr>
-                  <td>Gross Pay</td>
-                  <td className="tnum" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)' }}>{formatINR(d.gross_pay)}</td>
-                </tr>
-              )}
+              {/* Earnings Section */}
+              <tr className="hcm-payslip-section-row">
+                <td colSpan={2} className="hcm-payslip-section-title">Earnings</td>
+              </tr>
               {d.basic !== undefined && (
-                <tr>
-                  <td>Basic Pay</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.basic)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">Basic pay</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.basic)}</td>
                 </tr>
               )}
               {d.hra !== undefined && (
-                <tr>
-                  <td>HRA</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.hra)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">HRA</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.hra)}</td>
                 </tr>
               )}
               {d.special_allowance !== undefined && (
-                <tr>
-                  <td>Special Allowance</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.special_allowance)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">Special allowance</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.special_allowance)}</td>
                 </tr>
               )}
               {d.da !== undefined && (
-                <tr>
-                  <td>DA</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.da)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">DA</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.da)}</td>
                 </tr>
               )}
+              {d.gross_pay !== undefined && (
+                <tr className="hcm-payslip-subtotal-row">
+                  <td className="hcm-payslip-label-bold">Gross pay</td>
+                  <td className="hcm-payslip-val-bold tnum">{formatINR(d.gross_pay)}</td>
+                </tr>
+              )}
+
+              {/* Deductions Section */}
+              <tr className="hcm-payslip-section-row">
+                <td colSpan={2} className="hcm-payslip-section-title">Deductions</td>
+              </tr>
               {d.pf !== undefined && (
-                <tr>
-                  <td>PF Deduction</td>
-                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-status-warning-text)' }}>{formatINR(d.pf)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">PF</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.pf)}</td>
                 </tr>
               )}
               {d.tds !== undefined && (
-                <tr>
-                  <td>TDS Deduction</td>
-                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-status-warning-text)' }}>{formatINR(d.tds)}</td>
+                <tr className="hcm-payslip-row">
+                  <td className="hcm-payslip-label">TDS</td>
+                  <td className="hcm-payslip-val tnum">{formatINR(d.tds)}</td>
                 </tr>
               )}
               {d.total_deductions !== undefined && (
-                <tr>
-                  <td>Total Deductions</td>
-                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.total_deductions)}</td>
+                <tr className="hcm-payslip-subtotal-row">
+                  <td className="hcm-payslip-label-bold">Total deductions</td>
+                  <td className="hcm-payslip-val-bold tnum">{formatINR(d.total_deductions)}</td>
                 </tr>
               )}
+
+              {/* Net Pay */}
               {d.net_pay !== undefined && (
-                <tr style={{ fontWeight: 'var(--font-weight-bold)' }}>
-                  <td>Net Take-Home</td>
-                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-brand-accent)' }}>{formatINR(d.net_pay)}</td>
+                <tr className="hcm-payslip-net-row">
+                  <td className="hcm-payslip-net-label">Net pay</td>
+                  <td className="hcm-payslip-net-val tnum">{formatINR(d.net_pay)}</td>
                 </tr>
               )}
             </tbody>
@@ -125,10 +136,10 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
           <thead>
             <tr>
               <th scope="col">Month</th>
-              <th scope="col" style={{ textAlign: 'right' }}>Old Gross</th>
-              <th scope="col" style={{ textAlign: 'right' }}>Revised Gross</th>
-              <th scope="col" style={{ textAlign: 'right' }}>Arrears</th>
-              <th scope="col" style={{ textAlign: 'right' }}>Monthly TDS</th>
+              <th scope="col" className="hcm-text-right">Old Gross</th>
+              <th scope="col" className="hcm-text-right">Revised Gross</th>
+              <th scope="col" className="hcm-text-right">Arrears</th>
+              <th scope="col" className="hcm-text-right">Monthly TDS</th>
             </tr>
           </thead>
           <tbody>
@@ -137,20 +148,20 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
               const hasLop = m.lop_days !== undefined && m.lop_days > 0;
               return (
                 <tr key={m.month}>
-                  <td className="tnum" data-label="Month" style={{ fontWeight: 'var(--font-weight-medium)' }}>
+                  <td className="tnum hcm-month-cell" data-label="Month">
                     <span>{formattedMonth}</span>
                     {hasLop && (
-                      <span style={{ fontSize: '12px', color: 'var(--color-status-warning-text)', marginLeft: '6px', fontWeight: 'var(--font-weight-semibold)' }}>
+                      <span className="hcm-lop-badge">
                         · {m.lop_days} LOP days
                       </span>
                     )}
                   </td>
-                  <td className="tnum" data-label="Old Gross" style={{ textAlign: 'right' }}>{formatINR(m.old_gross)}</td>
-                  <td className="tnum" data-label="Revised Gross" style={{ textAlign: 'right' }}>{formatINR(m.revised_gross)}</td>
-                  <td className="tnum" data-label="Arrears" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-brand-accent)' }}>
+                  <td className="tnum hcm-text-right" data-label="Old Gross">{formatINR(m.old_gross)}</td>
+                  <td className="tnum hcm-text-right" data-label="Revised Gross">{formatINR(m.revised_gross)}</td>
+                  <td className="tnum hcm-cell-arrears" data-label="Arrears">
                     {formatINR(m.diff)}
                   </td>
-                  <td className="tnum" data-label="Monthly TDS" style={{ textAlign: 'right' }}>
+                  <td className="tnum hcm-text-right" data-label="Monthly TDS">
                     {m.tds_impact !== undefined ? formatINR(m.tds_impact) : '—'}
                   </td>
                 </tr>

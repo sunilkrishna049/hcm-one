@@ -1918,7 +1918,7 @@ class ChatRouter:
                 {
                     "id": f"card-payslip-{month}",
                     "type": "month_table",
-                    "title": f"Payslip Breakdown — {month_name}",
+                    "title": f"Payslip · {month_name}",
                     "certainty": data.get("certainty", "Complete for this scope"),
                     "data": {
                         "employee_id": emp_id,
@@ -1959,24 +1959,26 @@ class ChatRouter:
         pf_val = data["pf"] if data else 2220
         amount_str = format_inr(pf_val)
 
+        cards = []
+        if pf_val != 0:
+            cards.append({
+                "id": f"card-pf-{month}",
+                "type": "number_hero",
+                "title": f"PF Contribution — {month_name}",
+                "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
+                "data": {
+                    "hero_label": f"{month_name} Employee PF Contribution",
+                    "hero_amount": pf_val,
+                    "employee_id": emp_id,
+                    "month": month
+                }
+            })
+
         return {
             "messages": [
                 {"code": "C37", "text": get_message("C37", month=month_name, amount=amount_str)}
             ],
-            "cards": [
-                {
-                    "id": f"card-pf-{month}",
-                    "type": "number_hero",
-                    "title": f"PF Contribution — {month_name}",
-                    "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
-                    "data": {
-                        "hero_label": f"{month_name} Employee PF Contribution",
-                        "hero_amount": pf_val,
-                        "employee_id": emp_id,
-                        "month": month
-                    }
-                }
-            ],
+            "cards": cards,
             "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "pf_amount",
@@ -2034,24 +2036,26 @@ class ChatRouter:
             {"label": "Show calculation", "action": "show-calculation", "payload": {"topic": "tds", "month": month}}
         ] + [c for c in _get_user_fallback_chips(user) if c.get("action") != "show-calculation"]
 
+        cards = []
+        if tds_val != 0:
+            cards.append({
+                "id": f"card-tds-{month}",
+                "type": "number_hero",
+                "title": f"TDS Deduction — {month_name}",
+                "certainty": engine_certainty,
+                "data": {
+                    "hero_label": f"{month_name} TDS Deduction",
+                    "hero_amount": tds_val,
+                    "employee_id": emp_id,
+                    "month": month
+                }
+            })
+
         return {
             "messages": [
                 {"code": "C38", "text": get_message("C38", month=month_name, amount=amount_str)}
             ],
-            "cards": [
-                {
-                    "id": f"card-tds-{month}",
-                    "type": "number_hero",
-                    "title": f"TDS Deduction — {month_name}",
-                    "certainty": engine_certainty,
-                    "data": {
-                        "hero_label": f"{month_name} TDS Deduction",
-                        "hero_amount": tds_val,
-                        "employee_id": emp_id,
-                        "month": month
-                    }
-                }
-            ],
+            "cards": cards,
             "chips": chips,
             "state": {
                 "intent": "tds_amount",
@@ -2077,24 +2081,26 @@ class ChatRouter:
         lop_days = data["lop_days"] if data else 3
         text = get_message("C36", n=lop_days, month=month_name)
 
+        cards = []
+        if lop_days != 0:
+            cards.append({
+                "id": f"card-lop-{month}",
+                "type": "number_hero",
+                "title": f"Attendance & Loss of Pay — {month_name}",
+                "certainty": "Complete for this scope",
+                "data": {
+                    "hero_label": "Recorded LOP Days",
+                    "hero_amount": lop_days,
+                    "month": month_name,
+                    "employee_id": emp_id
+                }
+            })
+
         return {
             "messages": [
                 {"code": "C36", "text": text}
             ],
-            "cards": [
-                {
-                    "id": f"card-lop-{month}",
-                    "type": "number_hero",
-                    "title": f"Attendance & Loss of Pay — {month_name}",
-                    "certainty": "Complete for this scope",
-                    "data": {
-                        "hero_label": "Recorded LOP Days",
-                        "hero_amount": lop_days,
-                        "month": month_name,
-                        "employee_id": emp_id
-                    }
-                }
-            ],
+            "cards": cards,
             "chips": _get_user_fallback_chips(user),
             "state": {
                 "intent": "lop_days",

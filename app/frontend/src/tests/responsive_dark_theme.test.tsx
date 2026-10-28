@@ -6,6 +6,7 @@ import path from 'path';
 
 import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
+import { MonthTableCard } from '../design-system/components/cards/MonthTableCard';
 import fixturesData from './chat_scenario_fixtures.json';
 
 const fixtures: Record<string, any> = fixturesData;
@@ -346,5 +347,115 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
 
     fireEvent.click(screen.getByTestId('panel-close-btn'));
     expect(screen.queryByTestId('panel-hr')).not.toBeInTheDocument();
+  });
+
+  it('8. Scrollbar styles use tokens without white default browser scrollbars', () => {
+    const tokensPath = path.resolve(__dirname, '../design-system/tokens.css');
+    const tokensContent = fs.readFileSync(tokensPath, 'utf-8');
+
+    expect(tokensContent).toContain('--scrollbar-track-color: transparent');
+    expect(tokensContent).toContain('--scrollbar-thumb-color: var(--color-status-neutral-border)');
+    expect(tokensContent).toContain('--scrollbar-thumb-hover-color: var(--color-border-interactive)');
+    expect(tokensContent).toContain('--scrollbar-width: 6px');
+    expect(tokensContent).toContain('--scrollbar-width-firefox: thin');
+
+    expect(tokensContent).toContain('scrollbar-width: var(--scrollbar-width-firefox)');
+    expect(tokensContent).toContain('scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color)');
+    expect(tokensContent).toContain('*::-webkit-scrollbar');
+    expect(tokensContent).toContain('background-color: var(--scrollbar-thumb-color)');
+
+    const componentsPath = path.resolve(__dirname, '../design-system/components.css');
+    const componentsContent = fs.readFileSync(componentsPath, 'utf-8');
+    expect(componentsContent).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+  });
+
+  it('9. Suggestion chips wrap at desktop width and scroll horizontally at mobile width with fade', () => {
+    const componentsPath = path.resolve(__dirname, '../design-system/components.css');
+    const componentsContent = fs.readFileSync(componentsPath, 'utf-8');
+
+    // Desktop/tablet wrapping rule
+    expect(componentsContent).toContain('.hcm-suggestion-chips-track {');
+    expect(componentsContent).toContain('flex-wrap: wrap;');
+
+    // Mobile swipe sideways rule & hidden scrollbar & fade
+    expect(componentsContent).toContain('scrollbar-width: none;');
+    expect(componentsContent).toContain('flex-wrap: nowrap;');
+    expect(componentsContent).toContain('background: linear-gradient(to right, transparent, var(--color-surface))');
+  });
+
+  it('10. Composer placeholder differs by role: employee vs HR', () => {
+    const { unmount: unmountEmp } = render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
+    const empInput = screen.getByTestId('composer-textarea');
+    expect(empInput).toHaveAttribute('placeholder', 'Ask a question about your salary…');
+    unmountEmp();
+
+    const { unmount: unmountHr } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
+    const hrInput = screen.getByTestId('composer-textarea');
+    expect(hrInput).toHaveAttribute('placeholder', 'Ask about payroll, arrears or settlements…');
+    unmountHr();
+
+    expect(empInput.getAttribute('placeholder')).not.toEqual(hrInput.getAttribute('placeholder'));
+  });
+
+  it('11. Payslip card section order, sentence case labels, and tokens layout in MonthTableCard', () => {
+    const singleMonthCard = {
+      id: 'card-payslip-2026-06',
+      type: 'month_table',
+      title: 'Payslip · June 2026',
+      certainty: 'Complete for this scope',
+      data: {
+        employee_id: 'E05',
+        employee_name: 'Neha Gupta',
+        month: '2026-06',
+        basic: 25000,
+        hra: 10000,
+        special_allowance: 8000,
+        da: 2000,
+        gross_pay: 45000,
+        pf: 2220,
+        tds: 0,
+        total_deductions: 2220,
+        net_pay: 42780,
+      },
+    };
+
+    const { container, unmount } = render(<MonthTableCard card={singleMonthCard} />);
+
+    // Verify card title
+    expect(screen.getByText('Payslip · June 2026')).toBeInTheDocument();
+
+    // Verify section titles
+    expect(screen.getByText('Earnings')).toBeInTheDocument();
+    expect(screen.getByText('Deductions')).toBeInTheDocument();
+
+    // Verify sentence case labels
+    expect(screen.getByText('Basic pay')).toBeInTheDocument();
+    expect(screen.getByText('Gross pay')).toBeInTheDocument();
+    expect(screen.getByText('Total deductions')).toBeInTheDocument();
+    expect(screen.getByText('Net pay')).toBeInTheDocument();
+
+    // Verify section order: Earnings -> Basic pay -> Gross pay -> Deductions -> PF -> Total deductions -> Net pay
+    const allText = container.textContent || '';
+    const idxEarnings = allText.indexOf('Earnings');
+    const idxBasicPay = allText.indexOf('Basic pay');
+    const idxGrossPay = allText.indexOf('Gross pay');
+    const idxDeductions = allText.indexOf('Deductions');
+    const idxPF = allText.indexOf('PF');
+    const idxTotalDeductions = allText.indexOf('Total deductions');
+    const idxNetPay = allText.indexOf('Net pay');
+
+    expect(idxEarnings).toBeLessThan(idxBasicPay);
+    expect(idxBasicPay).toBeLessThan(idxGrossPay);
+    expect(idxGrossPay).toBeLessThan(idxDeductions);
+    expect(idxDeductions).toBeLessThan(idxPF);
+    expect(idxPF).toBeLessThan(idxTotalDeductions);
+    expect(idxTotalDeductions).toBeLessThan(idxNetPay);
+
+    // Verify CSS classes are used instead of inline styles
+    const table = container.querySelector('table');
+    expect(table).toHaveClass('hcm-payslip-table');
+    expect(table?.innerHTML).not.toContain('style=');
+
+    unmount();
   });
 });

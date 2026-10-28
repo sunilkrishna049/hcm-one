@@ -1288,7 +1288,7 @@
       {
         "id": "card-payslip-2026-09",
         "type": "month_table",
-        "title": "Payslip Breakdown — September 2026",
+        "title": "Payslip · September 2026",
         "certainty": "Complete for this scope",
         "data": {
           "employee_id": "E05",
@@ -1400,20 +1400,7 @@
         "text": "Your tax deducted (TDS) for September 2026 is ₹0. It's worked out as your remaining yearly tax divided by the months left in the tax year."
       }
     ],
-    "cards": [
-      {
-        "id": "card-tds-2026-09",
-        "type": "number_hero",
-        "title": "TDS Deduction — September 2026",
-        "certainty": "Complete for this scope",
-        "data": {
-          "hero_label": "September 2026 TDS Deduction",
-          "hero_amount": 0,
-          "employee_id": "E05",
-          "month": "2026-09"
-        }
-      }
-    ],
+    "cards": [],
     "chips": [
       {
         "label": "Show calculation",

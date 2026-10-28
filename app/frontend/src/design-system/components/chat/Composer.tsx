@@ -27,7 +27,7 @@ export const Composer: React.FC<ComposerProps> = ({
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
         if (prefilledText) {
-          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 124)}px`;
         }
       }
     }
@@ -62,10 +62,10 @@ export const Composer: React.FC<ComposerProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
-    // Auto resize
+    // Auto resize up to ~5 lines (124px), then scroll
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 124)}px`;
     }
   };
 

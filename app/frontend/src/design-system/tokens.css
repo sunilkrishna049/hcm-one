@@ -153,6 +153,13 @@
   --focus-outline-width: 3px;
   --focus-outline-offset: 3px;
   --focus-outline-color: var(--color-brand-accent);
+
+  /* Scrollbar Tokens */
+  --scrollbar-track-color: transparent;
+  --scrollbar-thumb-color: var(--color-status-neutral-border);
+  --scrollbar-thumb-hover-color: var(--color-border-interactive);
+  --scrollbar-width: 6px;
+  --scrollbar-width-firefox: thin;
 }
 
 /* Global Reset & Base Typography */
@@ -160,6 +167,26 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  scrollbar-width: var(--scrollbar-width-firefox);
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: var(--radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover-color);
 }
 
 body {

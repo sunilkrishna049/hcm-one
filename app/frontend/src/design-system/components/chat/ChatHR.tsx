@@ -330,7 +330,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
         <Composer
           onSendMessage={handleSendMessage}
           disabled={isLoading}
-          placeholder="Ask a question or enter a payroll request..."
+          placeholder="Ask about payroll, arrears or settlements…"
           isMobile={false}
           prefilledText={prefilledText}
           clearSignal={clearSignal}

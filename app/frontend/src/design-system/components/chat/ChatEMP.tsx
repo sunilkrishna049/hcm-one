@@ -284,7 +284,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
         <Composer
           onSendMessage={handleSendMessage}
           disabled={isLoading}
-          placeholder="Ask a question about your salary..."
+          placeholder="Ask a question about your salary…"
           prefilledText={prefilledText}
           clearSignal={clearSignal}
         />
