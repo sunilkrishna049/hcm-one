@@ -39,6 +39,11 @@ AI_MESSAGES = {
     "C34": "I don't have a record of that in your payroll data. You can raise a query with HR.",
     "C35": "I can show your pay for {available_months} only.",
     "C36": "{n} days of loss of pay were recorded in your {month} attendance. If that's not right, you can raise a query.",
+    "C37": "Your PF deduction for {month} is {amount}.",
+    "C38": "Your tax deducted (TDS) for {month} is {amount}. It's worked out as your remaining yearly tax divided by the months left in the tax year.",
+    "C39": "Here is your {month} payslip:",
+    "C40": "Your {month} query is {status}. No reply has been recorded yet.",
+    "C41": "You are on the {regime} tax regime for {tax_year}.",
 }
 
 
@@ -51,6 +56,8 @@ def get_message(code: str, **kwargs) -> str:
             kwargs["bonus_type"] = kwargs["bonus type"]
         if "available months" in kwargs and "available_months" not in kwargs:
             kwargs["available_months"] = kwargs["available months"]
+        if "tax year" in kwargs and "tax_year" not in kwargs:
+            kwargs["tax_year"] = kwargs["tax year"]
         try:
             return template.format(**kwargs)
         except KeyError:

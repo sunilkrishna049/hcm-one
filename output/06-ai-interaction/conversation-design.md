@@ -139,6 +139,13 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C36):** "{n} days of loss of pay were recorded in your {month} attendance. If that's not right, you can raise a query." (Approved by: Project owner).
   - Used for LOP inquiries. Never states or guesses why the employee was absent.
 
+### A06-17: Employee own-pay specific topic responses (Approved by: Project owner)
+- **Approved wording (C37):** "Your PF deduction for {month} is {amount}." (Approved by: Project owner).
+- **Approved wording (C38):** "Your tax deducted (TDS) for {month} is {amount}. It's worked out as your remaining yearly tax divided by the months left in the tax year." (Approved by: Project owner).
+- **Approved wording (C39):** "Here is your {month} payslip:" (Approved by: Project owner).
+- **Approved wording (C40):** "Your {month} query is {status}. No reply has been recorded yet." (Approved by: Project owner).
+- **Approved wording (C41):** "You are on the {regime} tax regime for {tax year}." (Approved by: Project owner).
+
 ## 8. Example conversations (5)
 
 All five scripts use the fictional company Northwind Technologies and fictional participants. They are content examples, not observed conversations, executed tests, actual calculations or approvals. Each numerical slot is labeled **Illustrative example, not a calculation**. Slots are intentionally unfilled. In a working demo, authorized records and Calculation code must supply every numeric input reference and derived result; the AI must never fill them from imagination. Words such as "April" and "May" identify fictional example periods, not real employee dates. No rate, amount, due date or confidence score is asserted here. (GR-3.1–GR-3.2, GR-8.1; conversation skill; BRD C-3)

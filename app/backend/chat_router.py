@@ -31,6 +31,99 @@ except Exception:
     EMPLOYEE_NAMES = {}
 
 
+MONTH_NAMES = {
+    "01": "January", "02": "February", "03": "March", "04": "April",
+    "05": "May", "06": "June", "07": "July", "08": "August",
+    "09": "September", "10": "October", "11": "November", "12": "December"
+}
+
+
+def format_month_label(month_str: str) -> str:
+    """Format '2026-09' to 'September 2026'."""
+    parts = month_str.split("-")
+    if len(parts) == 2:
+        return f"{MONTH_NAMES.get(parts[1], parts[1])} {parts[0]}"
+    return month_str
+
+
+def get_employee_ledger_months(emp_id: str) -> List[str]:
+    """Return every month the engine ledger holds with full provenance for that employee.
+    Never shows months before the employee joined.
+    """
+    bundle = bridge.get_bundle()
+    payroll = bundle.get("payroll")
+    store = bundle.get("store")
+    if not payroll or not store:
+        return ["2026-09"]
+
+    emp = store.employees.get(emp_id) if hasattr(store, "employees") else None
+    joining_date = None
+    if isinstance(emp, dict):
+        joining_date = emp.get("joining_date")
+    elif emp:
+        joining_date = getattr(emp, "joining_date", None)
+
+    joining_month = joining_date[:7] if joining_date else None
+
+    months = set()
+    for p in payroll.payslips:
+        if p.get("employee_id") == emp_id:
+            m = p.get("month")
+            if m:
+                if joining_month and m < joining_month:
+                    continue
+                months.add(m)
+
+    return sorted(list(months))
+
+
+def format_available_months_phrase(months: List[str]) -> str:
+    """Format available months from engine data, e.g. 'April to September 2026'."""
+    if not months:
+        return "September 2026"
+    if len(months) == 1:
+        return format_month_label(months[0])
+
+    start_parts = months[0].split("-")
+    end_parts = months[-1].split("-")
+    start_name = MONTH_NAMES.get(start_parts[1], start_parts[1])
+    end_name = MONTH_NAMES.get(end_parts[1], end_parts[1])
+
+    if start_parts[0] == end_parts[0]:
+        return f"{start_name} to {end_name} {end_parts[0]}"
+    return f"{start_name} {start_parts[0]} to {end_name} {end_parts[0]}"
+
+
+def normalize_month_code(m_str: Optional[str]) -> str:
+    """Normalizes any month string (e.g. 'September 2026', 'september', '2026-09') to 'YYYY-MM'."""
+    if not m_str:
+        return "2026-09"
+    m_clean = str(m_str).strip()
+    if re.match(r"^\d{4}-\d{2}$", m_clean):
+        return m_clean
+    lower = m_clean.lower()
+    month_map = {
+        "january": "01", "jan": "01",
+        "february": "02", "feb": "02",
+        "march": "03", "mar": "03",
+        "april": "04", "apr": "04",
+        "may": "05",
+        "june": "06", "jun": "06",
+        "july": "07", "jul": "07",
+        "august": "08", "aug": "08",
+        "september": "09", "sep": "09", "sept": "09",
+        "october": "10", "oct": "10",
+        "november": "11", "nov": "11",
+        "december": "12", "dec": "12",
+    }
+    for name, num in month_map.items():
+        if name in lower:
+            year_match = re.search(r"\b(20\d\d)\b", lower)
+            year = year_match.group(1) if year_match else "2026"
+            return f"{year}-{num}"
+    return "2026-09"
+
+
 def get_employee_name(employee_id: str) -> str:
     return EMPLOYEE_NAMES.get(employee_id, employee_id)
 
@@ -56,9 +149,13 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
 
     pf_rec = ps.get("pf", {})
     pf_val = pf_rec.get("employee", {}).get("value", 0) if isinstance(pf_rec, dict) and isinstance(pf_rec.get("employee"), dict) else (pf_rec.get("value", 0) if isinstance(pf_rec, dict) else 0)
+    pf_certainty = pf_rec.get("certainty") or (pf_rec.get("employee", {}).get("certainty") if isinstance(pf_rec.get("employee"), dict) else None) or ps.get("certainty", "Complete for this scope")
 
     tds_rec = ps.get("tds", {})
     tds_val = tds_rec.get("amount", {}).get("value", 0) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else (tds_rec.get("value", 0) if isinstance(tds_rec, dict) else 0)
+    tds_certainty = tds_rec.get("certainty") or (tds_rec.get("amount", {}).get("certainty") if isinstance(tds_rec.get("amount"), dict) else None) or ps.get("certainty", "Complete for this scope")
+    tds_formula = tds_rec.get("amount", {}).get("formula") if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else "Remaining yearly tax divided by remaining tax-year months including the current month"
+    tds_rules = tds_rec.get("amount", {}).get("rule_ids", []) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else []
 
     tot_ded = ps.get("total_deductions", {})
     tot_ded_val = tot_ded.get("value", 0) if isinstance(tot_ded, dict) else tot_ded
@@ -78,7 +175,11 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
         "da": da,
         "gross": gross,
         "pf": pf_val,
+        "pf_certainty": pf_certainty,
         "tds": tds_val,
+        "tds_certainty": tds_certainty,
+        "tds_formula": tds_formula,
+        "tds_rules": tds_rules,
         "total_deductions": tot_ded_val,
         "net_pay": net_val,
         "lop_days": lop_days,
@@ -296,7 +397,7 @@ class ChatRouter:
                 return self._build_scenario_12(user, role, surface)
 
         # 3. Out-of-Scope Requests (Personal Tax advice, Bank account verification)
-        if re.search(r"\btax regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*\btax regime\b|\btax investment\b|\bshould i choose (new|old)\b", lower_msg):
+        if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime should i choose\b", lower_msg):
             tax_chips = [{"label": "What is TDS?", "action": "faq-tds", "payload": {}}]
             if user.get("employee_id") == "E06":
                 tax_chips.insert(0, {"label": "Why did my TDS increase?", "action": "explain-tds", "payload": {}})
@@ -483,19 +584,66 @@ class ChatRouter:
 
         # --- Part C: Employee Own-Pay Topics and Approved Fallbacks ---
 
-        # C34 unrecorded topics: hike/arrears, bonus, October salary, CTC, leave balance, reimbursement, salary credit date, Form 16, PF balance
+        # C34 unrecorded topics: hike/arrears, bonus, CTC, leave balance, reimbursement, salary credit date, Form 16, PF balance
+        # Note: October salary is an unrecorded month (C35), handled by month routing below.
         is_bonus_query = bool(re.search(r"\b(bonus|incentive)\b", lower_msg))
-        is_october_salary = bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower_msg))
         is_unrecorded_topic_match = bool(re.search(
             r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b",
             lower_msg
         ))
-        if role == "Employee" and (is_bonus_query or is_october_salary or is_unrecorded_topic_match or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya")))):
+        if role == "Employee" and (is_bonus_query or is_unrecorded_topic_match or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya")))):
             return self._build_unrecorded_topic(user, role, surface)
 
-        # C35 unrecorded months: when employee asks for a month not in available display months (August 2026 and September 2026)
-        if role == "Employee" and re.search(r"\b(june|april|may|july|november|december|january|february|march)\b.*\b(pay|salary|payslip)\b|\b(pay|salary|payslip)\b.*\b(june|april|may|july|november|december|january|february|march)\b", lower_msg):
-            return self._build_unrecorded_month(user, role, surface)
+        # Topic e: Compare any two months
+        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b|\bcompare\b", lower_msg):
+            return self._build_compare_months(user, role, surface)
+
+        # Dynamic month routing for Employee
+        if role == "Employee":
+            month_lookup = {
+                "january": "2026-01", "february": "2026-02", "march": "2026-03",
+                "april": "2026-04", "may": "2026-05", "june": "2026-06",
+                "july": "2026-07", "august": "2026-08", "september": "2026-09",
+                "october": "2026-10", "november": "2026-11", "december": "2026-12"
+            }
+            found_m = None
+            for m_name, m_code in month_lookup.items():
+                if re.search(r"\b" + m_name + r"\b", lower_msg):
+                    found_m = (m_name, m_code)
+                    break
+
+            if found_m:
+                m_name, m_code = found_m
+                emp_id = user.get("employee_id") or "E05"
+                ledger_months = get_employee_ledger_months(emp_id)
+                # October is not processed and months outside the ledger get C35
+                if m_code not in ledger_months:
+                    if any(k in lower_msg for k in ("pay", "salary", "payslip", "pf", "tds", "tax", "lop", "breakdown")) or "what is my" in lower_msg or "explain" in lower_msg:
+                        return self._build_unrecorded_month(user, role, surface)
+                else:
+                    # Month is in ledger
+                    is_salary_drop = bool(re.search(
+                        r"\b(why is my salary less|why did i get less|why is my pay less|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+                        lower_msg
+                    )) or (("take-home" in lower_msg or "salary" in lower_msg or "payslip" in lower_msg) and ("lower" in lower_msg or "drop" in lower_msg or "less" in lower_msg))
+
+                    is_tds_increase = ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg))
+                    is_basic_allowance = ("basic pay" in lower_msg or "allowance" in lower_msg or "gross did not change" in lower_msg or ("change" in lower_msg and "allowance" in lower_msg))
+
+                    if is_salary_drop and (user.get("employee_id") == "E05" or (role == "HR Admin" and "E05" in (user.get("allowed_employee_ids") or []))):
+                        return self._build_scenario_9(user, role, surface)
+                    elif is_tds_increase and (user.get("employee_id") == "E06" or (role == "HR Admin" and "E06" in (user.get("allowed_employee_ids") or []))):
+                        return self._build_scenario_10(user, role, surface)
+                    elif is_basic_allowance and (user.get("employee_id") == "E16" or (role == "HR Admin" and "E16" in (user.get("allowed_employee_ids") or []))):
+                        return self._build_scenario_11(user, role, surface)
+                    elif "pf" in lower_msg:
+                        return self._build_pf_amount(user, role, surface, month=m_code)
+                    elif "tds" in lower_msg or ("tax" in lower_msg and "regime" not in lower_msg):
+                        return self._build_tds_amount(user, role, surface, month=m_code)
+                    elif "lop" in lower_msg:
+                        return self._build_lop_days(user, role, surface, month=m_code)
+                    elif any(k in lower_msg for k in ("pay", "salary", "payslip", "breakdown")) or "explain" in lower_msg:
+                        return self._build_payslip_breakdown(user, role, surface, month=m_code)
 
         # Topic g: Tax regime from her record
         if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
@@ -505,12 +653,8 @@ class ChatRouter:
         if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
             return self._handle_query_status(user, role, surface, context)
 
-        # Topic e: Compare any two months
-        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower_msg):
-            return self._build_compare_months(user, role, surface)
-
-        # Topic c: TDS amount & "why is my TDS zero"
-        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
+        # Topic c: TDS amount & "why is my TDS zero" & "How much tax was cut?"
+        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
             return self._build_tds_amount(user, role, surface)
 
         # Topic d: LOP days by month
@@ -522,7 +666,7 @@ class ChatRouter:
             return self._build_pf_amount(user, role, surface)
 
         # Topic a: Payslip breakdown for a month
-        if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b", lower_msg):
+        if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b|\bexplain my pay\b", lower_msg):
             m = "2026-08" if "august" in lower_msg else "2026-09"
             return self._build_payslip_breakdown(user, role, surface, month=m)
 
@@ -1754,16 +1898,21 @@ class ChatRouter:
 
     def _build_payslip_breakdown(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
         emp_id = user.get("employee_id") or "E05"
-        data = get_employee_payroll_data(emp_id, month)
-        month_name = "September 2026" if month == "2026-09" else "August 2026"
-        emp_name = get_employee_name(emp_id)
+        month = normalize_month_code(month)
+        ledger_months = get_employee_ledger_months(emp_id)
+        if month not in ledger_months:
+            return self._build_unrecorded_month(user, role, surface)
 
+        data = get_employee_payroll_data(emp_id, month)
         if not data:
             return self._build_unrecorded_month(user, role, surface)
 
+        month_name = format_month_label(month)
+        emp_name = get_employee_name(emp_id)
+
         return {
             "messages": [
-                {"code": "C27", "text": f"Here is your recorded payslip breakdown for {month_name}:"}
+                {"code": "C39", "text": get_message("C39", month=month_name)}
             ],
             "cards": [
                 {
@@ -1800,20 +1949,26 @@ class ChatRouter:
 
     def _build_pf_amount(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
         emp_id = user.get("employee_id") or "E05"
+        month = normalize_month_code(month)
+        ledger_months = get_employee_ledger_months(emp_id)
+        if month not in ledger_months:
+            return self._build_unrecorded_month(user, role, surface)
+
         data = get_employee_payroll_data(emp_id, month)
-        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        month_name = format_month_label(month)
         pf_val = data["pf"] if data else 2220
+        amount_str = format_inr(pf_val)
 
         return {
             "messages": [
-                {"code": "PF_AMOUNT", "text": f"Your recorded employee PF contribution for {month_name} is {format_inr(pf_val)}."}
+                {"code": "C37", "text": get_message("C37", month=month_name, amount=amount_str)}
             ],
             "cards": [
                 {
                     "id": f"card-pf-{month}",
                     "type": "number_hero",
                     "title": f"PF Contribution — {month_name}",
-                    "certainty": "Complete for this scope",
+                    "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
                     "data": {
                         "hero_label": f"{month_name} Employee PF Contribution",
                         "hero_amount": pf_val,
@@ -1835,45 +1990,90 @@ class ChatRouter:
 
     def _build_tds_amount(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
         emp_id = user.get("employee_id") or "E05"
+        month = normalize_month_code(month)
+        ledger_months = get_employee_ledger_months(emp_id)
+        if month not in ledger_months:
+            return self._build_unrecorded_month(user, role, surface)
+
         data = get_employee_payroll_data(emp_id, month)
-        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        month_name = format_month_label(month)
         tds_val = data["tds"] if data else 0
+        amount_str = format_inr(tds_val)
+
+        engine_certainty = data.get("tds_certainty", "Complete for this scope") if data else "Complete for this scope"
+        tds_formula = data.get("tds_formula", "Remaining yearly tax divided by remaining tax-year months including the current month") if data else "Remaining yearly tax divided by remaining tax-year months including the current month"
+        tds_rules = data.get("tds_rules", []) if data else []
+
+        rule_citations = []
+        for r in tds_rules:
+            if isinstance(r, dict):
+                r_id = r.get("rule_id", "")
+                r_val = r.get("value", "")
+                if isinstance(r_val, dict):
+                    r_val_str = ", ".join(f"{k}: {v}" for k, v in r_val.items())
+                elif isinstance(r_val, list):
+                    r_val_str = f"{len(r_val)} slabs defined"
+                else:
+                    r_val_str = str(r_val)
+                rule_citations.append(f"{r_id}: {r_val_str}")
+            elif isinstance(r, str):
+                rule_citations.append(r)
+
+        if not rule_citations:
+            rule_citations = [
+                "tax-rules.json#monthly_tds_formula: (projected yearly tax - TDS already deducted) / remaining months including the current month",
+                "tax-rules.json#rebate: taxable_income_limit_inr: 1200000, tax_up_to_limit_inr: 0",
+                "tax-rules.json#standard_deduction_inr: 75000",
+                "tax-rules.json#regime_scope: regime: new, old_regime_in_scope: False"
+            ]
+
+        # TDS reply uses C38 plus a "Show calculation" chip listing the engine formula and rule references (names and values only from data/rules).
+        # Never state a reason the engine does not output (e.g. "below the rebate limit").
+        # C11 only when the user asks for advice (which regime to choose, how to save tax, investments). Not for factual questions like "How much tax was cut?".
+        chips = [
+            {"label": "Show calculation", "action": "show-calculation", "payload": {"topic": "tds", "month": month}}
+        ] + [c for c in _get_user_fallback_chips(user) if c.get("action") != "show-calculation"]
 
         return {
             "messages": [
-                {"code": "TDS_ZERO", "text": f"Your recorded TDS for {month_name} is {format_inr(tds_val)}."},
-                {"code": "C11", "text": get_message("C11")}
+                {"code": "C38", "text": get_message("C38", month=month_name, amount=amount_str)}
             ],
             "cards": [
                 {
                     "id": f"card-tds-{month}",
                     "type": "number_hero",
                     "title": f"TDS Deduction — {month_name}",
-                    "certainty": "Cannot explain from available payroll data",
+                    "certainty": engine_certainty,
                     "data": {
                         "hero_label": f"{month_name} TDS Deduction",
                         "hero_amount": tds_val,
-                        "note": "Cannot explain from available payroll data",
                         "employee_id": emp_id,
                         "month": month
                     }
                 }
             ],
-            "chips": _get_user_fallback_chips(user),
+            "chips": chips,
             "state": {
                 "intent": "tds_amount",
                 "scenario_num": None,
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "panel": None
+                "panel": {
+                    "title": f"TDS Calculation — {month_name}",
+                    "formulas": [
+                        tds_formula
+                    ],
+                    "rule_citations": rule_citations
+                }
             }
         }
 
     def _build_lop_days(self, user: dict, role: str, surface: str, month: str = "2026-09") -> dict:
         emp_id = user.get("employee_id") or "E05"
+        month = normalize_month_code(month)
         data = get_employee_payroll_data(emp_id, month)
-        month_name = "September 2026" if month == "2026-09" else "August 2026"
+        month_name = format_month_label(month)
         lop_days = data["lop_days"] if data else 3
         text = get_message("C36", n=lop_days, month=month_name)
 
@@ -1914,8 +2114,8 @@ class ChatRouter:
         net_b = data_b["net_pay"] if data_b else 42780
         net_change = net_b - net_a
         direction = "lower" if net_change < 0 else "higher"
-        name_a = "August 2026" if month_a == "2026-08" else month_a
-        name_b = "September 2026" if month_b == "2026-09" else month_b
+        name_a = format_month_label(month_a)
+        name_b = format_month_label(month_b)
 
         return {
             "messages": [
@@ -1952,13 +2152,11 @@ class ChatRouter:
     def _build_tax_regime(self, user: dict, role: str, surface: str) -> dict:
         emp_id = user.get("employee_id") or "E05"
         data = get_employee_payroll_data(emp_id, "2026-09")
-        regime_raw = data.get("tax_regime", "new") if data else "new"
-        regime_label = "New tax regime" if regime_raw == "new" else "Old tax regime"
+        regime_raw = (data.get("tax_regime") or "new").lower() if data else "new"
 
         return {
             "messages": [
-                {"code": "TAX_REGIME", "text": f"Your employee record indicates you are under the {regime_label} for Tax Year 2026-27."},
-                {"code": "C11", "text": get_message("C11")}
+                {"code": "C41", "text": get_message("C41", regime=regime_raw, tax_year="2026-27")}
             ],
             "cards": [
                 {
@@ -1967,7 +2165,7 @@ class ChatRouter:
                     "title": "Recorded Tax Regime",
                     "certainty": "Complete for this scope",
                     "data": {
-                        "tax_regime": regime_label,
+                        "tax_regime": regime_raw,
                         "tax_year": "2026-27",
                         "employee_id": emp_id
                     }
@@ -2004,23 +2202,31 @@ class ChatRouter:
         }
 
     def _build_unrecorded_month(self, user: dict, role: str, surface: str) -> dict:
-        available_str = "August 2026 and September 2026"
+        emp_id = user.get("employee_id") or "E05"
+        ledger_months = get_employee_ledger_months(emp_id)
+        available_str = format_available_months_phrase(ledger_months)
+
+        chips = []
+        if len(ledger_months) >= 1:
+            m_latest = ledger_months[-1]
+            chips.append({"label": f"Show my {format_month_label(m_latest)} payslip", "action": "explain-payslip", "payload": {"month": m_latest}})
+        if len(ledger_months) >= 2:
+            m_prev = ledger_months[-2]
+            chips.append({"label": f"Show my {format_month_label(m_prev)} payslip", "action": "explain-payslip", "payload": {"month": m_prev}})
+        chips.append({"label": "Draft a query for HR", "action": "draft-query", "payload": {}})
+
         return {
             "messages": [
                 {"code": "C35", "text": get_message("C35", available_months=available_str)}
             ],
             "cards": [],
-            "chips": [
-                {"label": "Show my September payslip", "action": "explain-payslip", "payload": {"month": "2026-09"}},
-                {"label": "Show my August payslip", "action": "explain-payslip", "payload": {"month": "2026-08"}},
-                {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "unrecorded_month",
                 "scenario_num": None,
                 "role": role,
                 "surface": surface,
-                "employee_id": user.get("employee_id"),
+                "employee_id": emp_id,
                 "panel": None
             }
         }
@@ -2500,12 +2706,24 @@ class ChatRouter:
             }
         latest = queries[-1]
         st = latest.get("status", "Sent")
-        code_map = {"Sent": "C15", "In review": "C16", "Resolved": "C23", "Closed": "C24", "Draft": "C17"}
-        msg_code = code_map.get(st, "C15")
+        if st.lower() == "in review":
+            st = "In review"
+
+        hr_reply = latest.get("hr_reply") or latest.get("reply_text") or latest.get("resolution")
+        q_months = latest.get("months") or ([latest.get("month")] if latest.get("month") else ["2026-09"])
+        q_month_name = format_month_label(q_months[0]) if q_months else "September 2026"
+
+        if not hr_reply:
+            msg_code = "C40"
+            msg_text = get_message("C40", month=q_month_name, status=st)
+        else:
+            code_map = {"Sent": "C15", "In review": "C16", "Resolved": "C23", "Closed": "C24", "Draft": "C17"}
+            msg_code = code_map.get(st, "C15")
+            msg_text = get_message(msg_code)
 
         return {
             "messages": [
-                {"code": msg_code, "text": get_message(msg_code)}
+                {"code": msg_code, "text": msg_text}
             ],
             "cards": [
                 {
@@ -2712,6 +2930,23 @@ class ChatRouter:
         }
 
     def _handle_show_calculation(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        topic = context.get("topic")
+        if topic == "tds" or (role == "Employee" and not context.get("scenario_num")):
+            m = context.get("month", "2026-09")
+            resp = self._build_tds_amount(user, role, surface, month=m)
+            return {
+                "messages": [
+                    {"code": "C22", "text": get_message("C22")}
+                ],
+                "cards": resp.get("cards", []),
+                "chips": resp.get("chips", []),
+                "state": {
+                    **resp.get("state", {}),
+                    "open_panel": True,
+                    "panel": resp.get("state", {}).get("panel")
+                }
+            }
+
         s_num = context.get("scenario_num", 1)
         builder = getattr(self, f"_build_scenario_{s_num}", self._build_scenario_1)
         resp = builder(user, role, surface)

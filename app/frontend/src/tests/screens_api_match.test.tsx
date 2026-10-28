@@ -73,9 +73,11 @@ function getSpacedText(element: HTMLElement): string {
 
 // Setup fetch mock to return real chat responses from fixtures
 let currentTestScenario = 1;
+let currentTestKey = '';
 
 beforeEach(() => {
   currentTestScenario = 1;
+  currentTestKey = '';
   vi.spyOn(globalThis, 'fetch').mockImplementation((input: any, init?: any) => {
     const url = String(input);
 
@@ -90,7 +92,9 @@ beforeEach(() => {
       }
       const effectiveUserId = body?.user_id || body?.userId;
       let sNum = body?.context?.scenario_num;
-      if (!sNum) {
+      if (currentTestKey && fixtures[currentTestKey]) {
+        sNum = currentTestKey;
+      } else if (!sNum) {
         const msg = (body?.message || '').toLowerCase();
         if (msg.includes('priya') || msg.includes('sharma')) sNum = effectiveUserId === 'HR02' ? 12 : 1;
         else if (msg.includes('arjun') || msg.includes('rao')) sNum = 2;
@@ -348,21 +352,21 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
   });
 
   it('GUARD TEST: Fails if any payroll number on rendered chat cards is not present in the API response', async () => {
+    // Add allowed non-payroll UI numbers: year, month numbers, scenario ids, versions, calendar dates, clock hours/minutes
+    const standardAllowed = new Set([
+      2025, 2026, 2027, // years
+      ...Array.from({ length: 31 }, (_, i) => i + 1), // dates / days 1..31
+      ...Array.from({ length: 60 }, (_, i) => i), // clock hours / minutes 0..59
+      100, // percentage max
+      390, 1440, // frame widths
+    ]);
+
     // Test across scenarios 1, 2, 3, 6, 9, 10, 11, 12, 13
     for (const sNum of [1, 2, 3, 6, 9, 10, 11, 12, 13]) {
       const sc = loadScenarioData(sNum);
       const fixture = fixtures[String(sNum)];
       const allowedNumbers = extractNumbersFromObject(sc);
       extractNumbersFromObject(fixture, allowedNumbers);
-
-      // Add allowed non-payroll UI numbers: year, month numbers, scenario ids, versions, calendar dates, clock hours/minutes
-      const standardAllowed = new Set([
-        2025, 2026, 2027, // years
-        ...Array.from({ length: 31 }, (_, i) => i + 1), // dates / days 1..31
-        ...Array.from({ length: 60 }, (_, i) => i), // clock hours / minutes 0..59
-        100, // percentage max
-        390, 1440, // frame widths
-      ]);
 
       currentTestScenario = sNum;
       let renderedResult;
@@ -403,6 +407,59 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
         if (!isInApi) {
           throw new Error(
             `GUARD FAILED: Found payroll number '${match}' (${num}) in Scenario ${sNum} chat screen that does NOT exist in API response!`
+          );
+        }
+        expect(isInApi).toBe(true);
+      }
+
+      renderedResult.unmount();
+    }
+
+    // Part D Item 10: Run screen-vs-API guard test over USER-E05 new topics:
+    // payslip, PF, TDS, LOP days, month comparison, query status, tax regime, C34 and C35
+    const e05Topics = [
+      { key: 'e05_payslip', prompt: 'Explain my September pay.' },
+      { key: 'e05_pf', prompt: 'How much PF was cut in September?' },
+      { key: 'e05_tds', prompt: 'Why is my TDS zero?' },
+      { key: 'e05_lop', prompt: 'How many LOP days do I have?' },
+      { key: 'e05_compare', prompt: 'Compare my August and September pay.' },
+      { key: 'e05_query_status', prompt: "What's happening with my query?" },
+      { key: 'e05_tax_regime', prompt: 'Which tax regime am I in?' },
+      { key: 'e05_c34', prompt: 'Will I get a bonus this year?' },
+      { key: 'e05_c35', prompt: 'What is my October salary?' },
+    ];
+
+    for (const topic of e05Topics) {
+      currentTestKey = topic.key;
+      const fixture = fixtures[topic.key];
+      expect(fixture).toBeDefined();
+      const allowedNumbers = extractNumbersFromObject(fixture);
+
+      const renderedResult = render(
+        <ChatEMP
+          currentUser="USER-E05"
+          currentScenario={9}
+        />
+      );
+      sendChatMessage(topic.prompt);
+
+      await waitFor(() => {
+        expect(renderedResult.container).toBeInTheDocument();
+      });
+
+      const text = getSpacedText(renderedResult.container);
+      const matches = text.match(/-?\b\d[\d,]*(?:\.\d+)?\b/g) || [];
+
+      for (const match of matches) {
+        const cleanStr = match.replace(/,/g, '');
+        const num = Math.abs(parseFloat(cleanStr));
+        if (isNaN(num)) continue;
+        if (standardAllowed.has(num)) continue;
+
+        const isInApi = allowedNumbers.has(num) || allowedNumbers.has(-num);
+        if (!isInApi) {
+          throw new Error(
+            `GUARD FAILED: Found payroll number '${match}' (${num}) in E05 topic '${topic.key}' chat screen that does NOT exist in API response!`
           );
         }
         expect(isInApi).toBe(true);

@@ -45,11 +45,43 @@ class MockLLM:
             return self.custom_classify_response
 
         lower = message.lower()
-        if bool(re.search(r"\b(bonus|incentive)\b", lower)) or bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower)):
+        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b|\bcompare\b", lower):
+            return {
+                "intent": "compare_months",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if bool(re.search(r"\b(bonus|incentive)\b", lower)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower)):
             return {
                 "intent": "unrecorded_topic",
                 "scenario_num": None,
                 "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if "october" in lower and any(k in lower for k in ("pay", "salary", "payslip", "pf", "tds", "tax", "lop")):
+            return {
+                "intent": "unrecorded_month",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if "june" in lower and any(k in lower for k in ("pay", "salary", "payslip")):
+            # June is in E05's ledger, but not in E06's
+            if context.get("employee_id") == "E06" or "e06" in str(context).lower():
+                int_name = "unrecorded_month"
+            else:
+                int_name = "payslip_breakdown"
+            return {
+                "intent": int_name,
+                "scenario_num": None,
+                "entities": {"month": "2026-06"},
                 "confidence": 0.98,
                 "is_prompt_injection": False,
                 "clarification_needed": False
@@ -81,16 +113,7 @@ class MockLLM:
                 "is_prompt_injection": False,
                 "clarification_needed": False
             }
-        if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower):
-            return {
-                "intent": "compare_months",
-                "scenario_num": None,
-                "entities": {},
-                "confidence": 0.98,
-                "is_prompt_injection": False,
-                "clarification_needed": False
-            }
-        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower) or (lower.strip() in ("tds", "my tds"))) and not ("increase" in lower or "higher" in lower or "more" in lower):
+        if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower) or (lower.strip() in ("tds", "my tds"))) and not ("increase" in lower or "higher" in lower or "more" in lower):
             return {
                 "intent": "tds_amount",
                 "scenario_num": None,

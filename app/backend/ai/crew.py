@@ -157,8 +157,9 @@ class PayrollAICrew:
 
         try:
             # Agent 1: Classifier Agent (LLM)
+            merged_ctx = {"user_id": user_id, "employee_id": user.get("employee_id"), **context}
             if self._custom_llm and hasattr(self._custom_llm, "classify"):
-                classifier_res = validate_classifier_output(self._custom_llm.classify(raw_msg, role, context), user)
+                classifier_res = validate_classifier_output(self._custom_llm.classify(raw_msg, role, merged_ctx), user)
             else:
                 classifier_agent = create_classifier_agent(llm)
                 classify_task = Task(
@@ -173,7 +174,7 @@ class PayrollAICrew:
                     expected_output="JSON object with classification fields",
                     agent=classifier_agent
                 )
-                classifier_res = self._execute_classifier(classify_task, raw_msg, role, user, context)
+                classifier_res = self._execute_classifier(classify_task, raw_msg, role, user, merged_ctx)
 
             if classifier_res.is_prompt_injection:
                 return _router._build_refusal(role, surface, "Prompt injection prevented.")
@@ -224,8 +225,19 @@ class PayrollAICrew:
             if not retrieval_data.get("cards"):
                 # Fallback to deterministic reply for that same intent
                 if classifier_res and classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
+                    target_m = classifier_res.entities.get("month") if classifier_res.entities else None
+                    if not target_m:
+                        for m_name, m_code in [
+                            ("january", "2026-01"), ("february", "2026-02"), ("march", "2026-03"),
+                            ("april", "2026-04"), ("may", "2026-05"), ("june", "2026-06"),
+                            ("july", "2026-07"), ("august", "2026-08"), ("september", "2026-09"),
+                            ("october", "2026-10"), ("november", "2026-11"), ("december", "2026-12")
+                        ]:
+                            if re.search(r"\b" + m_name + r"\b", lower_msg):
+                                target_m = m_code
+                                break
                     fallback_resp = self._build_deterministic_fallback_for_intent(
-                        classifier_res.intent, scenario_num, user, role, surface, bonus_key
+                        classifier_res.intent, scenario_num, user, role, surface, bonus_key, month=target_m
                     )
                     if fallback_resp:
                         return fallback_resp
@@ -360,8 +372,9 @@ class PayrollAICrew:
                 latency_ms=(time.time() - start_time) * 1000
             )
             if classifier_res and classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
+                target_m = classifier_res.entities.get("month") if classifier_res.entities else None
                 fallback_resp = self._build_deterministic_fallback_for_intent(
-                    classifier_res.intent, curr_sc, user, role, surface, bonus_key
+                    classifier_res.intent, curr_sc, user, role, surface, bonus_key, month=target_m
                 )
                 if fallback_resp:
                     return fallback_resp
@@ -379,10 +392,12 @@ class PayrollAICrew:
         user: dict,
         role: str,
         surface: str,
-        bonus_key: Optional[str] = None
+        bonus_key: Optional[str] = None,
+        month: Optional[str] = None
     ) -> Optional[dict]:
         """Returns the deterministic reply for the identified intent without fresh keyword routing."""
         allowed = set(user.get("allowed_employee_ids") or [])
+        target_month = month or "2026-09"
         if intent == "explain_salary":
             if (role == "HR Admin" and "E05" in allowed) or user.get("employee_id") == "E05":
                 return _router._build_scenario_9(user, role, surface)
@@ -416,13 +431,13 @@ class PayrollAICrew:
         elif intent == "settlement_review":
             return _router._build_scenario_13(user, role, surface)
         elif intent == "payslip_breakdown":
-            return _router._build_payslip_breakdown(user, role, surface, month="2026-09")
+            return _router._build_payslip_breakdown(user, role, surface, month=target_month)
         elif intent == "pf_amount":
-            return _router._build_pf_amount(user, role, surface, month="2026-09")
+            return _router._build_pf_amount(user, role, surface, month=target_month)
         elif intent == "tds_amount":
-            return _router._build_tds_amount(user, role, surface, month="2026-09")
+            return _router._build_tds_amount(user, role, surface, month=target_month)
         elif intent == "lop_days":
-            return _router._build_lop_days(user, role, surface, month="2026-09")
+            return _router._build_lop_days(user, role, surface, month=target_month)
         elif intent == "compare_months":
             return _router._build_compare_months(user, role, surface)
         elif intent == "query_status":
@@ -490,7 +505,7 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
 
         # Tax advice out of scope
-        if re.search(r"\btax regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*\btax regime\b|\btax investment\b|\bshould i choose (new|old)\b", lower_msg):
+        if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime should i choose\b", lower_msg):
             return validate_classifier_output({"intent": "out_of_scope", "scenario_num": None}, user)
 
         if (lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
@@ -498,23 +513,67 @@ class PayrollAICrew:
 
         # Part C intents for signed-in employee
         if role == "Employee":
-            if bool(re.search(r"\b(bonus|incentive)\b", lower_msg)) or bool(re.search(r"\boctober\b.*\b(salary|pay|payslip)\b|\b(salary|pay|payslip)\b.*\boctober\b", lower_msg)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower_msg)) or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya"))):
+            if bool(re.search(r"\b(bonus|incentive)\b", lower_msg)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower_msg)) or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya"))):
                 return validate_classifier_output({"intent": "unrecorded_topic", "scenario_num": None}, user)
-            if re.search(r"\b(june|april|may|july|november|december|january|february|march)\b.*\b(pay|salary|payslip)\b|\b(pay|salary|payslip)\b.*\b(june|april|may|july|november|december|january|february|march)\b", lower_msg):
-                return validate_classifier_output({"intent": "unrecorded_month", "scenario_num": None}, user)
+
+            if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b|\bcompare\b", lower_msg):
+                return validate_classifier_output({"intent": "compare_months", "scenario_num": None}, user)
+
+            month_lookup = {
+                "january": "2026-01", "february": "2026-02", "march": "2026-03",
+                "april": "2026-04", "may": "2026-05", "june": "2026-06",
+                "july": "2026-07", "august": "2026-08", "september": "2026-09",
+                "october": "2026-10", "november": "2026-11", "december": "2026-12"
+            }
+            found_m = None
+            for m_name, m_code in month_lookup.items():
+                if re.search(r"\b" + m_name + r"\b", lower_msg):
+                    found_m = (m_name, m_code)
+                    break
+
+            if found_m:
+                m_name, m_code = found_m
+                from ..chat_router import get_employee_ledger_months
+                emp_id = user.get("employee_id") or "E05"
+                ledger_months = get_employee_ledger_months(emp_id)
+                if m_code not in ledger_months:
+                    if any(k in lower_msg for k in ("pay", "salary", "payslip", "pf", "tds", "tax", "lop", "breakdown")) or "what is my" in lower_msg or "explain" in lower_msg:
+                        return validate_classifier_output({"intent": "unrecorded_month", "scenario_num": None, "entities": {"month": m_code}}, user)
+                else:
+                    is_salary_drop = bool(re.search(
+                        r"\b(why is my salary less|why did i get less|why is my pay less|less this month|salary.*less|pay.*less|take-home.*less|cut in.*salary|salary.*drop|take-home.*lower)\b",
+                        lower_msg
+                    )) or (("take-home" in lower_msg or "salary" in lower_msg or "payslip" in lower_msg) and ("lower" in lower_msg or "drop" in lower_msg or "less" in lower_msg))
+
+                    is_tds_increase = ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg))
+                    is_basic_allowance = ("basic pay" in lower_msg or "allowance" in lower_msg or "gross did not change" in lower_msg or ("change" in lower_msg and "allowance" in lower_msg))
+
+                    if is_salary_drop and (user.get("employee_id") == "E05" or (role == "HR Admin" and "E05" in allowed)):
+                        return validate_classifier_output({"intent": "explain_salary", "scenario_num": 9, "entities": {"month": m_code}}, user)
+                    elif is_tds_increase and (user.get("employee_id") == "E06" or (role == "HR Admin" and "E06" in allowed)):
+                        return validate_classifier_output({"intent": "explain_tds", "scenario_num": 10, "entities": {"month": m_code}}, user)
+                    elif is_basic_allowance and (user.get("employee_id") == "E16" or (role == "HR Admin" and "E16" in allowed)):
+                        return validate_classifier_output({"intent": "explain_deduction", "scenario_num": 11, "entities": {"month": m_code}}, user)
+                    elif "pf" in lower_msg:
+                        return validate_classifier_output({"intent": "pf_amount", "scenario_num": None, "entities": {"month": m_code}}, user)
+                    elif "tds" in lower_msg or ("tax" in lower_msg and "regime" not in lower_msg):
+                        return validate_classifier_output({"intent": "tds_amount", "scenario_num": None, "entities": {"month": m_code}}, user)
+                    elif "lop" in lower_msg:
+                        return validate_classifier_output({"intent": "lop_days", "scenario_num": None, "entities": {"month": m_code}}, user)
+                    elif any(k in lower_msg for k in ("pay", "salary", "payslip", "breakdown")) or "explain" in lower_msg:
+                        return validate_classifier_output({"intent": "payslip_breakdown", "scenario_num": None, "entities": {"month": m_code}}, user)
+
             if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
                 return validate_classifier_output({"intent": "tax_regime", "scenario_num": None}, user)
             if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
                 return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
-            if re.search(r"\bcompare\b.*\b(august|september|months|pay|salary)\b", lower_msg):
-                return validate_classifier_output({"intent": "compare_months", "scenario_num": None}, user)
-            if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much tds\b|\bwhat is my tds\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
+            if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
                 return validate_classifier_output({"intent": "tds_amount", "scenario_num": None}, user)
             if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower_msg):
                 return validate_classifier_output({"intent": "lop_days", "scenario_num": None}, user)
             if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw much pf\b", lower_msg):
                 return validate_classifier_output({"intent": "pf_amount", "scenario_num": None}, user)
-            if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b", lower_msg):
+            if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b|\bexplain my pay\b", lower_msg):
                 return validate_classifier_output({"intent": "payslip_breakdown", "scenario_num": None}, user)
 
         # Casual phrasings and personal pay queries for Neha / salary explanation

@@ -38,7 +38,7 @@ EMPLOYEE_DISTINCTIVE_NUMBERS = {
 # 17 target users: 16 employees (USER-E01 to USER-E16) + HR02 (Sales only)
 TARGET_USERS = [f"USER-E{i:02d}" for i in range(1, 17)] + ["HR02"]
 
-# 25 probe messages: 9 keyword topics + 16 employee first names
+# 25 probe messages: 9 keyword topics + expanded employee probes (first name, last name, full name, ID)
 TOPIC_PROBES = [
     "tds",
     "why did my tds change",
@@ -51,9 +51,22 @@ TOPIC_PROBES = [
     "bonus"
 ]
 
-NAME_PROBES = [
-    emp["name"].split()[0].lower() for emp in ALL_EMPLOYEES if emp.get("name")
-]
+from pathlib import Path
+_EMPLOYEES_PATH = Path(__file__).resolve().parents[3] / "data" / "mock" / "employees.json"
+with open(_EMPLOYEES_PATH, "r", encoding="utf-8") as _f:
+    _MOCK_EMPLOYEES = json.load(_f)
+
+NAME_PROBES = []
+for _emp in _MOCK_EMPLOYEES:
+    _eid = _emp["employee_id"]
+    _name = _emp["name"]
+    _parts = _name.strip().split()
+    _first = _parts[0].lower()
+    _last = _parts[-1].lower() if len(_parts) > 1 else ""
+    _full = _name.lower()
+    for _p in [_first, _last, _full, _eid, _eid.lower()]:
+        if _p and _p not in NAME_PROBES:
+            NAME_PROBES.append(_p)
 
 ALL_PROBE_MESSAGES = TOPIC_PROBES + NAME_PROBES
 

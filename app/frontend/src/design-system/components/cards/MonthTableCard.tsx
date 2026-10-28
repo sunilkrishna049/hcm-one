@@ -18,15 +18,96 @@ interface MonthTableCardProps {
     title: string;
     certainty: string;
     data: {
-      months: MonthRecord[];
+      months?: MonthRecord[];
       total_gross_arrears?: number;
+      gross_pay?: number;
+      basic?: number;
+      hra?: number;
+      special_allowance?: number;
+      da?: number;
+      pf?: number;
+      tds?: number;
+      total_deductions?: number;
+      net_pay?: number;
+      [key: string]: any;
     };
   };
   onShowCalculation?: () => void;
 }
 
 export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
-  const { months, total_gross_arrears } = card.data;
+  const d = card.data || {};
+  const { months, total_gross_arrears } = d;
+
+  if (!months || !Array.isArray(months)) {
+    return (
+      <div className="hcm-rich-card hcm-card-month-table" data-testid={`card-${card.id}`}>
+        <div className="hcm-card-header">
+          <h4 className="hcm-card-title">{card.title}</h4>
+        </div>
+        <div className="hcm-table-container">
+          <table className="hcm-table">
+            <tbody>
+              {d.gross_pay !== undefined && (
+                <tr>
+                  <td>Gross Pay</td>
+                  <td className="tnum" style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)' }}>{formatINR(d.gross_pay)}</td>
+                </tr>
+              )}
+              {d.basic !== undefined && (
+                <tr>
+                  <td>Basic Pay</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.basic)}</td>
+                </tr>
+              )}
+              {d.hra !== undefined && (
+                <tr>
+                  <td>HRA</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.hra)}</td>
+                </tr>
+              )}
+              {d.special_allowance !== undefined && (
+                <tr>
+                  <td>Special Allowance</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.special_allowance)}</td>
+                </tr>
+              )}
+              {d.da !== undefined && (
+                <tr>
+                  <td>DA</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.da)}</td>
+                </tr>
+              )}
+              {d.pf !== undefined && (
+                <tr>
+                  <td>PF Deduction</td>
+                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-status-warning-text)' }}>{formatINR(d.pf)}</td>
+                </tr>
+              )}
+              {d.tds !== undefined && (
+                <tr>
+                  <td>TDS Deduction</td>
+                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-status-warning-text)' }}>{formatINR(d.tds)}</td>
+                </tr>
+              )}
+              {d.total_deductions !== undefined && (
+                <tr>
+                  <td>Total Deductions</td>
+                  <td className="tnum" style={{ textAlign: 'right' }}>{formatINR(d.total_deductions)}</td>
+                </tr>
+              )}
+              {d.net_pay !== undefined && (
+                <tr style={{ fontWeight: 'var(--font-weight-bold)' }}>
+                  <td>Net Take-Home</td>
+                  <td className="tnum" style={{ textAlign: 'right', color: 'var(--color-brand-accent)' }}>{formatINR(d.net_pay)}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="hcm-rich-card hcm-card-month-table" data-testid={`card-${card.id}`}>

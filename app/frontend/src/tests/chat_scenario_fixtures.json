@@ -1276,5 +1276,494 @@
         ]
       }
     }
+  },
+  "e05_payslip": {
+    "messages": [
+      {
+        "code": "C39",
+        "text": "Here is your September 2026 payslip:"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-payslip-2026-09",
+        "type": "month_table",
+        "title": "Payslip Breakdown — September 2026",
+        "certainty": "Complete for this scope",
+        "data": {
+          "employee_id": "E05",
+          "employee_name": "Neha Gupta",
+          "month": "2026-09",
+          "gross_pay": 45000,
+          "basic": 22500,
+          "hra": 11250,
+          "special_allowance": 11250,
+          "da": 0,
+          "total_deductions": 2220,
+          "pf": 2220,
+          "tds": 0,
+          "net_pay": 42780
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "payslip_breakdown",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_pf": {
+    "messages": [
+      {
+        "code": "C37",
+        "text": "Your PF deduction for September 2026 is ₹2,220."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-pf-2026-09",
+        "type": "number_hero",
+        "title": "PF Contribution — September 2026",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "September 2026 Employee PF Contribution",
+          "hero_amount": 2220,
+          "employee_id": "E05",
+          "month": "2026-09"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "pf_amount",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_tds": {
+    "messages": [
+      {
+        "code": "C38",
+        "text": "Your tax deducted (TDS) for September 2026 is ₹0. It's worked out as your remaining yearly tax divided by the months left in the tax year."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-tds-2026-09",
+        "type": "number_hero",
+        "title": "TDS Deduction — September 2026",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "September 2026 TDS Deduction",
+          "hero_amount": 0,
+          "employee_id": "E05",
+          "month": "2026-09"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Show calculation",
+        "action": "show-calculation",
+        "payload": {
+          "topic": "tds",
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "tds_amount",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": {
+        "title": "TDS Calculation — September 2026",
+        "formulas": [
+          "Remaining yearly tax divided by remaining tax-year months including the current month"
+        ],
+        "rule_citations": [
+          "tax-rules.json#regime_scope: regime: new, old_regime_in_scope: False",
+          "tax-rules.json#tax_year: year: 2026-27, act: Income-tax Act, 2025",
+          "tax-rules.json#slabs: 7 slabs defined",
+          "tax-rules.json#standard_deduction_inr: 75000",
+          "tax-rules.json#rebate: taxable_income_limit_inr: 1200000, tax_up_to_limit_inr: 0",
+          "tax-rules.json#health_and_education_cess: rate_percent: 4, basis: tax",
+          "tax-rules.json#marginal_relief_scope: Marginal relief near the rebate limit is out of scope for the demo",
+          "company-settings.json#rounding: Round each line to the nearest rupee, then add rounded lines for totals",
+          "tax-rules.json#monthly_tds_formula: (projected yearly tax - TDS already deducted) / remaining months including the current month",
+          "tax-rules.json#previous_employer_income: declaration_status: accepted, gross_income_treatment: Add accepted declared gross income to projected yearly income, previous_employer_tds_treatment: Count declared previous-employer TDS as tax already deducted, standard_deduction_applications_per_person_per_tax_year: 1, remaining_tax_schedule: Spread remaining tax over the remaining months starting from the month the declaration is applied",
+          "tax-rules.json#negative_remaining_tax: monthly_tds_inr: 0, flag: Excess tax is claimed through the tax return, not payroll.",
+          "tax-rules.json#last_month_tds: In the last month of the tax year, deduct all remaining tax"
+        ]
+      }
+    }
+  },
+  "e05_lop": {
+    "messages": [
+      {
+        "code": "C36",
+        "text": "3 days of loss of pay were recorded in your September 2026 attendance. If that's not right, you can raise a query."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-lop-2026-09",
+        "type": "number_hero",
+        "title": "Attendance & Loss of Pay — September 2026",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Recorded LOP Days",
+          "hero_amount": 3,
+          "month": "September 2026",
+          "employee_id": "E05"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "lop_days",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_compare": {
+    "messages": [
+      {
+        "code": "C30",
+        "text": "Your September 2026 take-home is ₹5,420 lower than August 2026. The main recorded reasons are below."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-compare-2026-08-2026-09",
+        "type": "number_hero",
+        "title": "August 2026 vs September 2026 Pay Comparison",
+        "certainty": "Complete for this scope",
+        "data": {
+          "hero_label": "Net Pay Change",
+          "hero_amount": -5420,
+          "previous_month_label": "August 2026 Take-Home",
+          "previous_month_amount": 48200,
+          "current_month_label": "September 2026 Take-Home",
+          "current_month_amount": 42780,
+          "employee_id": "E05"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "compare_months",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_query_status": {
+    "messages": [
+      {
+        "code": "C40",
+        "text": "Your September 2026 query is In review. No reply has been recorded yet."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-status-QUERY-E05-SEPTEMBER",
+        "type": "query_status",
+        "title": "Payroll Query Status",
+        "data": {
+          "query_id": "QUERY-E05-SEPTEMBER",
+          "status": "In review",
+          "category": "salary",
+          "description": "Please check my September attendance.",
+          "reply_text": null,
+          "resolution": null
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "query_status",
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_tax_regime": {
+    "messages": [
+      {
+        "code": "C41",
+        "text": "You are on the new tax regime for 2026-27."
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-tax-regime",
+        "type": "certainty_label",
+        "title": "Recorded Tax Regime",
+        "certainty": "Complete for this scope",
+        "data": {
+          "tax_regime": "new",
+          "tax_year": "2026-27",
+          "employee_id": "E05"
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "What is LOP?",
+        "action": "faq-lop",
+        "payload": {}
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "tax_regime",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_c34": {
+    "messages": [
+      {
+        "code": "C34",
+        "text": "I don't have a record of that in your payroll data. You can raise a query with HR."
+      }
+    ],
+    "cards": [],
+    "chips": [
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      },
+      {
+        "label": "Why is my take-home pay lower in September?",
+        "action": "explain-salary",
+        "payload": {}
+      },
+      {
+        "label": "How much PF was cut in September?",
+        "action": "explain-pf",
+        "payload": {
+          "month": "2026-09"
+        }
+      }
+    ],
+    "state": {
+      "intent": "unrecorded_topic",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
+  },
+  "e05_c35": {
+    "messages": [
+      {
+        "code": "C35",
+        "text": "I can show your pay for April to September 2026 only."
+      }
+    ],
+    "cards": [],
+    "chips": [
+      {
+        "label": "Show my September 2026 payslip",
+        "action": "explain-payslip",
+        "payload": {
+          "month": "2026-09"
+        }
+      },
+      {
+        "label": "Show my August 2026 payslip",
+        "action": "explain-payslip",
+        "payload": {
+          "month": "2026-08"
+        }
+      },
+      {
+        "label": "Draft a query for HR",
+        "action": "draft-query",
+        "payload": {}
+      }
+    ],
+    "state": {
+      "intent": "unrecorded_month",
+      "scenario_num": null,
+      "role": "Employee",
+      "surface": "CHAT-EMP",
+      "employee_id": "E05",
+      "panel": null
+    }
   }
 }

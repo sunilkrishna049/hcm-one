@@ -819,5 +819,97 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
+  it('14. Employee picker card shows names from the API (no IDs), tapping a name sends that selection and continues the task', async () => {
+    // 1. Initial chat response returns employee_picker card with candidate employees
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C01', text: 'Select an employee to prepare arrears hike:' }],
+      cards: [
+        {
+          id: 'card-picker-arrears',
+          type: 'employee_picker',
+          title: 'Select Employee',
+          certainty: 'Complete for this scope',
+          data: {
+            task: 'arrears',
+            prompt: 'Select an employee to prepare arrears hike:',
+            employees: [
+              { employee_id: 'E01', name: 'Priya Sharma', department: 'Engineering' },
+              { employee_id: 'E02', name: 'Arjun Rao', department: 'Marketing' },
+              { employee_id: 'E03', name: 'Kavya Iyer', department: 'Operations' },
+            ],
+          },
+        },
+      ],
+      chips: [],
+      state: { intent: 'arrears_picker', role: 'HR Admin' },
+    });
+
+    render(<ChatHR currentUser="HR01" currentScenario={1} />);
+
+    // Send query to load arrears picker
+    const composer = screen.getByTestId('composer-textarea');
+    fireEvent.change(composer, { target: { value: 'Calculate arrears' } });
+    fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+    // Wait for employee picker card to render
+    await waitFor(() => {
+      expect(screen.getByTestId('employee-picker-card')).toBeInTheDocument();
+    });
+
+    const pickerCard = screen.getByTestId('employee-picker-card');
+
+    // Assert card shows employee names from the API
+    expect(pickerCard).toHaveTextContent('Priya Sharma');
+    expect(pickerCard).toHaveTextContent('Arjun Rao');
+    expect(pickerCard).toHaveTextContent('Kavya Iyer');
+
+    // Assert card does NOT show employee IDs
+    expect(pickerCard).not.toHaveTextContent('E01');
+    expect(pickerCard).not.toHaveTextContent('E02');
+    expect(pickerCard).not.toHaveTextContent('E03');
+
+    // 2. Mock response when employee is selected (continues the task)
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C03', text: 'This is a proposal for the recorded affected months.' }],
+      cards: [
+        {
+          id: 'card-approval-s1',
+          type: 'approval_card',
+          title: 'Approval',
+          certainty: 'Complete for this scope',
+          data: {
+            scope_label: 'Priya Sharma · Apr–Sep 2026',
+            status: 'pending',
+            proposal_id: 'PROP-SCENARIO-1',
+          },
+        },
+      ],
+      chips: [{ label: 'Show calculation', action: 'show-calculation' }],
+      state: { scenario_num: 1, role: 'HR Admin' },
+    });
+
+    // Tap Priya Sharma's button
+    const priyaButton = screen.getByTestId('employee-item-E01');
+    fireEvent.click(priyaButton);
+
+    // Verify tapping sends that selection (action='select-employee')
+    await waitFor(() => {
+      expect(api.chat).toHaveBeenCalledWith({
+        userId: 'HR01',
+        action: 'select-employee',
+        context: {
+          employee_id: 'E01',
+          task: 'arrears',
+          name: 'Priya Sharma',
+        },
+      });
+    });
+
+    // Verify task continues and renders proposal card
+    await waitFor(() => {
+      expect(screen.getByText(/Priya Sharma · Apr–Sep 2026/)).toBeInTheDocument();
+    });
+  });
+
 });
 
