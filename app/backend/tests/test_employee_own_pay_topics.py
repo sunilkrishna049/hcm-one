@@ -210,7 +210,6 @@ def test_certainty_label_equals_engine_certainty():
         ("Why is my TDS zero?", "tds_amount", "Complete for this scope"),
         ("How many LOP days do I have?", "lop_days", "Complete for this scope"),
         ("Compare my August and September pay.", "compare_months", "Complete for this scope"),
-        ("Which tax regime am I in?", "tax_regime", "Complete for this scope"),
     ]:
         res = chat_router.handle_chat("USER-E05", message=topic_query)
         assert res.get("state", {}).get("certainty") == expected_certainty
@@ -264,7 +263,6 @@ def test_reply_level_state_certainty_for_topics_and_scenarios():
         ("Why is my TDS zero?", "Complete for this scope"),
         ("How many LOP days do I have?", "Complete for this scope"),
         ("Compare my August and September pay.", "Complete for this scope"),
-        ("Which tax regime am I in?", "Complete for this scope"),
     ]
     for query, expected_certainty in topic_cases:
         res = chat_router.handle_chat("USER-E05", message=query)
@@ -272,13 +270,14 @@ def test_reply_level_state_certainty_for_topics_and_scenarios():
             f"Topic '{query}' state.certainty was '{res.get('state', {}).get('certainty')}', expected '{expected_certainty}'"
         )
 
-    # 3. Replies with NO payroll numbers show no badge (state.certainty is None)
+    # 3. Replies with NO payroll numbers / record facts show no badge (state.certainty is None)
     no_number_cases = [
         ("USER-E05", "What is basic pay?"),                # FAQ
         ("USER-E05", "What is HRA?"),                     # FAQ
         ("USER-E05", "hello"),                            # Greeting / clarification C33
         ("USER-E05", "Will I get a bonus this year?"),    # C34 unrecorded topic
         ("USER-E05", "What is my October salary?"),       # C35 unrecorded month
+        ("USER-E05", "Which tax regime am I in?"),        # Record fact (no calculation)
         ("HR02", "Show me Priya Sharma's salary breakdown."), # Scenario 12 refusal
     ]
     for user, query in no_number_cases:
@@ -372,14 +371,13 @@ def test_guard_certainty_integrity_all_replies():
                     f"Card {card.get('id')} has certainty '{c_cert}' not found in engine result for scenario {s_num}"
                 )
 
-    # 2. Employee Topics
+    # 2. Employee Topics with calculations
     topics = [
         ("Explain my September pay.", "payslip_breakdown", "certainty"),
         ("How much PF was cut?", "pf_amount", "pf_certainty"),
         ("Why is my TDS zero?", "tds_amount", "tds_certainty"),
         ("How many LOP days do I have?", "lop_days", "lop_certainty"),
         ("Compare my August and September pay.", "compare_months", "net_pay_certainty"),
-        ("Which tax regime am I in?", "tax_regime", "tax_regime_certainty"),
     ]
     data_e05 = get_employee_payroll_data("E05", "2026-09")
     for query, expected_intent, engine_field in topics:
@@ -393,13 +391,14 @@ def test_guard_certainty_integrity_all_replies():
                     f"Topic '{query}' card '{card.get('id')}' certainty '{card['certainty']}' != expected '{expected_cert}'"
                 )
 
-    # 3. Non-calculating replies (FAQ, canned, greetings, C33, C34, C35, choices, pickers)
+    # 3. Non-calculating replies and record facts (FAQ, canned, greetings, C33, C34, C35, choices, pickers, tax regime)
     no_cert_cases = [
         ("USER-E05", "What is basic pay?", {}),
         ("USER-E05", "What is HRA?", {}),
         ("USER-E05", "hello", {}),
         ("USER-E05", "Will I get a bonus this year?", {}),
         ("USER-E05", "What is my October salary?", {}),
+        ("USER-E05", "Which tax regime am I in?", {}),
         ("HR02", "Show me Priya Sharma's salary breakdown.", {}),
         ("HR01", "", {"action": "arrears-picker"}),
         ("HR01", "prepare a bonus proposal", {}),
@@ -413,6 +412,99 @@ def test_guard_certainty_integrity_all_replies():
             assert card.get("certainty") is None, (
                 f"Query '{query}' {kwargs} card '{card.get('id')}' has certainty '{card.get('certainty')}', must be None"
             )
+
+
+def test_item_2_bonus_type_own_engine_certainty():
+    """Item 2: After HR picks a bonus type, use that bonus request's own engine certainty:
+    - Annual performance bonus -> 'Incomplete' (its own label from scenario 4 engine result)
+    - Sales incentive -> 'Complete for this scope' (its own label, NOT Scenario 4's overall 'Incomplete')
+    """
+    # 1. Direct prompt with Annual performance bonus
+    res_annual = chat_router.handle_chat("HR01", message="Annual performance bonus, FY 2025-26, Engineering")
+    assert res_annual["state"]["certainty"] == "Incomplete"
+    for card in res_annual.get("cards", []):
+        if card.get("id") in ("card-bonus-s4", "card-approval-s4"):
+            assert card.get("certainty") == "Incomplete"
+
+    # 2. Direct prompt with Sales incentive
+    res_sales = chat_router.handle_chat("HR01", message="Q2 Sales incentive, Hyderabad Sales")
+    assert res_sales["state"]["certainty"] == "Complete for this scope", (
+        f"Sales incentive state.certainty should be its own engine certainty 'Complete for this scope', got '{res_sales['state']['certainty']}'"
+    )
+    for card in res_sales.get("cards", []):
+        if card.get("id") in ("card-bonus-s4", "card-approval-s4"):
+            assert card.get("certainty") == "Complete for this scope"
+
+    # 3. Via action apply-selection
+    res_sel_sales = chat_router.handle_chat("HR01", action="apply-selection", context={"choice": "Q2 Sales incentive, Hyderabad Sales"})
+    assert res_sel_sales["state"]["certainty"] == "Complete for this scope"
+    for card in res_sel_sales.get("cards", []):
+        if card.get("id") in ("card-bonus-s4", "card-approval-s4"):
+            assert card.get("certainty") == "Complete for this scope"
+
+    res_sel_annual = chat_router.handle_chat("HR01", action="apply-selection", context={"choice": "Annual performance bonus, FY 2025-26, Engineering"})
+    assert res_sel_annual["state"]["certainty"] == "Incomplete"
+    for card in res_sel_annual.get("cards", []):
+        if card.get("id") in ("card-bonus-s4", "card-approval-s4"):
+            assert card.get("certainty") == "Incomplete"
+
+
+def test_item_3_least_certain_label_order_and_combined_numbers():
+    """Item 3: When a reply combines several numbers (e.g. comparing two months), the badge
+    shows the least certain label among them:
+    - Any label other than 'Complete for this scope' wins.
+    - Order: Needs HR decision > Rule not verified > Incomplete > Cannot explain from available payroll data.
+    """
+    from app.backend.chat_router import get_least_certain_label
+
+    # Precedence tests
+    assert get_least_certain_label("Complete for this scope", "Complete for this scope") == "Complete for this scope"
+    assert get_least_certain_label("Complete for this scope", "Incomplete") == "Incomplete"
+    assert get_least_certain_label("Complete for this scope", "Needs HR decision") == "Needs HR decision"
+    assert get_least_certain_label("Complete for this scope", "Rule not verified") == "Rule not verified"
+    assert get_least_certain_label("Complete for this scope", "Cannot explain from available payroll data") == "Cannot explain from available payroll data"
+
+    # Hierarchy among non-complete labels
+    # Needs HR decision beats all
+    assert get_least_certain_label("Needs HR decision", "Rule not verified") == "Needs HR decision"
+    assert get_least_certain_label("Needs HR decision", "Incomplete") == "Needs HR decision"
+    assert get_least_certain_label("Needs HR decision", "Cannot explain from available payroll data") == "Needs HR decision"
+
+    # Rule not verified beats Incomplete and Cannot explain
+    assert get_least_certain_label("Rule not verified", "Incomplete") == "Rule not verified"
+    assert get_least_certain_label("Rule not verified", "Cannot explain from available payroll data") == "Rule not verified"
+
+    # Incomplete beats Cannot explain
+    assert get_least_certain_label("Incomplete", "Cannot explain from available payroll data") == "Incomplete"
+
+    # Multi-label combinations
+    assert get_least_certain_label("Complete for this scope", "Incomplete", "Needs HR decision", "Rule not verified") == "Needs HR decision"
+    assert get_least_certain_label("Complete for this scope", "Rule not verified", "Incomplete") == "Rule not verified"
+    assert get_least_certain_label("Complete for this scope", "Cannot explain from available payroll data", "Incomplete") == "Incomplete"
+
+    # None and empty handling
+    assert get_least_certain_label(None, "Complete for this scope") == "Complete for this scope"
+    assert get_least_certain_label(None, "Incomplete") == "Incomplete"
+    assert get_least_certain_label(None, None) is None
+
+    # Test month comparison query combining August and September
+    res = chat_router.handle_chat("USER-E05", message="Compare my August and September pay.")
+    assert res["state"]["intent"] == "compare_months"
+    assert res["state"]["certainty"] == "Complete for this scope"
+    assert res["cards"][0]["certainty"] == "Complete for this scope"
+
+
+def test_item_4_record_facts_no_badge():
+    """Item 4: Facts from records that are not calculations (e.g. tax regime): no badge."""
+    res = chat_router.handle_chat("USER-E05", message="Which tax regime am I in?")
+    assert res["state"]["intent"] == "tax_regime"
+    assert res["state"]["certainty"] is None, (
+        f"Record fact query must have state.certainty = None, got '{res['state']['certainty']}'"
+    )
+    for card in res.get("cards", []):
+        assert card.get("certainty") is None, (
+            f"Record fact card '{card.get('id')}' must not have certainty badge, got '{card.get('certainty')}'"
+        )
 
 
 

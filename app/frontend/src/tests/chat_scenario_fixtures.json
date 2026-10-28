@@ -1328,7 +1328,6 @@
         "id": "card-payslip-2026-09",
         "type": "month_table",
         "title": "Payslip · September 2026",
-        "certainty": "Complete for this scope",
         "data": {
           "employee_id": "E05",
           "employee_name": "Neha Gupta",
@@ -1342,7 +1341,8 @@
           "pf": 2220,
           "tds": 0,
           "net_pay": 42780
-        }
+        },
+        "certainty": "Complete for this scope"
       }
     ],
     "chips": [
@@ -1391,13 +1391,13 @@
         "id": "card-pf-2026-09",
         "type": "number_hero",
         "title": "PF contribution — September 2026",
-        "certainty": "Complete for this scope",
         "data": {
           "hero_label": "September 2026 employee PF contribution",
           "hero_amount": 2220,
           "employee_id": "E05",
           "month": "2026-09"
-        }
+        },
+        "certainty": "Complete for this scope"
       }
     ],
     "chips": [
@@ -1515,13 +1515,13 @@
         "id": "card-lop-2026-09",
         "type": "number_hero",
         "title": "Attendance & loss of pay — September 2026",
-        "certainty": "Complete for this scope",
         "data": {
           "hero_label": "Recorded LOP days",
           "hero_amount": 3,
           "month": "September 2026",
           "employee_id": "E05"
-        }
+        },
+        "certainty": "Complete for this scope"
       }
     ],
     "chips": [
@@ -1570,7 +1570,6 @@
         "id": "card-compare-2026-08-2026-09",
         "type": "number_hero",
         "title": "August 2026 vs September 2026 pay comparison",
-        "certainty": "Complete for this scope",
         "data": {
           "hero_label": "Net pay change",
           "hero_amount": -5420,
@@ -1579,7 +1578,8 @@
           "current_month_label": "September 2026 take-home",
           "current_month_amount": 42780,
           "employee_id": "E05"
-        }
+        },
+        "certainty": "Complete for this scope"
       }
     ],
     "chips": [
@@ -1683,7 +1683,6 @@
         "id": "card-tax-regime",
         "type": "certainty_label",
         "title": "Recorded tax regime",
-        "certainty": "Complete for this scope",
         "data": {
           "tax_regime": "new",
           "tax_year": "2026-27",
@@ -1721,7 +1720,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
-      "certainty": "Complete for this scope",
+      "certainty": null,
       "panel": null
     }
   },

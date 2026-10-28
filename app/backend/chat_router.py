@@ -48,6 +48,39 @@ def _get_engine_certainty(obj: Optional[dict], field_name: str = "certainty") ->
     return str(val)
 
 
+LEAST_CERTAIN_ORDER = [
+    "Needs HR decision",
+    "Rule not verified",
+    "Incomplete",
+    "Cannot explain from available payroll data",
+]
+
+
+def get_least_certain_label(*labels: Optional[str]) -> Optional[str]:
+    """Return the least certain label among the provided labels.
+    - Any label other than 'Complete for this scope' wins.
+    - If several differ, the order is:
+      1. Needs HR decision
+      2. Rule not verified
+      3. Incomplete
+      4. Cannot explain from available payroll data
+    - If all valid labels are 'Complete for this scope', returns 'Complete for this scope'.
+    - If no valid labels, returns None.
+    """
+    valid_labels = [l for l in labels if l]
+    if not valid_labels:
+        return None
+    if all(l == "Complete for this scope" for l in valid_labels):
+        return "Complete for this scope"
+    for candidate in LEAST_CERTAIN_ORDER:
+        if candidate in valid_labels:
+            return candidate
+    for l in valid_labels:
+        if l != "Complete for this scope":
+            return l
+    return "Complete for this scope"
+
+
 MONTH_NAMES = {
     "01": "January", "02": "February", "03": "March", "04": "April",
     "05": "May", "06": "June", "07": "July", "08": "August",
@@ -186,7 +219,7 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
     lop_certainty = _get_engine_certainty(paid_days_rec) if isinstance(paid_days_rec, dict) else None
 
     tax_regime = emp.get("tax_regime_selected", "new") if isinstance(emp, dict) else "new"
-    tax_regime_certainty = _get_engine_certainty(tds_rec.get("taxable_income")) if isinstance(tds_rec, dict) else _get_engine_certainty(ps)
+    tax_regime_certainty = None
 
     return {
         "employee_id": emp_id,
@@ -497,7 +530,9 @@ class ChatRouter:
             elif act in ("scenario-3", "scenario-03"):
                 return self._build_scenario_3(user, role, surface)
             elif act in ("scenario-4", "scenario-04"):
-                return self._build_scenario_4(user, role, surface)
+                b_type = (context.get("bonus_type") or context.get("choice") or "").lower()
+                b_key = "quarterly_sales_incentive" if ("sales" in b_type or "hyderabad" in b_type or "incentive" in b_type) else "annual_performance_bonus"
+                return self._build_scenario_4(user, role, surface, bonus_type_key=b_key)
             elif act in ("scenario-5", "scenario-05"):
                 return self._build_scenario_5(user, role, surface)
             elif act in ("scenario-6", "scenario-06"):
@@ -1200,9 +1235,8 @@ class ChatRouter:
     def _build_scenario_4(self, user: dict, role: str, surface: str, bonus_type_key: str = "annual_performance_bonus") -> dict:
         sc = bridge.get_scenario(4)
         r = sc["result"]
-        eng_cert = _get_engine_certainty(r)
-
         req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == bonus_type_key), r["bonus_requests"][0])
+        eng_cert = _get_engine_certainty(req)
         gross_total = req["known_eligible_gross"]["value"]
         gross_certainty = _get_engine_certainty(req.get("known_eligible_gross"))
 
@@ -2217,7 +2251,7 @@ class ChatRouter:
         name_b = format_month_label(month_b)
         cert_a = _get_engine_certainty(data_a, "net_pay_certainty")
         cert_b = _get_engine_certainty(data_b, "net_pay_certainty")
-        cert = cert_b if (cert_a and cert_b and cert_a == cert_b) else (cert_b or cert_a)
+        cert = get_least_certain_label(cert_a, cert_b)
 
         cards = []
         comp_card = {
@@ -2259,7 +2293,6 @@ class ChatRouter:
         emp_id = user.get("employee_id") or "E05"
         data = get_employee_payroll_data(emp_id, "2026-09")
         regime_raw = (data.get("tax_regime") or "new").lower() if data else "new"
-        cert = _get_engine_certainty(data, "tax_regime_certainty")
 
         reg_card = {
             "id": "card-tax-regime",
@@ -2271,8 +2304,6 @@ class ChatRouter:
                 "employee_id": emp_id
             }
         }
-        if cert:
-            reg_card["certainty"] = cert
 
         return {
             "messages": [
@@ -2286,7 +2317,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
-                "certainty": cert,
+                "certainty": None,
                 "panel": None
             }
         }
@@ -2440,7 +2471,13 @@ class ChatRouter:
 
         existing_prop = lifecycle.get_proposal(prop_id)
         scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+        if s_num == 4 and "bonus_requests" in scen_result:
+            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
+            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
+            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
+        else:
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
 
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
@@ -2558,7 +2595,13 @@ class ChatRouter:
 
         existing_prop = lifecycle.get_proposal(prop_id)
         scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+        if s_num == 4 and "bonus_requests" in scen_result:
+            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
+            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
+            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
+        else:
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
 
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
@@ -2619,7 +2662,13 @@ class ChatRouter:
 
         existing_prop = lifecycle.get_proposal(prop_id)
         scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+        if s_num == 4 and "bonus_requests" in scen_result:
+            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
+            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
+            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
+        else:
+            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
 
         lifecycle.get_or_create_proposal(prop_id, {
             "status": "Calculated; needs HR approval",
