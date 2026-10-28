@@ -23,12 +23,13 @@ interface ApprovalCardProps {
       approved_at?: string;
       disabled?: boolean;
       disabled_label?: string;
+      blocking_reason?: string;
       proposal_id?: string;
     };
   };
-  onApprove?: () => void;
-  onEdit?: () => void;
-  onReject?: () => void;
+  onApprove?: (payload?: { proposal_id?: string; version?: number }) => void;
+  onEdit?: (payload?: { proposal_id?: string; version?: number; reason?: string }) => void;
+  onReject?: (payload?: { proposal_id?: string; version?: number; reason?: string }) => void;
 }
 
 export const ApprovalCard: React.FC<ApprovalCardProps> = ({
@@ -50,12 +51,19 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
     .replace(/^Authorized Scope:\s*/i, '')
     .replace(/^You're approving:\s*/i, '')
     .replace(/^Approved:\s*/i, '')
+    .replace(/^[•·\s]+/, '')
     .trim();
 
   const prefix = isApproved ? 'Approved:' : "You're approving:";
-  const hasStructuredScope = Boolean(d.employee_name || d.employee_id || d.period);
+  // Only structured if an individual employee_name is provided; team proposals use cleanScope
+  const hasStructuredScope = Boolean(d.employee_name);
 
   const approverName = d.approver ? getUserDisplayName(d.approver) : 'Anita Desai';
+
+  // Option A: "Approve proposal for payroll" is disabled when certainty is not "Complete for this scope"
+  const isComplete = card.certainty === 'Complete for this scope';
+  const isApprovalDisabled = Boolean(d.disabled || (card.certainty && !isComplete));
+  const blockingReason = d.blocking_reason || d.disabled_label || (card.certainty && !isComplete ? `Scope is ${card.certainty}; required inputs pending.` : undefined);
 
   // Heading: plain heading without dev labels
   const heading = card.title === 'HR Authorization' || card.title === 'HR authorization' || !card.title ? 'Approval' : card.title;
@@ -76,7 +84,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               {prefix}{' '}
               {hasStructuredScope ? (
                 <>
-                  {d.employee_name && <span>{d.employee_name}</span>}
+                  <span>{d.employee_name}</span>
                   {d.employee_id && (
                     <>
                       {' · '}
@@ -95,7 +103,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
         )}
 
         {/* Mandatory C04 Governance Notice - only when actively pending approval */}
-        {!isApproved && !isRejected && !isEdited && !d.disabled && d.notice && (
+        {!isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && d.notice && (
           <div className="hcm-approval-notice">
             <p>{d.notice}</p>
           </div>
@@ -136,36 +144,48 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
           </div>
         )}
 
-        {/* Actions Group (explicit clicks only - hidden once approved, rejected, edited or disabled) */}
-        {!isApproved && !isRejected && !isEdited && !d.disabled && (
+        {/* Actions Group (explicit clicks only - hidden once approved, rejected, edited, or if actions is empty) */}
+        {!isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && (
           <div className="hcm-approval-actions">
             <button
               type="button"
               className="hcm-button hcm-button-primary"
-              onClick={onApprove}
+              onClick={isApprovalDisabled ? undefined : () => onApprove?.({ proposal_id: d.proposal_id, version: d.version ?? 1 })}
+              disabled={isApprovalDisabled}
+              style={isApprovalDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+              data-testid={isApprovalDisabled ? "approval-button-disabled" : "approval-button"}
+              title={isApprovalDisabled ? blockingReason : undefined}
             >
               Approve proposal for payroll
             </button>
             <button
               type="button"
               className="hcm-button hcm-button-secondary"
-              onClick={onEdit}
+              onClick={() => onEdit?.({ proposal_id: d.proposal_id, version: d.version ?? 1, reason: 'Adjusted by HR' })}
             >
               Edit with reason
             </button>
             <button
               type="button"
               className="hcm-button hcm-button-danger"
-              onClick={onReject}
+              onClick={() => onReject?.({ proposal_id: d.proposal_id, version: d.version ?? 1, reason: 'Rejected by HR' })}
             >
               Reject proposal
             </button>
           </div>
         )}
 
-        {d.disabled && !isApproved && !isRejected && !isEdited && (
+        {/* Option A Note: Reason from engine data why approval is disabled */}
+        {isApprovalDisabled && !isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && blockingReason && (
+          <div className="hcm-approval-blocked-note" data-testid="approval-disabled-note" style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-status-warning-text)' }}>
+            <span>{blockingReason}</span>
+          </div>
+        )}
+
+        {/* When actions have been removed after an action is taken */}
+        {d.actions && d.actions.length === 0 && d.disabled_label && !isApproved && !isRejected && !isEdited && (
           <div className="hcm-approval-blocked-note" data-testid="approval-disabled-note">
-            <span>{d.disabled_label || 'Notice: Blocked from approval while required records or clearances are incomplete.'}</span>
+            <span>{d.disabled_label}</span>
           </div>
         )}
       </div>

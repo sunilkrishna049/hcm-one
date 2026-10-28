@@ -16,9 +16,9 @@ interface AssistantTurnProps {
   certainty?: string;
   time?: string;
   onShowCalculation?: () => void;
-  onApprove?: () => void;
-  onEdit?: () => void;
-  onReject?: () => void;
+  onApprove?: (payload?: any) => void;
+  onEdit?: (payload?: any) => void;
+  onReject?: (payload?: any) => void;
   onApplySelection?: (choice: string) => void;
   onSendQuery?: (description: string) => void;
   onCancelQueryDraft?: () => void;

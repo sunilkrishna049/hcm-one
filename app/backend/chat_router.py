@@ -973,7 +973,8 @@ class ChatRouter:
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-1"
+                        "proposal_id": "PROP-SCENARIO-1",
+                        "version": 1
                     }
                 }
             ],
@@ -1085,7 +1086,8 @@ class ChatRouter:
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-2"
+                        "proposal_id": "PROP-SCENARIO-2",
+                        "version": 1
                     }
                 }
             ],
@@ -1159,16 +1161,21 @@ class ChatRouter:
                 {
                     "id": "card-approval-s3",
                     "type": "approval_card",
-                    "title": "HR authorization (blocked)",
+                    "title": "HR authorization",
                     "certainty": eng_cert,
                     "data": {
                         "employee_name": "Kavya Iyer",
                         "employee_id": "E03",
-                        "period": None,
-                        "scope_label": "Kavya Iyer · E03",
-                        "notice": "Cannot approve an incomplete proposal while required records are missing.",
-                        "actions": [],
-                        "disabled": True
+                        "period": "Apr–Sep 2026",
+                        "scope_label": "Kavya Iyer · Apr–Sep 2026",
+                        "notice": get_message("C04"),
+                        "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
+                        "status": "pending",
+                        "proposal_id": "PROP-SCENARIO-3",
+                        "version": 1,
+                        "disabled": True,
+                        "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
+                        "disabled_label": "1 item needs input: July attendance missing for Kavya Iyer"
                     }
                 }
             ],
@@ -1254,6 +1261,10 @@ class ChatRouter:
             display_bonus_type = "Q2 Sales incentive"
             display_period = req.get("period", "Q2 2026-27")
             card_title = "Q2 sales incentive summary"
+            prop_id = "PROP-SCENARIO-4-SALES"
+            prop_scope_label = f"Q2 Sales incentive · Hyderabad Sales · {display_period}"
+            s4_blocking_reason = None
+            s4_disabled = False
             emp_formulas = [
                 f"{e['employee_id']} ({get_employee_name(e['employee_id'])}): Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
                 for e in req.get("employees", [])
@@ -1262,6 +1273,10 @@ class ChatRouter:
             display_bonus_type = "Annual performance bonus"
             display_period = req.get("period", "FY 2025-26")
             card_title = "Team bonus run summary"
+            prop_id = "PROP-SCENARIO-4-ANNUAL"
+            prop_scope_label = f"Annual performance bonus · Engineering · {display_period}"
+            s4_blocking_reason = "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+            s4_disabled = True
             emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
             e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
             e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
@@ -1309,7 +1324,7 @@ class ChatRouter:
                     }
                 },
                 {
-                    "id": "card-approval-s4",
+                    "id": f"card-approval-s4-{bonus_type_key}",
                     "type": "approval_card",
                     "title": "HR authorization",
                     "certainty": eng_cert,
@@ -1317,11 +1332,15 @@ class ChatRouter:
                         "employee_name": None,
                         "employee_id": None,
                         "period": display_period,
-                        "scope_label": f"{display_bonus_type} • {len(req.get('employees', []))} employees evaluated",
+                        "scope_label": prop_scope_label,
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": f"PROP-SCENARIO-4"
+                        "proposal_id": prop_id,
+                        "version": 1,
+                        "disabled": s4_disabled,
+                        "blocking_reason": s4_blocking_reason,
+                        "disabled_label": s4_blocking_reason
                     }
                 }
             ],
@@ -1463,7 +1482,8 @@ class ChatRouter:
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-6"
+                        "proposal_id": "PROP-SCENARIO-6",
+                        "version": 1
                     }
                 }
             ],
@@ -1543,7 +1563,8 @@ class ChatRouter:
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-7"
+                        "proposal_id": "PROP-SCENARIO-7",
+                        "version": 1
                     }
                 }
             ],
@@ -1617,16 +1638,21 @@ class ChatRouter:
                 {
                     "id": "card-approval-s8",
                     "type": "approval_card",
-                    "title": "HR authorization (blocked)",
+                    "title": "HR authorization",
                     "certainty": eng_cert,
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
-                        "period": None,
-                        "scope_label": "Imran Khan · E12",
-                        "notice": "Cannot approve an incomplete settlement while clearance is pending.",
-                        "actions": [],
-                        "disabled": True
+                        "period": "Settlement",
+                        "scope_label": "Imran Khan · Settlement",
+                        "notice": get_message("C04"),
+                        "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
+                        "status": "pending",
+                        "proposal_id": "PROP-SCENARIO-8",
+                        "version": 1,
+                        "disabled": True,
+                        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)",
+                        "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
                     }
                 }
             ],
@@ -1973,12 +1999,16 @@ class ChatRouter:
                     "data": {
                         "employee_name": "Imran Khan",
                         "employee_id": "E12",
-                        "period": None,
-                        "scope_label": "Imran Khan · E12",
+                        "period": "Settlement",
+                        "scope_label": "Imran Khan · Settlement",
                         "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
-                        "actions": ["Approve verified lines only", "Edit with reason", "Reject proposal"],
+                        "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
-                        "proposal_id": "PROP-SCENARIO-13"
+                        "proposal_id": "PROP-SCENARIO-13",
+                        "version": 1,
+                        "disabled": True,
+                        "blocking_reason": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)",
+                        "disabled_label": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)"
                     }
                 }
             ],
@@ -2465,25 +2495,99 @@ class ChatRouter:
     def _handle_approve_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
             return self._build_refusal(role, surface, "Only HR Admin can approve proposals.", user=user)
-        s_num = context.get("scenario_num", 1)
-        prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
-        version = int(context.get("version", 1))
+
+        prop_id = context.get("proposal_id")
+        if not prop_id:
+            return {
+                "messages": [{"code": "C09", "text": "Proposal ID is required. Refusing approval without an exact proposal ID."}],
+                "cards": [
+                    {
+                        "id": "card-approval-refused",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "status": "error",
+                            "status_badge": "Action refused • Missing proposal ID",
+                            "notice": "Proposal ID is missing. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "approve_error", "role": role, "surface": surface, "error": "Missing proposal_id"}
+            }
 
         existing_prop = lifecycle.get_proposal(prop_id)
-        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        if s_num == 4 and "bonus_requests" in scen_result:
-            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
-            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
-            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
-        else:
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+        if not existing_prop:
+            return {
+                "messages": [{"code": "C09", "text": f"Proposal '{prop_id}' is unknown. Cannot approve."}],
+                "cards": [
+                    {
+                        "id": f"card-approval-error-{prop_id}",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "proposal_id": prop_id,
+                            "status": "error",
+                            "status_badge": "Action refused • Unknown proposal",
+                            "notice": f"Proposal '{prop_id}' was not found. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "approve_error", "role": role, "surface": surface, "error": "Unknown proposal_id"}
+            }
 
-        lifecycle.get_or_create_proposal(prop_id, {
-            "status": "Calculated; needs HR approval",
-            "certainty": prop_cert,
-            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
-        })
+        req_version = context.get("version")
+        if req_version is None or int(req_version) != existing_prop["current_version"]:
+            s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
+            return {
+                "messages": [{"code": "C25", "text": get_message("C25")}],
+                "cards": [
+                    {
+                        "id": f"card-version-mismatch-{prop_id}",
+                        "type": "approval_card",
+                        "title": "Version mismatch",
+                        "data": {
+                            "proposal_id": prop_id,
+                            "version": existing_prop["current_version"],
+                            "status": "error",
+                            "status_badge": "Action refused • Version mismatch",
+                            "notice": get_message("C25")
+                        }
+                    }
+                ],
+                "chips": [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}] if s_num else [],
+                "state": {"intent": "approve_error", "code": "C25", "role": role, "surface": surface, "panel": None}
+            }
+
+        version = int(req_version)
+
+        prop_cert = existing_prop.get("certainty")
+        if prop_cert != "Complete for this scope":
+            blocking_reason = existing_prop.get("blocking_reason") or "Scope is incomplete or unverified; obtain required inputs first."
+            s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
+            return {
+                "messages": [{"code": "C07", "text": f"Cannot approve proposal: {blocking_reason}"}],
+                "cards": [
+                    {
+                        "id": f"card-approval-blocked-{prop_id}",
+                        "type": "approval_card",
+                        "title": "Approval refused (incomplete scope)",
+                        "certainty": prop_cert,
+                        "data": {
+                            "proposal_id": prop_id,
+                            "version": existing_prop["current_version"],
+                            "status": "blocked",
+                            "status_badge": f"Approval refused • {prop_cert}",
+                            "notice": blocking_reason,
+                            "disabled": True,
+                            "disabled_label": blocking_reason
+                        }
+                    }
+                ],
+                "chips": [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}] if s_num else [],
+                "state": {"intent": "approve_error", "error": "Incomplete proposal", "role": role, "surface": surface}
+            }
 
         try:
             res = lifecycle.approve_proposal(
@@ -2498,7 +2602,7 @@ class ChatRouter:
                 return {
                     "messages": [{"code": "C25", "text": get_message("C25")}],
                     "cards": [],
-                    "chips": [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}],
+                    "chips": [],
                     "state": {"intent": "approve_error", "code": "C25", "role": role, "surface": surface, "panel": None}
                 }
             raise he
@@ -2507,46 +2611,18 @@ class ChatRouter:
         approved_time = datetime.now(timezone.utc).isoformat()
         status_badge = f"Approved and ready for payroll • Version {version} • Approved by {approver_name}"
 
-        scope_base = f"{get_employee_name('E01')} · Apr–Sep 2026"
-        emp_id = "E01"
-        emp_name = get_employee_name("E01")
-        period_str = "Apr–Sep 2026"
+        raw_scope_label = existing_prop.get("scope_label") or existing_prop.get("scope", {}).get("scope_label") or ""
+        if raw_scope_label.startswith("Approved: "):
+            scope_label_display = raw_scope_label
+        else:
+            scope_label_display = f"Approved: {raw_scope_label}"
 
-        if s_num == 2:
-            scope_base = f"{get_employee_name('E02')} · September 2026"
-            emp_id = "E02"
-            emp_name = get_employee_name("E02")
-            period_str = "September 2026"
-        elif s_num == 3:
-            scope_base = f"{get_employee_name('E03')} · Apr–Sep 2026"
-            emp_id = "E03"
-            emp_name = get_employee_name("E03")
-            period_str = "Apr–Sep 2026"
-        elif s_num == 4:
-            scope_base = "Engineering & Sales · FY 2025-26 Bonus"
-            emp_id = None
-            emp_name = "Engineering & Sales"
-            period_str = "FY 2025-26 Bonus"
-        elif s_num == 5:
-            scope_base = f"{get_employee_name('E09')} · FY 2025-26 Bonus"
-            emp_id = "E09"
-            emp_name = get_employee_name("E09")
-            period_str = "FY 2025-26 Bonus"
-        elif s_num == 6:
-            scope_base = f"{get_employee_name('E10')} · Settlement"
-            emp_id = "E10"
-            emp_name = get_employee_name("E10")
-            period_str = "Exit Settlement"
-        elif s_num == 7:
-            scope_base = f"{get_employee_name('E11')} · Settlement"
-            emp_id = "E11"
-            emp_name = get_employee_name("E11")
-            period_str = "Settlement"
-        elif s_num in (8, 13):
-            scope_base = f"{get_employee_name('E12')} · Settlement"
-            emp_id = "E12"
-            emp_name = get_employee_name("E12")
-            period_str = "Settlement"
+        emp_id = existing_prop.get("scope", {}).get("employee_id")
+        emp_name = existing_prop.get("scope", {}).get("employee_name")
+        period_str = existing_prop.get("scope", {}).get("period")
+        s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
+
+        chips = [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}] if s_num else []
 
         return {
             "messages": [],
@@ -2563,22 +2639,20 @@ class ChatRouter:
                         "approver": approver_name,
                         "approved_at": approved_time,
                         "status_badge": status_badge,
-                        "scope_label": f"Approved: {scope_base}",
+                        "scope_label": scope_label_display,
                         "employee_name": emp_name,
                         "employee_id": emp_id,
                         "period": period_str
                     }
                 }
             ],
-            "chips": [
-                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "approve_proposal",
                 "scenario_num": s_num,
                 "role": role,
                 "surface": surface,
-                "employee_id": context.get("employee_id"),
+                "employee_id": emp_id,
                 "status": "Approved and ready for payroll",
                 "panel": None
             }
@@ -2587,27 +2661,51 @@ class ChatRouter:
     def _handle_edit_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
             return self._build_refusal(role, surface, "Only HR Admin can edit proposals.", user=user)
-        s_num = context.get("scenario_num", 1)
-        prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
+
+        prop_id = context.get("proposal_id")
+        if not prop_id:
+            return {
+                "messages": [{"code": "C09", "text": "Proposal ID is required. Refusing edit without an exact proposal ID."}],
+                "cards": [
+                    {
+                        "id": "card-edit-refused",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "status": "error",
+                            "status_badge": "Action refused • Missing proposal ID",
+                            "notice": "Proposal ID is missing. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "edit_error", "role": role, "surface": surface, "error": "Missing proposal_id"}
+            }
+
+        existing_prop = lifecycle.get_proposal(prop_id)
+        if not existing_prop:
+            return {
+                "messages": [{"code": "C09", "text": f"Proposal '{prop_id}' is unknown. Cannot edit."}],
+                "cards": [
+                    {
+                        "id": f"card-edit-error-{prop_id}",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "proposal_id": prop_id,
+                            "status": "error",
+                            "status_badge": "Action refused • Unknown proposal",
+                            "notice": f"Proposal '{prop_id}' was not found. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "edit_error", "role": role, "surface": surface, "error": "Unknown proposal_id"}
+            }
+
         line = context.get("line", "gross_arrears")
         proposed_value = context.get("proposed_value", 70000)
         reason = context.get("reason", "Adjusted attendance records for June")
-
-        existing_prop = lifecycle.get_proposal(prop_id)
-        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        if s_num == 4 and "bonus_requests" in scen_result:
-            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
-            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
-            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
-        else:
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
-
-        lifecycle.get_or_create_proposal(prop_id, {
-            "status": "Calculated; needs HR approval",
-            "certainty": prop_cert,
-            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
-        })
 
         res = lifecycle.edit_proposal(
             proposal_id=prop_id,
@@ -2616,6 +2714,9 @@ class ChatRouter:
             proposed_value=proposed_value,
             reason=reason
         )
+
+        prop_cert = existing_prop.get("certainty")
+        s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
 
         edit_card = {
             "id": f"card-edit-{prop_id}",
@@ -2634,14 +2735,14 @@ class ChatRouter:
         if prop_cert:
             edit_card["certainty"] = prop_cert
 
+        chips = [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}] if s_num else []
+
         return {
             "messages": [
                 {"code": "C05", "text": get_message("C05")}
             ],
             "cards": [edit_card],
-            "chips": [
-                {"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}
-            ],
+            "chips": chips,
             "state": {
                 "intent": "edit_proposal",
                 "role": role,
@@ -2656,27 +2757,53 @@ class ChatRouter:
     def _handle_reject_proposal(self, user: dict, role: str, surface: str, context: dict) -> dict:
         if role != "HR Admin":
             return self._build_refusal(role, surface, "Only HR Admin can reject proposals.", user=user)
-        s_num = context.get("scenario_num", 1)
-        prop_id = context.get("proposal_id", f"PROP-SCENARIO-{s_num}")
-        reason = context.get("reason", "Documentation incomplete or unverified.")
+
+        prop_id = context.get("proposal_id")
+        if not prop_id:
+            return {
+                "messages": [{"code": "C09", "text": "Proposal ID is required. Refusing rejection without an exact proposal ID."}],
+                "cards": [
+                    {
+                        "id": "card-reject-refused",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "status": "error",
+                            "status_badge": "Action refused • Missing proposal ID",
+                            "notice": "Proposal ID is missing. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "reject_error", "role": role, "surface": surface, "error": "Missing proposal_id"}
+            }
 
         existing_prop = lifecycle.get_proposal(prop_id)
-        scen_result = bridge.get_scenario(s_num).get("result", {}) if s_num else {}
-        if s_num == 4 and "bonus_requests" in scen_result:
-            b_ctx = (context.get("bonus_type") or context.get("choice") or str(context)).lower()
-            b_key = "quarterly_sales_incentive" if ("sales" in b_ctx or "hyderabad" in b_ctx or "incentive" in b_ctx) else "annual_performance_bonus"
-            req = next((item for item in scen_result["bonus_requests"] if item.get("bonus_type") == b_key), scen_result["bonus_requests"][0])
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(req)
-        else:
-            prop_cert = (existing_prop.get("certainty") if existing_prop else None) or _get_engine_certainty(scen_result)
+        if not existing_prop:
+            return {
+                "messages": [{"code": "C09", "text": f"Proposal '{prop_id}' is unknown. Cannot reject."}],
+                "cards": [
+                    {
+                        "id": f"card-reject-error-{prop_id}",
+                        "type": "approval_card",
+                        "title": "Action refused",
+                        "data": {
+                            "proposal_id": prop_id,
+                            "status": "error",
+                            "status_badge": "Action refused • Unknown proposal",
+                            "notice": f"Proposal '{prop_id}' was not found. No proposal was modified."
+                        }
+                    }
+                ],
+                "chips": [],
+                "state": {"intent": "reject_error", "role": role, "surface": surface, "error": "Unknown proposal_id"}
+            }
 
-        lifecycle.get_or_create_proposal(prop_id, {
-            "status": "Calculated; needs HR approval",
-            "certainty": prop_cert,
-            "scope": {"employee_id": context.get("employee_id", "E01"), "scenario_num": s_num}
-        })
-
+        reason = context.get("reason", "Documentation incomplete or unverified.")
         res = lifecycle.reject_proposal(proposal_id=prop_id, actor=user, reason=reason)
+
+        prop_cert = existing_prop.get("certainty")
+        s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
 
         reject_card = {
             "id": f"card-reject-{prop_id}",
@@ -3151,8 +3278,18 @@ class ChatRouter:
                 }
             }
 
-        s_num = context.get("scenario_num", 1)
-        builder = getattr(self, f"_build_scenario_{s_num}", self._build_scenario_1)
+        s_num = context.get("scenario_num")
+        if not s_num and context.get("proposal_id"):
+            prop = lifecycle.get_proposal(context["proposal_id"])
+            if prop:
+                s_num = prop.get("scenario_num") or prop.get("scope", {}).get("scenario_num")
+        if not s_num:
+            return self._build_unknown_fallback(role, surface, user)
+
+        builder = getattr(self, f"_build_scenario_{s_num}", None)
+        if not builder:
+            return self._build_unknown_fallback(role, surface, user)
+
         resp = builder(user, role, surface)
         panel_data = resp.get("state", {}).get("panel")
         return {
@@ -3308,7 +3445,7 @@ class ChatRouter:
             elif emp_id == "E03":
                 return self._build_scenario_3(user, role, surface)
             else:
-                return self._build_scenario_1(user, role, surface)
+                return self._build_unknown_fallback(role, surface, user)
 
         elif task in ("settlement", "full_and_final"):
             if emp_id == "E10":
@@ -3318,7 +3455,7 @@ class ChatRouter:
             elif emp_id == "E12":
                 return self._build_scenario_8(user, role, surface)
             else:
-                return self._build_scenario_6(user, role, surface)
+                return self._build_unknown_fallback(role, surface, user)
 
         elif task == "salary":
             if emp_id == "E05":
@@ -3328,9 +3465,9 @@ class ChatRouter:
             elif emp_id == "E16":
                 return self._build_scenario_11(user, role, surface)
             else:
-                return self._build_scenario_9(user, role, surface)
+                return self._build_unknown_fallback(role, surface, user)
 
-        return self._build_scenario_1(user, role, surface)
+        return self._build_unknown_fallback(role, surface, user)
 
 
 chat_router = ChatRouter()

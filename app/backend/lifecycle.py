@@ -32,6 +32,165 @@ def _write_json(path: Path, data: Any):
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+DEFAULT_PROPOSALS = {
+    "PROP-SCENARIO-1": {
+        "proposal_id": "PROP-SCENARIO-1",
+        "scenario_num": 1,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Complete for this scope",
+        "scope_label": "Priya Sharma · Apr–Sep 2026",
+        "scope": {
+            "employee_id": "E01",
+            "employee_name": "Priya Sharma",
+            "period": "Apr–Sep 2026",
+            "scenario_num": 1,
+            "scope_label": "Priya Sharma · Apr–Sep 2026",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-2": {
+        "proposal_id": "PROP-SCENARIO-2",
+        "scenario_num": 2,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Complete for this scope",
+        "scope_label": "Arjun Rao · September 2026",
+        "scope": {
+            "employee_id": "E02",
+            "employee_name": "Arjun Rao",
+            "period": "September 2026",
+            "scenario_num": 2,
+            "scope_label": "Arjun Rao · September 2026",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-3": {
+        "proposal_id": "PROP-SCENARIO-3",
+        "scenario_num": 3,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Incomplete",
+        "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
+        "scope_label": "Kavya Iyer · Apr–Sep 2026",
+        "scope": {
+            "employee_id": "E03",
+            "employee_name": "Kavya Iyer",
+            "period": "Apr–Sep 2026",
+            "scenario_num": 3,
+            "scope_label": "Kavya Iyer · Apr–Sep 2026",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-4": {
+        "proposal_id": "PROP-SCENARIO-4",
+        "scenario_num": 4,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Incomplete",
+        "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+        "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
+        "scope": {
+            "department": "Engineering",
+            "period": "FY 2025-26",
+            "bonus_type": "annual_performance_bonus",
+            "scenario_num": 4,
+            "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-4-ANNUAL": {
+        "proposal_id": "PROP-SCENARIO-4-ANNUAL",
+        "scenario_num": 4,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Incomplete",
+        "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+        "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
+        "scope": {
+            "department": "Engineering",
+            "period": "FY 2025-26",
+            "bonus_type": "annual_performance_bonus",
+            "scenario_num": 4,
+            "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-4-SALES": {
+        "proposal_id": "PROP-SCENARIO-4-SALES",
+        "scenario_num": 4,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Complete for this scope",
+        "scope_label": "Q2 Sales incentive · Hyderabad Sales · FY 2025-26",
+        "scope": {
+            "department": "Hyderabad Sales",
+            "period": "FY 2025-26",
+            "bonus_type": "quarterly_sales_incentive",
+            "scenario_num": 4,
+            "scope_label": "Q2 Sales incentive · Hyderabad Sales · FY 2025-26",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-6": {
+        "proposal_id": "PROP-SCENARIO-6",
+        "scenario_num": 6,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Complete for this scope",
+        "scope_label": "Rahul Verma · Settlement",
+        "scope": {
+            "employee_id": "E10",
+            "employee_name": "Rahul Verma",
+            "period": "Settlement",
+            "scenario_num": 6,
+            "scope_label": "Rahul Verma · Settlement",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-7": {
+        "proposal_id": "PROP-SCENARIO-7",
+        "scenario_num": 7,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Complete for this scope",
+        "scope_label": "Lakshmi Reddy · Settlement",
+        "scope": {
+            "employee_id": "E11",
+            "employee_name": "Lakshmi Reddy",
+            "period": "Settlement",
+            "scenario_num": 7,
+            "scope_label": "Lakshmi Reddy · Settlement",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-8": {
+        "proposal_id": "PROP-SCENARIO-8",
+        "scenario_num": 8,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Incomplete",
+        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)",
+        "scope_label": "Imran Khan · Settlement",
+        "scope": {
+            "employee_id": "E12",
+            "employee_name": "Imran Khan",
+            "period": "Settlement",
+            "scenario_num": 8,
+            "scope_label": "Imran Khan · Settlement",
+        },
+        "current_version": 1,
+    },
+    "PROP-SCENARIO-13": {
+        "proposal_id": "PROP-SCENARIO-13",
+        "scenario_num": 13,
+        "status": "Calculated; needs HR approval",
+        "certainty": "Incomplete",
+        "blocking_reason": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)",
+        "scope_label": "Imran Khan · Settlement",
+        "scope": {
+            "employee_id": "E12",
+            "employee_name": "Imran Khan",
+            "period": "Settlement",
+            "scenario_num": 13,
+            "scope_label": "Imran Khan · Settlement",
+        },
+        "current_version": 1,
+    },
+}
+
+
 class LifecycleStore:
     def __init__(self):
         self._ensure_init()
@@ -80,7 +239,11 @@ class LifecycleStore:
 
     def get_proposal(self, proposal_id: str) -> Optional[dict]:
         proposals = _read_json(PROPOSALS_FILE, {})
-        return proposals.get(proposal_id)
+        if proposal_id in proposals:
+            return proposals[proposal_id]
+        if proposal_id in DEFAULT_PROPOSALS:
+            return self.get_or_create_proposal(proposal_id, DEFAULT_PROPOSALS[proposal_id])
+        return None
 
     def get_or_create_proposal(self, proposal_id: str, default_data: dict) -> dict:
         proposals = _read_json(PROPOSALS_FILE, {})
@@ -90,6 +253,8 @@ class LifecycleStore:
                 "current_version": 1,
                 "status": default_data.get("status", "Calculated; needs HR approval"),
                 "certainty": default_data.get("certainty"),
+                "blocking_reason": default_data.get("blocking_reason"),
+                "scope_label": default_data.get("scope_label"),
                 "scope": default_data.get("scope", {}),
                 "versions": {
                     "1": {
@@ -101,12 +266,25 @@ class LifecycleStore:
                 }
             }
             _write_json(PROPOSALS_FILE, proposals)
+        else:
+            changed = False
+            prop = proposals[proposal_id]
+            for k in ("certainty", "blocking_reason", "scope_label"):
+                if default_data.get(k) and not prop.get(k):
+                    prop[k] = default_data[k]
+                    changed = True
+            if changed:
+                _write_json(PROPOSALS_FILE, proposals)
         return proposals[proposal_id]
 
     def approve_proposal(self, proposal_id: str, version: int, actor: dict, selected_scope: Optional[dict] = None) -> dict:
         proposals = _read_json(PROPOSALS_FILE, {})
         if proposal_id not in proposals:
-            raise HTTPException(status_code=404, detail="Proposal not found")
+            if proposal_id in DEFAULT_PROPOSALS:
+                self.get_or_create_proposal(proposal_id, DEFAULT_PROPOSALS[proposal_id])
+                proposals = _read_json(PROPOSALS_FILE, {})
+            else:
+                raise HTTPException(status_code=404, detail="Proposal not found")
         prop = proposals[proposal_id]
 
         # Guard: Check version staleness (C25)
@@ -121,16 +299,17 @@ class LifecycleStore:
                 }
             )
 
-        # Guard: Check completeness of scope
+        # Guard: Check completeness of scope (Option A: refuse if certainty is not "Complete for this scope")
         current_data = prop["versions"][str(version)]["data"]
-        certainty = current_data.get("certainty")
-        if certainty in ("Incomplete", "Rule not verified") and not selected_scope:
+        certainty = prop.get("certainty") or current_data.get("certainty")
+        if certainty != "Complete for this scope" and not (selected_scope and not selected_scope.get("has_incomplete")):
+            blocking_reason = prop.get("blocking_reason") or "Scope is incomplete or unverified; obtain required inputs first."
             raise HTTPException(
                 status_code=400,
                 detail={
                     "error": "Incomplete or unverified scope cannot be approved",
                     "certainty": certainty,
-                    "message": "Incomplete scope cannot be approved; obtain required inputs first."
+                    "message": blocking_reason
                 }
             )
 
@@ -178,7 +357,11 @@ class LifecycleStore:
 
         proposals = _read_json(PROPOSALS_FILE, {})
         if proposal_id not in proposals:
-            raise HTTPException(status_code=404, detail="Proposal not found")
+            if proposal_id in DEFAULT_PROPOSALS:
+                self.get_or_create_proposal(proposal_id, DEFAULT_PROPOSALS[proposal_id])
+                proposals = _read_json(PROPOSALS_FILE, {})
+            else:
+                raise HTTPException(status_code=404, detail="Proposal not found")
         prop = proposals[proposal_id]
 
         new_version = prop["current_version"] + 1
@@ -186,7 +369,9 @@ class LifecycleStore:
         # Recalculate using the engine
         recalculated_data = {}
         if "HIKE" in proposal_id:
-            emp_id = prop["scope"].get("employee_id", "E01")
+            emp_id = prop["scope"].get("employee_id")
+            if not emp_id:
+                raise HTTPException(status_code=400, detail="Proposal scope is missing employee_id")
             new_pct = float(proposed_value)
             recalculated_data = bridge.recalculate_hike(emp_id, new_pct, reason)
         else:

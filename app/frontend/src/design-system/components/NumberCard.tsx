@@ -64,12 +64,12 @@ export const NumberCard: React.FC<NumberCardProps> = ({
     <div className={`${cardClass} ${className}`}>
       <div className="hcm-number-card-label">
         <span>{label}</span>
-        {certainty && <CertaintyLabel certainty={certainty} />}
       </div>
 
-      <div className="hcm-number-card-amount">
+      <div className="hcm-number-card-amount" style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
         <span className={`${amountClass} tnum`}>{displayAmount}</span>
         {isAvailable && currency && <span className="hcm-currency-label">{currency}</span>}
+        {certainty && <CertaintyLabel certainty={certainty} />}
       </div>
 
       {source && (

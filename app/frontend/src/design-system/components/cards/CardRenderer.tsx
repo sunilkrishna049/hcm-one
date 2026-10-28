@@ -17,9 +17,9 @@ import { EmployeePickerCard } from './EmployeePickerCard';
 interface CardRendererProps {
   card: any;
   onShowCalculation?: () => void;
-  onApprove?: () => void;
-  onEdit?: () => void;
-  onReject?: () => void;
+  onApprove?: (payload?: any) => void;
+  onEdit?: (payload?: any) => void;
+  onReject?: (payload?: any) => void;
   onApplySelection?: (choice: string) => void;
   onSendQuery?: (description: string) => void;
   onCancelQueryDraft?: () => void;

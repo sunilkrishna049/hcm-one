@@ -177,6 +177,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   ...c,
                   data: {
                     ...c.data,
+                    notice: undefined,
                     actions: [],
                     disabled: true,
                     disabled_label: isCurrentApproved
@@ -289,9 +290,9 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   state={turn.state}
                   time={turn.time}
                   onShowCalculation={() => setIsPanelOpen(true)}
-                  onApprove={() => handleAction('approve')}
-                  onEdit={() => handleAction('edit', { reason: 'Adjusted by HR' })}
-                  onReject={() => handleAction('reject', { reason: 'Rejected by HR' })}
+                  onApprove={(payload) => handleAction('approve', payload)}
+                  onEdit={(payload) => handleAction('edit', { reason: 'Adjusted by HR', ...payload })}
+                  onReject={(payload) => handleAction('reject', { reason: 'Rejected by HR', ...payload })}
                   onApplySelection={(choice) => handleAction('apply-selection', { choice })}
                   onSendQuery={(desc) => handleAction('send-query', { description: desc })}
                   onCancelQueryDraft={() => handleAction('cancel-draft')}

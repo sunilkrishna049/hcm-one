@@ -493,3 +493,160 @@ def test_no_action_returns_error_or_unknown():
         assert data.get("state", {}).get("intent") != "unknown", f"Action {action} resulted in unknown intent"
         messages = data.get("messages", [])
         assert not any(m.get("code") == "FALLBACK" for m in messages), f"Action {action} returned FALLBACK message"
+
+
+def test_static_guard_no_scenario_1_or_priya_fallbacks():
+    """Static guard asserting NO fallbacks to scenario 1 or Priya Sharma or default proposals exist in code."""
+    from pathlib import Path
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    files_to_check = [
+        base_dir / "backend" / "chat_router.py",
+        base_dir / "backend" / "lifecycle.py",
+        base_dir / "backend" / "crew.py",
+        base_dir / "backend" / "main.py",
+    ]
+
+    forbidden_patterns = [
+        'scenario_num", 1)',
+        "scenario_num or 1",
+        'scenario_num = 1',
+        'context.get("proposal_id", f"PROP-SCENARIO-',
+        'context.get("proposal_id", "PROP-SCENARIO-',
+        'employee_id", "E01")',
+        'employee_id or "E01"',
+    ]
+
+    for fpath in files_to_check:
+        if not fpath.exists():
+            continue
+        content = fpath.read_text(encoding="utf-8")
+        for line_num, line in enumerate(content.splitlines(), start=1):
+            # Skip comments or default dictionary definitions
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            for pattern in forbidden_patterns:
+                # Disallow forbidden fallbacks in logic
+                if pattern in line and "DEFAULT_PROPOSALS" not in line and "test" not in str(fpath):
+                    pytest.fail(f"Forbidden fallback pattern '{pattern}' found at {fpath.name}:{line_num}: {line}")
+
+
+def test_approval_integrity_for_all_proposals():
+    """Tests approval integrity across all proposals:
+    Scenarios 1, 2, 3, 6, 7, 8, 13 and both bonus types (Annual and Sales).
+    - Approve succeeds ONLY for complete proposals (S1, S2, S4-Sales, S6, S7) and modifies EXACTLY that proposal.
+    - Confirmation shows the same scope as the card that was approved.
+    - Approving an Incomplete proposal (S3, S4-Annual, S8, S13) is refused and changes nothing.
+    - Approving with missing, unknown, or mismatched proposal_id/version changes nothing and is refused.
+    """
+    complete_proposals = [
+        ("PROP-SCENARIO-1", 1, "Priya Sharma · Apr–Sep 2026"),
+        ("PROP-SCENARIO-2", 2, "Arjun Rao · September 2026"),
+        ("PROP-SCENARIO-4-SALES", 4, "Q2 Sales incentive · Hyderabad Sales · FY 2025-26"),
+        ("PROP-SCENARIO-6", 6, "Rahul Verma · Settlement"),
+        ("PROP-SCENARIO-7", 7, "Lakshmi Reddy · Settlement"),
+    ]
+
+    incomplete_proposals = [
+        ("PROP-SCENARIO-3", 3, "Kavya Iyer"),
+        ("PROP-SCENARIO-4-ANNUAL", 4, "Annual performance bonus · Engineering"),
+        ("PROP-SCENARIO-8", 8, "Imran Khan"),
+        ("PROP-SCENARIO-13", 13, "Imran Khan"),
+    ]
+
+    # 1. Test each complete proposal
+    for prop_id, s_num, expected_scope in complete_proposals:
+        lifecycle.reset_demo()
+        prop_before = lifecycle.get_proposal(prop_id)
+        assert prop_before["status"] == "Calculated; needs HR approval"
+
+        resp = client.post(
+            "/api/chat",
+            json={
+                "user_id": "HR01",
+                "action": "approve-proposal",
+                "context": {"proposal_id": prop_id, "version": 1},
+            },
+        )
+        assert resp.status_code == 200, f"Approval failed for {prop_id}"
+        data = resp.json()
+        assert data.get("state", {}).get("intent") == "approve_proposal"
+        card = data["cards"][0]
+        assert card["data"]["status"] == "approved"
+        assert card["data"]["proposal_id"] == prop_id
+        assert expected_scope in card["data"]["scope_label"]
+        assert "Approved:" in card["data"]["scope_label"]
+
+        # Verify ONLY this proposal changed in runtime
+        prop_after = lifecycle.get_proposal(prop_id)
+        assert prop_after["status"] == "Approved and ready for payroll"
+        assert prop_after["approved_version"] == 1
+
+        # Check all other proposals are untouched
+        for other_id, _, _ in complete_proposals + incomplete_proposals:
+            if other_id != prop_id:
+                other_prop = lifecycle.get_proposal(other_id)
+                assert other_prop["status"] == "Calculated; needs HR approval", (
+                    f"Proposal {other_id} was modified when approving {prop_id}!"
+                )
+
+    # 2. Test each incomplete proposal (Option A: must be refused)
+    for prop_id, s_num, expected_name in incomplete_proposals:
+        lifecycle.reset_demo()
+        resp = client.post(
+            "/api/chat",
+            json={
+                "user_id": "HR01",
+                "action": "approve-proposal",
+                "context": {"proposal_id": prop_id, "version": 1},
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        card = data["cards"][0]
+        assert card["data"]["status"] == "blocked" or "refused" in card["data"].get("status_badge", "").lower()
+
+        # Proposal in store must NOT be approved
+        prop_check = lifecycle.get_proposal(prop_id)
+        assert prop_check["status"] == "Calculated; needs HR approval"
+
+    # 3. Missing proposal_id -> refused, nothing changed
+    lifecycle.reset_demo()
+    resp_missing = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "action": "approve-proposal",
+            "context": {"version": 1},
+        },
+    )
+    assert resp_missing.status_code == 200
+    assert resp_missing.json()["cards"][0]["data"]["status"] == "error"
+    # Ensure scenario 1 is NOT approved
+    assert lifecycle.get_proposal("PROP-SCENARIO-1")["status"] == "Calculated; needs HR approval"
+
+    # 4. Unknown proposal_id -> refused, nothing changed
+    resp_unknown = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "action": "approve-proposal",
+            "context": {"proposal_id": "PROP-UNKNOWN-99", "version": 1},
+        },
+    )
+    assert resp_unknown.status_code == 200
+    assert resp_unknown.json()["cards"][0]["data"]["status"] == "error"
+
+    # 5. Mismatched version -> C25 refused, nothing changed
+    resp_mismatch = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "action": "approve-proposal",
+            "context": {"proposal_id": "PROP-SCENARIO-1", "version": 99},
+        },
+    )
+    assert resp_mismatch.status_code == 200
+    assert any(m["code"] == "C25" for m in resp_mismatch.json()["messages"])
+    assert lifecycle.get_proposal("PROP-SCENARIO-1")["status"] == "Calculated; needs HR approval"
+
