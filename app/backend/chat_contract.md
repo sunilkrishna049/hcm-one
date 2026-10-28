@@ -220,6 +220,11 @@ HCM One operates a single conversational API endpoint that serves both **`CHAT-H
         "employee_id": {
           "type": ["string", "null"]
         },
+        "certainty": {
+          "type": ["string", "null"],
+          "description": "Engine certainty level for the reply when payroll numbers are stated, or null when no payroll numbers appear.",
+          "enum": ["Complete for this scope", "Incomplete", null]
+        },
         "panel": {
           "type": ["object", "null"],
           "description": "Data payload for PANEL-HR (Desktop side panel) or SHEET-EMP (Mobile bottom sheet)."

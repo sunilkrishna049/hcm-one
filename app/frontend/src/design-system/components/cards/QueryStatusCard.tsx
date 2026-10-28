@@ -107,7 +107,7 @@ export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
 
         {(d.reply_text || d.resolution) && (
           <div className="hcm-query-reply-box">
-            <span className="hcm-kv-label">HR Resolution Reply:</span>
+            <span className="hcm-kv-label">HR resolution reply:</span>
             <p>{d.reply_text || d.resolution}</p>
           </div>
         )}

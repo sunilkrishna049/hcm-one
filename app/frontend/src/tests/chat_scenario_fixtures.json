@@ -10,7 +10,7 @@
       {
         "id": "card-prop-s1",
         "type": "proposal_summary",
-        "title": "Proposal Summary",
+        "title": "Proposal summary",
         "certainty": "Complete for this scope",
         "data": {
           "employee_name": "Priya Sharma",
@@ -27,7 +27,7 @@
       {
         "id": "card-numbers-s1",
         "type": "number_cards",
-        "title": "Arrears & Tax Breakdown",
+        "title": "Arrears & tax breakdown",
         "certainty": "Complete for this scope",
         "data": {
           "hero_label": "Expected net arrears",
@@ -45,7 +45,7 @@
       {
         "id": "card-months-s1",
         "type": "month_table",
-        "title": "Affected Months Summary",
+        "title": "Affected months summary",
         "certainty": "Complete for this scope",
         "data": {
           "months": [
@@ -140,6 +140,7 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E01",
+      "certainty": "Complete for this scope",
       "panel": {
         "title": "Calculation Proof & Month Breakdown",
         "employee_name": "Priya Sharma",
@@ -248,7 +249,7 @@
       {
         "id": "card-prop-s2",
         "type": "proposal_summary",
-        "title": "Proposal Summary",
+        "title": "Proposal summary",
         "certainty": "Complete for this scope",
         "data": {
           "employee_name": "Arjun Rao",
@@ -265,7 +266,7 @@
       {
         "id": "card-numbers-s2",
         "type": "number_cards",
-        "title": "Arrears & PF Impact",
+        "title": "Arrears & PF impact",
         "certainty": "Complete for this scope",
         "data": {
           "hero_label": "Expected net arrears",
@@ -279,10 +280,10 @@
       {
         "id": "card-approval-s2",
         "type": "approval_card",
-        "title": "HR Authorization",
+        "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Arjun Rao (E02) • September 2026",
+          "scope_label": "Arjun Rao · E02 · September 2026",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -309,8 +310,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E02",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "September 2026 PF Dual-Segment Proof",
+        "title": "September 2026 PF dual-segment proof",
         "employee_name": "Arjun Rao",
         "employee_id": "E02",
         "formulas": [
@@ -338,7 +340,7 @@
       {
         "id": "card-prop-s3",
         "type": "proposal_summary",
-        "title": "Incomplete Proposal Summary",
+        "title": "Incomplete proposal summary",
         "certainty": "Incomplete",
         "data": {
           "employee_name": "Kavya Iyer",
@@ -351,7 +353,7 @@
       {
         "id": "card-numbers-s3",
         "type": "number_cards",
-        "title": "Known Monthly Differences",
+        "title": "Known monthly differences",
         "certainty": "Incomplete",
         "data": {
           "hero_label": "Expected net arrears",
@@ -365,10 +367,10 @@
       {
         "id": "card-approval-s3",
         "type": "approval_card",
-        "title": "HR Authorization (Blocked)",
+        "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
-          "scope_label": "Kavya Iyer (E03)",
+          "scope_label": "Kavya Iyer · E03",
           "notice": "Cannot approve an incomplete proposal while required records are missing.",
           "actions": [],
           "disabled": true
@@ -390,8 +392,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E03",
+      "certainty": "Incomplete",
       "panel": {
-        "title": "Missing Attendance Proof",
+        "title": "Missing attendance proof",
         "employee_name": "Kavya Iyer",
         "employee_id": "E03",
         "formulas": [
@@ -417,7 +420,7 @@
       {
         "id": "card-bonus-s4",
         "type": "proposal_summary",
-        "title": "Team Bonus Run Summary",
+        "title": "Team bonus run summary",
         "certainty": "Complete for this scope",
         "data": {
           "proposal_type": "Annual performance bonus (FY 2025-26)",
@@ -459,7 +462,7 @@
       {
         "id": "card-approval-s4",
         "type": "approval_card",
-        "title": "HR Authorization",
+        "title": "HR authorization",
         "certainty": "Needs HR decision",
         "data": {
           "scope_label": "Annual performance bonus • 6 employees evaluated",
@@ -496,8 +499,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": null,
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "Bonus Eligibility & Scope Roster",
+        "title": "Bonus eligibility & scope roster",
         "formulas": [
           "E01 (Priya Sharma): Annual bonus ₹1,08,000",
           "E03 (Kavya Iyer): Annual bonus ₹36,000 (tax incomplete)",
@@ -525,7 +529,7 @@
       {
         "id": "card-bonus-s5",
         "type": "proposal_summary",
-        "title": "Employee Bonus Evaluation",
+        "title": "Employee bonus evaluation",
         "certainty": "Incomplete",
         "data": {
           "employee_name": "Meera Nair",
@@ -538,10 +542,10 @@
       {
         "id": "card-approval-s5",
         "type": "approval_card",
-        "title": "HR Authorization (Blocked)",
+        "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
-          "scope_label": "Meera Nair (E09)",
+          "scope_label": "Meera Nair · E09",
           "notice": "Cannot approve bonus without verified performance rating.",
           "actions": [],
           "disabled": true
@@ -563,8 +567,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E09",
+      "certainty": "Incomplete",
       "panel": {
-        "title": "Missing Performance Record",
+        "title": "Missing performance record",
         "formulas": [
           "Performance rating for FY 2025-26: Not available in generated data",
           "Bonus calculation: Blocked until rating is supplied"
@@ -582,7 +587,7 @@
       {
         "id": "card-settlement-s6",
         "type": "proposal_summary",
-        "title": "Full & Final Settlement Proposal",
+        "title": "Full & final settlement proposal",
         "certainty": "Complete for this scope",
         "data": {
           "employee_name": "Rahul Verma",
@@ -595,7 +600,7 @@
       {
         "id": "card-components-s6",
         "type": "component_list",
-        "title": "Settlement Components Ledger",
+        "title": "Settlement components ledger",
         "certainty": "Complete for this scope",
         "data": {
           "hero_label": "Final net settlement",
@@ -630,10 +635,10 @@
       {
         "id": "card-approval-s6",
         "type": "approval_card",
-        "title": "HR Authorization",
+        "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Rahul Verma (E10) • Exit Settlement",
+          "scope_label": "Rahul Verma · E10 · Exit Settlement",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -667,8 +672,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E10",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "Settlement Proof & Component Ledger",
+        "title": "Settlement proof & component ledger",
         "employee_name": "Rahul Verma",
         "employee_id": "E10",
         "formulas": [
@@ -692,7 +698,7 @@
       {
         "id": "card-settlement-s7",
         "type": "proposal_summary",
-        "title": "Full & Final Settlement Proposal",
+        "title": "Full & final settlement proposal",
         "certainty": "Complete for this scope",
         "data": {
           "employee_name": "Lakshmi Reddy",
@@ -704,7 +710,7 @@
       {
         "id": "card-components-s7",
         "type": "component_list",
-        "title": "Settlement Components",
+        "title": "Settlement components",
         "certainty": "Complete for this scope",
         "data": {
           "components": [
@@ -720,10 +726,10 @@
       {
         "id": "card-approval-s7",
         "type": "approval_card",
-        "title": "HR Authorization",
+        "title": "HR authorization",
         "certainty": "Complete for this scope",
         "data": {
-          "scope_label": "Lakshmi Reddy (E11)",
+          "scope_label": "Lakshmi Reddy · E11",
           "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
           "actions": [
             "Approve proposal for payroll",
@@ -750,8 +756,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E11",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "Gratuity Service Eligibility Proof",
+        "title": "Gratuity service eligibility proof",
         "formulas": [
           "Tenure: Continuous service is less than 5-year threshold",
           "Gratuity payable = ₹0"
@@ -778,7 +785,7 @@
       {
         "id": "card-settlement-s8",
         "type": "proposal_summary",
-        "title": "Incomplete Settlement Proposal",
+        "title": "Incomplete settlement proposal",
         "certainty": "Incomplete",
         "data": {
           "employee_name": "Imran Khan",
@@ -790,10 +797,10 @@
       {
         "id": "card-components-s8",
         "type": "component_list",
-        "title": "Recovery Line Items",
+        "title": "Recovery line items",
         "certainty": "Incomplete",
         "data": {
-          "hero_label": "Final Net",
+          "hero_label": "Final net",
           "hero_amount": null,
           "known_recoveries": 56667,
           "known_recoveries_subtotal": 56667,
@@ -819,10 +826,10 @@
       {
         "id": "card-approval-s8",
         "type": "approval_card",
-        "title": "HR Authorization (Blocked)",
+        "title": "HR authorization (blocked)",
         "certainty": "Incomplete",
         "data": {
-          "scope_label": "Imran Khan (E12)",
+          "scope_label": "Imran Khan · E12",
           "notice": "Cannot approve an incomplete settlement while clearance is pending.",
           "actions": [],
           "disabled": true
@@ -844,8 +851,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E12",
+      "certainty": "Incomplete",
       "panel": {
-        "title": "Asset Clearance Status",
+        "title": "Asset clearance status",
         "formulas": [
           "Known recoveries = Notice shortfall recovery (₹46,667) + Salary advance (₹10,000) = ₹56,667",
           "Asset clearance pending: Company laptop not received",
@@ -873,13 +881,13 @@
       {
         "id": "card-hero-s9",
         "type": "number_hero",
-        "title": "Take-Home Pay Comparison",
+        "title": "Take-home pay comparison",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "September Take-Home",
+          "hero_label": "September take-home",
           "hero_amount": 42780,
           "net_change": -5420,
-          "previous_month_label": "August Take-Home",
+          "previous_month_label": "August take-home",
           "previous_month_amount": 48200
         }
       },
@@ -944,8 +952,9 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "September Pay Breakdown",
+        "title": "September pay breakdown",
         "formulas": [
           "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
           "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
@@ -978,10 +987,10 @@
       {
         "id": "card-hero-s10",
         "type": "number_hero",
-        "title": "TDS Deduction Increase",
+        "title": "TDS deduction increase",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "September TDS Deduction",
+          "hero_label": "September TDS deduction",
           "hero_amount": 12454,
           "tds_increase": 12454
         }
@@ -1035,8 +1044,9 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E06",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "Tax Calculation Proof",
+        "title": "Tax calculation proof",
         "formulas": [
           "Declared previous employer gross income = ₹4,50,000",
           "Tax already deducted by previous employer = ₹15,000",
@@ -1069,10 +1079,10 @@
       {
         "id": "card-hero-s11",
         "type": "number_hero",
-        "title": "Take-Home Pay Change",
+        "title": "Take-home pay change",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "Take-Home Net Change",
+          "hero_label": "Take-home net change",
           "hero_amount": -420,
           "earnings_status": "No salary earning component change"
         }
@@ -1113,8 +1123,9 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E16",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "Earnings & Deduction Proof",
+        "title": "Earnings & deduction proof",
         "formulas": [
           "Basic pay: Unchanged at ₹22,500",
           "Special allowance: Unchanged at ₹11,250",
@@ -1140,7 +1151,7 @@
       {
         "id": "card-refusal",
         "type": "refusal_card",
-        "title": "Permission Denied",
+        "title": "Permission denied",
         "certainty": "Permission denied",
         "data": {
           "message": "I cannot provide that information. I can help with payroll records you are authorized to access.",
@@ -1178,7 +1189,8 @@
       "surface": "CHAT-HR",
       "scenario_num": null,
       "employee_id": null,
-      "panel": null
+      "panel": null,
+      "certainty": null
     }
   },
   "13": {
@@ -1192,7 +1204,7 @@
       {
         "id": "card-settlement-s13",
         "type": "proposal_summary",
-        "title": "Settlement Breakdown (Unresolved Component)",
+        "title": "Settlement breakdown (unresolved component)",
         "certainty": "Incomplete",
         "data": {
           "employee_name": "Imran Khan",
@@ -1204,10 +1216,10 @@
       {
         "id": "card-components-s13",
         "type": "component_list",
-        "title": "Settlement Ledger Lines",
+        "title": "Settlement ledger lines",
         "certainty": "Incomplete",
         "data": {
-          "hero_label": "Final Net",
+          "hero_label": "Final net",
           "hero_amount": null,
           "known_recoveries": 56667,
           "known_recoveries_subtotal": 56667,
@@ -1233,10 +1245,10 @@
       {
         "id": "card-approval-s13",
         "type": "approval_card",
-        "title": "Partial Authorization",
+        "title": "Partial authorization",
         "certainty": "Incomplete",
         "data": {
-          "scope_label": "Imran Khan (E12)",
+          "scope_label": "Imran Khan · E12",
           "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
           "actions": [
             "Approve verified lines only",
@@ -1263,8 +1275,9 @@
       "role": "HR Admin",
       "surface": "CHAT-HR",
       "employee_id": "E12",
+      "certainty": "Incomplete",
       "panel": {
-        "title": "Settlement Line Review",
+        "title": "Settlement line review",
         "formulas": [
           "Known recoveries = Notice shortfall recovery (₹46,667) + Salary advance (₹10,000) = ₹56,667",
           "Asset clearance hold: Laptop status unconfirmed",
@@ -1336,6 +1349,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": null
     }
   },
@@ -1350,10 +1364,10 @@
       {
         "id": "card-pf-2026-09",
         "type": "number_hero",
-        "title": "PF Contribution — September 2026",
+        "title": "PF contribution — September 2026",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "September 2026 Employee PF Contribution",
+          "hero_label": "September 2026 employee PF contribution",
           "hero_amount": 2220,
           "employee_id": "E05",
           "month": "2026-09"
@@ -1390,6 +1404,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": null
     }
   },
@@ -1439,8 +1454,9 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": {
-        "title": "TDS Calculation — September 2026",
+        "title": "TDS calculation — September 2026",
         "formulas": [
           "Remaining yearly tax divided by remaining tax-year months including the current month"
         ],
@@ -1472,10 +1488,10 @@
       {
         "id": "card-lop-2026-09",
         "type": "number_hero",
-        "title": "Attendance & Loss of Pay — September 2026",
+        "title": "Attendance & loss of pay — September 2026",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "Recorded LOP Days",
+          "hero_label": "Recorded LOP days",
           "hero_amount": 3,
           "month": "September 2026",
           "employee_id": "E05"
@@ -1512,6 +1528,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": null
     }
   },
@@ -1526,14 +1543,14 @@
       {
         "id": "card-compare-2026-08-2026-09",
         "type": "number_hero",
-        "title": "August 2026 vs September 2026 Pay Comparison",
+        "title": "August 2026 vs September 2026 pay comparison",
         "certainty": "Complete for this scope",
         "data": {
-          "hero_label": "Net Pay Change",
+          "hero_label": "Net pay change",
           "hero_amount": -5420,
-          "previous_month_label": "August 2026 Take-Home",
+          "previous_month_label": "August 2026 take-home",
           "previous_month_amount": 48200,
-          "current_month_label": "September 2026 Take-Home",
+          "current_month_label": "September 2026 take-home",
           "current_month_amount": 42780,
           "employee_id": "E05"
         }
@@ -1569,6 +1586,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": null
     }
   },
@@ -1583,7 +1601,7 @@
       {
         "id": "card-status-QUERY-E05-SEPTEMBER",
         "type": "query_status",
-        "title": "Payroll Query Status",
+        "title": "Payroll query status",
         "data": {
           "query_id": "QUERY-E05-SEPTEMBER",
           "status": "In review",
@@ -1623,7 +1641,8 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
-      "panel": null
+      "panel": null,
+      "certainty": null
     }
   },
   "e05_tax_regime": {
@@ -1637,7 +1656,7 @@
       {
         "id": "card-tax-regime",
         "type": "certainty_label",
-        "title": "Recorded Tax Regime",
+        "title": "Recorded tax regime",
         "certainty": "Complete for this scope",
         "data": {
           "tax_regime": "new",
@@ -1676,6 +1695,7 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "certainty": "Complete for this scope",
       "panel": null
     }
   },
@@ -1712,7 +1732,8 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
-      "panel": null
+      "panel": null,
+      "certainty": null
     }
   },
   "e05_c35": {
@@ -1750,7 +1771,8 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
-      "panel": null
+      "panel": null,
+      "certainty": null
     }
   }
 }

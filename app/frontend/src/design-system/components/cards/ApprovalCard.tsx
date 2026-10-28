@@ -57,7 +57,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   const approverName = d.approver ? getUserDisplayName(d.approver) : 'Anita Desai';
 
   // Heading: plain heading without dev labels
-  const heading = card.title === 'HR Authorization' || !card.title ? 'Approval' : card.title;
+  const heading = card.title === 'HR Authorization' || card.title === 'HR authorization' || !card.title ? 'Approval' : card.title;
 
   return (
     <div

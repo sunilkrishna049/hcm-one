@@ -212,6 +212,7 @@ def test_certainty_label_equals_engine_certainty():
         ("Which tax regime am I in?", "tax_regime", "Complete for this scope"),
     ]:
         res = chat_router.handle_chat("USER-E05", message=topic_query)
+        assert res.get("state", {}).get("certainty") == expected_certainty
         if topic_query == "Why is my TDS zero?":
             assert len(res.get("cards", [])) == 0, "No card sent for TDS 0"
             res_nonzero = chat_router.handle_chat("USER-E06", message="Why did my TDS increase in September?")
@@ -226,6 +227,64 @@ def test_certainty_label_equals_engine_certainty():
                 f"Topic '{expected_intent}' card '{card.get('id')}' has certainty '{card.get('certainty')}', "
                 f"expected engine certainty '{expected_certainty}'"
             )
+
+
+def test_reply_level_state_certainty_for_topics_and_scenarios():
+    """PART A — Items 1-3:
+    For every employee topic and scenario reply:
+    - If any payroll number appears in messages or cards, state.certainty equals the engine label.
+    - Replies with no payroll number (FAQ, C33, C34, greetings) show no badge (state.certainty is None).
+    """
+    # 1. Scenarios with payroll numbers
+    scenario_cases = [
+        (1, "HR01", "Prepare Priya Sharma's pending back-dated hike.", "Complete for this scope"),
+        (2, "HR01", "Prepare Arjun Rao's pending back-dated hike.", "Complete for this scope"),
+        (3, "HR01", "Prepare Kavya Iyer's pending back-dated hike.", "Incomplete"),
+        (4, "HR01", "Prepare bonus proposal for Engineering and Sales.", "Complete for this scope"),
+        (5, "HR01", "Prepare bonus proposal for Meera Nair.", "Incomplete"),
+        (6, "HR01", "Prepare settlement proposal for Rahul Verma.", "Complete for this scope"),
+        (7, "HR01", "Prepare settlement proposal for Lakshmi Reddy.", "Complete for this scope"),
+        (8, "HR01", "Prepare settlement proposal for Imran Khan.", "Incomplete"),
+        (9, "USER-E05", "Why is my September salary lower than August?", "Complete for this scope"),
+        (10, "USER-E06", "Why did my TDS increase in September?", "Complete for this scope"),
+        (11, "USER-E16", "Why did my take-home pay decrease in September when my gross did not change?", "Complete for this scope"),
+        (13, "HR01", "Review settlement calculation for Imran Khan.", "Incomplete"),
+    ]
+    for s_num, user, msg, expected_certainty in scenario_cases:
+        res = chat_router.handle_chat(user, message=msg, context={"scenario_num": s_num})
+        assert res.get("state", {}).get("certainty") == expected_certainty, (
+            f"Scenario {s_num} state.certainty was '{res.get('state', {}).get('certainty')}', expected '{expected_certainty}'"
+        )
+
+    # 2. Employee topics with payroll numbers (including TDS zero where cards is empty)
+    topic_cases = [
+        ("Explain my September pay.", "Complete for this scope"),
+        ("How much PF was cut?", "Complete for this scope"),
+        ("Why is my TDS zero?", "Complete for this scope"),
+        ("How many LOP days do I have?", "Complete for this scope"),
+        ("Compare my August and September pay.", "Complete for this scope"),
+        ("Which tax regime am I in?", "Complete for this scope"),
+    ]
+    for query, expected_certainty in topic_cases:
+        res = chat_router.handle_chat("USER-E05", message=query)
+        assert res.get("state", {}).get("certainty") == expected_certainty, (
+            f"Topic '{query}' state.certainty was '{res.get('state', {}).get('certainty')}', expected '{expected_certainty}'"
+        )
+
+    # 3. Replies with NO payroll numbers show no badge (state.certainty is None)
+    no_number_cases = [
+        ("USER-E05", "What is basic pay?"),                # FAQ
+        ("USER-E05", "What is HRA?"),                     # FAQ
+        ("USER-E05", "hello"),                            # Greeting / clarification C33
+        ("USER-E05", "Will I get a bonus this year?"),    # C34 unrecorded topic
+        ("USER-E05", "What is my October salary?"),       # C35 unrecorded month
+        ("HR02", "Show me Priya Sharma's salary breakdown."), # Scenario 12 refusal
+    ]
+    for user, query in no_number_cases:
+        res = chat_router.handle_chat(user, message=query)
+        assert res.get("state", {}).get("certainty") is None, (
+            f"Query '{query}' state.certainty was '{res.get('state', {}).get('certainty')}', expected None"
+        )
 
 
 @pytest.mark.parametrize("phrasing,expected_topic,expected_reply_start", NEHA_PHRASINGS)

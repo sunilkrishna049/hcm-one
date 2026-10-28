@@ -74,7 +74,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
             <h2 className="hcm-panel-title">{title}</h2>
             {data?.employee_name && (
               <p className="hcm-panel-subtitle">
-                {data.employee_name} ({data.employee_id})
+                {data.employee_name} · <span style={{ color: 'var(--color-text-muted)' }}>{data.employee_id}</span>
               </p>
             )}
           </div>
@@ -95,7 +95,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
           {/* Multi-month Proof Table (Fits without horizontal scrolling) */}
           {months.length > 0 && (
             <section className="hcm-panel-section" aria-label="Month-by-month proof">
-              <h3 className="hcm-panel-section-title">Month-by-Month Proof</h3>
+              <h3 className="hcm-panel-section-title">Month-by-month proof</h3>
               <div className="hcm-panel-table-wrapper">
                 <table className="hcm-panel-table">
                   <thead>
@@ -103,7 +103,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
                       <th style={{ width: '60px' }}>Month</th>
                       <th className="hcm-num-cell" style={{ width: '60px' }}>Paid</th>
                       <th className="hcm-num-cell" style={{ width: '60px' }}>LOP</th>
-                      <th style={{ textAlign: 'left', paddingLeft: 'var(--space-2)' }}>Formula Used</th>
+                      <th style={{ textAlign: 'left', paddingLeft: 'var(--space-2)' }}>Formula used</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -134,7 +134,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
         {/* Settlement Components List */}
         {components.length > 0 && (
           <section className="hcm-panel-section" aria-label="Settlement components">
-            <h3 className="hcm-panel-section-title">Settlement Breakdown</h3>
+            <h3 className="hcm-panel-section-title">Settlement breakdown</h3>
             <div className="hcm-panel-components-list">
               {components.map((c, idx) => (
                 <div key={idx} className="hcm-panel-comp-row">
@@ -161,7 +161,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
         {/* Plain-Language Formulas */}
         {formulas.length > 0 && (
           <section className="hcm-panel-section" aria-label="Plain-language formulas">
-            <h3 className="hcm-panel-section-title">Plain-Language Formulas</h3>
+            <h3 className="hcm-panel-section-title">Plain-language formulas</h3>
             <div className="hcm-panel-formulas-box">
               {formulas.map((f, idx) => (
                 <div key={idx} className="hcm-panel-formula-item">

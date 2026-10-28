@@ -12,6 +12,8 @@ interface AssistantMessage {
 interface AssistantTurnProps {
   messages: AssistantMessage[];
   cards?: any[];
+  state?: any;
+  certainty?: string;
   time?: string;
   onShowCalculation?: () => void;
   onApprove?: () => void;
@@ -31,6 +33,8 @@ interface AssistantTurnProps {
 export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   messages,
   cards = [],
+  state,
+  certainty,
   time,
   onShowCalculation,
   onApprove,
@@ -47,11 +51,9 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   onSelectEmployee,
 }) => {
   // Epistemic certainty shown once per assistant reply:
-  // Certainty labels appear only on replies that show calculated amounts.
-  const hasCalculatedAmounts = cards.some((c) =>
-    ['number_hero', 'number_cards', 'month_table', 'component_list', 'reason_list', 'proposal_summary'].includes(c.type)
-  );
-  const turnCertainty = hasCalculatedAmounts ? cards.find((c) => c.certainty)?.certainty : undefined;
+  // Reads from reply-level state.certainty (or explicit certainty prop).
+  // Replies with no payroll number (FAQ, C33, C34, greetings) show no badge.
+  const turnCertainty = certainty ?? state?.certainty;
 
   const displayTime = time || formatLocalTime(new Date());
 

@@ -425,3 +425,13 @@
 - Status: Approved
 - Approved by: Project owner
 
+- ID: DEC-043
+- Date: 2026-10-28
+- Decision: HR views show employee name with code (muted); employee views never show codes
+- Options considered: (a) Show employee codes on all surfaces, (b) Option B: HR surfaces show employee name and code everywhere an employee is named (picker, proposal, bonus list, settlement, query review, side panel) in format "Priya Sharma · E01" with code in muted text token; employee surfaces never show any employee code, including their own.
+- Reason: Project owner decision. HR needs clear identifiers when disambiguating records across enterprise staff, while employee self-service interfaces maintain personal, clean conversational presentation without displaying internal administrative identifiers.
+- Evidence or source: Project owner instructions, 2026-10-28; [EmployeePickerCard.tsx](../app/frontend/src/design-system/components/cards/EmployeePickerCard.tsx); [ProposalSummaryCard.tsx](../app/frontend/src/design-system/components/cards/ProposalSummaryCard.tsx); [PanelHR.tsx](../app/frontend/src/design-system/components/chat/PanelHR.tsx); [ChatEMP.tsx](../app/frontend/src/design-system/components/chat/ChatEMP.tsx).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+

@@ -31,7 +31,7 @@ export const ReasonListCard: React.FC<ReasonListCardProps> = ({ card }) => {
         <h4 className="hcm-card-title">{card.title}</h4>
         {net_change !== undefined && net_change !== null && (
           <span className="hcm-net-change-pill tnum">
-            Net Change: {formatINR(net_change)}
+            Net change: {formatINR(net_change)}
           </span>
         )}
       </div>

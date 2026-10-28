@@ -45,13 +45,13 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
             <strong>{draft.category}</strong>
           </div>
           <div className="hcm-kv-item">
-            <span className="hcm-kv-label">Target Months</span>
+            <span className="hcm-kv-label">Target months</span>
             <span className="tnum">{draft.months.map((m: string) => formatHumanDate(m)).join(', ')}</span>
           </div>
         </div>
 
         <div className="hcm-form-group" style={{ marginTop: 'var(--space-3)' }}>
-          <label className="hcm-form-label">Employee Inquiry Description:</label>
+          <label className="hcm-form-label">Employee inquiry description:</label>
           <textarea
             className="hcm-textarea"
             rows={3}
@@ -62,7 +62,7 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
 
         {/* Attached Evidence List */}
         <div className="hcm-evidence-section" style={{ marginTop: 'var(--space-3)' }}>
-          <span className="hcm-kv-label">Attached Sourced Evidence:</span>
+          <span className="hcm-kv-label">Attached sourced evidence:</span>
           <ul className="hcm-evidence-list">
             {draft.evidence.map((ev, i) => (
               <li key={i} className="hcm-evidence-item">

@@ -71,7 +71,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
 
           {d.tds_increase !== undefined && d.tds_increase !== null && (
             <div className="hcm-hero-sublabel">
-              <span>Monthly TDS Increase: </span>
+              <span>Monthly TDS increase: </span>
               <strong className="tnum" style={{ color: 'var(--color-status-error-text)' }}>
                 +{formatINR(d.tds_increase)}
               </strong>
@@ -91,7 +91,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
       {(d.gross_arrears !== undefined || d.employee_pf_change !== undefined || d.estimated_tds_impact !== undefined) && (
         <div className="hcm-secondary-grid">
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">Gross Arrears</span>
+            <span className="hcm-stat-label">Gross arrears</span>
             <span className="hcm-stat-value tnum">{formatINR(d.gross_arrears)}</span>
           </div>
           <div className="hcm-grid-stat">
@@ -117,11 +117,11 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
       {(d.august_diff !== undefined || d.september_diff !== undefined) && (
         <div className="hcm-secondary-grid">
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">August Arrears</span>
+            <span className="hcm-stat-label">August arrears</span>
             <span className="hcm-stat-value tnum">{formatINR(d.august_diff)}</span>
           </div>
           <div className="hcm-grid-stat">
-            <span className="hcm-stat-label">September Arrears</span>
+            <span className="hcm-stat-label">September arrears</span>
             <span className="hcm-stat-value tnum">{formatINR(d.september_diff)}</span>
           </div>
         </div>

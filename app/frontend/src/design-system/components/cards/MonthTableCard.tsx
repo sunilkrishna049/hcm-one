@@ -126,7 +126,7 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
         <h4 className="hcm-card-title">{card.title}</h4>
         {total_gross_arrears !== undefined && (
           <span className="hcm-total-badge">
-            Total Gross Arrears: <strong className="tnum">{formatINR(total_gross_arrears)}</strong>
+            Total gross arrears: <strong className="tnum">{formatINR(total_gross_arrears)}</strong>
           </span>
         )}
       </div>
@@ -136,8 +136,8 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
           <thead>
             <tr>
               <th scope="col">Month</th>
-              <th scope="col" className="hcm-text-right">Old Gross</th>
-              <th scope="col" className="hcm-text-right">Revised Gross</th>
+              <th scope="col" className="hcm-text-right">Old gross</th>
+              <th scope="col" className="hcm-text-right">Revised gross</th>
               <th scope="col" className="hcm-text-right">Arrears</th>
               <th scope="col" className="hcm-text-right">Monthly TDS</th>
             </tr>
@@ -156,8 +156,8 @@ export const MonthTableCard: React.FC<MonthTableCardProps> = ({ card }) => {
                       </span>
                     )}
                   </td>
-                  <td className="tnum hcm-text-right" data-label="Old Gross">{formatINR(m.old_gross)}</td>
-                  <td className="tnum hcm-text-right" data-label="Revised Gross">{formatINR(m.revised_gross)}</td>
+                  <td className="tnum hcm-text-right" data-label="Old gross">{formatINR(m.old_gross)}</td>
+                  <td className="tnum hcm-text-right" data-label="Revised gross">{formatINR(m.revised_gross)}</td>
                   <td className="tnum hcm-cell-arrears" data-label="Arrears">
                     {formatINR(m.diff)}
                   </td>

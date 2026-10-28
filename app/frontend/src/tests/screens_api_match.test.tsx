@@ -199,7 +199,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Prepare Kavya Iyer's pending back-dated hike.");
 
     await waitFor(() => {
-      expect(screen.getByText('Known Monthly Differences')).toBeInTheDocument();
+      expect(screen.getByText('Known monthly differences')).toBeInTheDocument();
     });
 
     expect(screen.getAllByText(/Kavya Iyer/).length).toBeGreaterThan(0);
@@ -251,7 +251,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Why is my September salary lower than August?");
 
     await waitFor(() => {
-      expect(screen.getByText('September Take-Home')).toBeInTheDocument();
+      expect(screen.getByText('September take-home')).toBeInTheDocument();
     });
 
     expect(screen.getByText('₹42,780')).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Why did my TDS increase in September?");
 
     await waitFor(() => {
-      expect(screen.getByText('September TDS Deduction')).toBeInTheDocument();
+      expect(screen.getByText('September TDS deduction')).toBeInTheDocument();
     });
 
     expect(screen.getByText('+₹12,454')).toBeInTheDocument();
@@ -301,7 +301,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Why did my take-home pay decrease in September when my gross did not change?");
 
     await waitFor(() => {
-      expect(screen.getByText('Take-Home Net Change')).toBeInTheDocument();
+      expect(screen.getByText('Take-home net change')).toBeInTheDocument();
     });
 
     expect(screen.getAllByText('−₹420').length).toBeGreaterThan(0);
@@ -318,7 +318,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Show me Priya Sharma's salary breakdown.");
 
     await waitFor(() => {
-      expect(screen.getByText('Permission Denied')).toBeInTheDocument();
+      expect(screen.getByText('Permission denied')).toBeInTheDocument();
     });
 
     expect(
@@ -343,7 +343,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
-      expect(screen.getByText('Settlement Breakdown (Unresolved Component)')).toBeInTheDocument();
+      expect(screen.getByText('Settlement breakdown (unresolved component)')).toBeInTheDocument();
     });
 
     expect(screen.getAllByText('₹56,667').length).toBeGreaterThan(0);

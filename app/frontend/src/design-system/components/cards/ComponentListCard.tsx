@@ -38,7 +38,7 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
           <h4 className="hcm-card-title">{card.title}</h4>
           {d.due_date && (
             <span className="hcm-due-date-pill tnum">
-              Due Date: {formatHumanDate(d.due_date)}
+              Due date: {formatHumanDate(d.due_date)}
             </span>
           )}
         </div>
@@ -53,9 +53,9 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
           </div>
           {(d.gross_payables !== undefined || d.total_deductions !== undefined) && (
             <div className="hcm-hero-sublabel">
-              <span>Gross Payables: <strong className="tnum">{formatINR(d.gross_payables)}</strong></span>
+              <span>Gross payables: <strong className="tnum">{formatINR(d.gross_payables)}</strong></span>
               <span style={{ margin: '0 var(--space-2)' }}>•</span>
-              <span>Total Deductions: <strong className="tnum">{formatINR(d.total_deductions)}</strong></span>
+              <span>Total deductions: <strong className="tnum">{formatINR(d.total_deductions)}</strong></span>
             </div>
           )}
           {(d.known_recoveries !== undefined || d.known_recoveries_subtotal !== undefined) && (

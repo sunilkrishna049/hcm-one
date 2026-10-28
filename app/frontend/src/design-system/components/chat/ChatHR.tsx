@@ -286,6 +286,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   key={turn.id}
                   messages={turn.messages || []}
                   cards={turn.cards || []}
+                  state={turn.state}
                   time={turn.time}
                   onShowCalculation={() => setIsPanelOpen(true)}
                   onApprove={() => handleAction('approve')}

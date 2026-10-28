@@ -246,6 +246,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
                   key={turn.id}
                   messages={turn.messages || []}
                   cards={turn.cards || []}
+                  state={turn.state}
                   time={turn.time}
                   onShowCalculation={() => setIsSheetOpen(true)}
                   onSendQuery={(desc) => handleAction('confirm-send-query', { draft: { description: desc } })}

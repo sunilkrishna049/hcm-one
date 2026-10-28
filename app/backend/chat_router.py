@@ -352,6 +352,9 @@ class ChatRouter:
     def handle_chat(self, user_id: str, message: str = "", action: Optional[str] = None, context: Optional[dict] = None) -> dict:
         user = USERS.get(user_id, USERS.get("HR01", {}))
         result = self._handle_chat_internal(user_id=user_id, message=message, action=action, context=context)
+        if isinstance(result, dict) and "state" in result and isinstance(result["state"], dict):
+            if "certainty" not in result["state"]:
+                result["state"]["certainty"] = None
         return enforce_reply_permissions(result, user)
 
     def _handle_chat_internal(self, user_id: str, message: str = "", action: Optional[str] = None, context: Optional[dict] = None) -> dict:
@@ -843,7 +846,7 @@ class ChatRouter:
                 {
                     "id": "card-prop-s1",
                     "type": "proposal_summary",
-                    "title": "Proposal Summary",
+                    "title": "Proposal summary",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "employee_name": "Priya Sharma",
@@ -860,7 +863,7 @@ class ChatRouter:
                 {
                     "id": "card-numbers-s1",
                     "type": "number_cards",
-                    "title": "Arrears & Tax Breakdown",
+                    "title": "Arrears & tax breakdown",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "Expected net arrears",
@@ -878,7 +881,7 @@ class ChatRouter:
                 {
                     "id": "card-months-s1",
                     "type": "month_table",
-                    "title": "Affected Months Summary",
+                    "title": "Affected months summary",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "months": [
@@ -919,6 +922,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E01",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
                     "title": "Calculation Proof & Month Breakdown",
                     "employee_name": "Priya Sharma",
@@ -975,7 +979,7 @@ class ChatRouter:
                 {
                     "id": "card-prop-s2",
                     "type": "proposal_summary",
-                    "title": "Proposal Summary",
+                    "title": "Proposal summary",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "employee_name": "Arjun Rao",
@@ -992,7 +996,7 @@ class ChatRouter:
                 {
                     "id": "card-numbers-s2",
                     "type": "number_cards",
-                    "title": "Arrears & PF Impact",
+                    "title": "Arrears & PF impact",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "Expected net arrears",
@@ -1006,10 +1010,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s2",
                     "type": "approval_card",
-                    "title": "HR Authorization",
+                    "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "scope_label": "Arjun Rao (E02) • September 2026",
+                        "scope_label": "Arjun Rao · E02 · September 2026",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
@@ -1026,8 +1030,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E02",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "September 2026 PF Dual-Segment Proof",
+                    "title": "September 2026 PF dual-segment proof",
                     "employee_name": "Arjun Rao",
                     "employee_id": "E02",
                     "formulas": [
@@ -1058,7 +1063,7 @@ class ChatRouter:
                 {
                     "id": "card-prop-s3",
                     "type": "proposal_summary",
-                    "title": "Incomplete Proposal Summary",
+                    "title": "Incomplete proposal summary",
                     "certainty": "Incomplete",
                     "data": {
                         "employee_name": "Kavya Iyer",
@@ -1071,7 +1076,7 @@ class ChatRouter:
                 {
                     "id": "card-numbers-s3",
                     "type": "number_cards",
-                    "title": "Known Monthly Differences",
+                    "title": "Known monthly differences",
                     "certainty": "Incomplete",
                     "data": {
                         "hero_label": "Expected net arrears",
@@ -1085,10 +1090,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s3",
                     "type": "approval_card",
-                    "title": "HR Authorization (Blocked)",
+                    "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
-                        "scope_label": "Kavya Iyer (E03)",
+                        "scope_label": "Kavya Iyer · E03",
                         "notice": "Cannot approve an incomplete proposal while required records are missing.",
                         "actions": [],
                         "disabled": True
@@ -1104,8 +1109,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E03",
+                "certainty": r.get("certainty", "Incomplete"),
                 "panel": {
-                    "title": "Missing Attendance Proof",
+                    "title": "Missing attendance proof",
                     "employee_name": "Kavya Iyer",
                     "employee_id": "E03",
                     "formulas": [
@@ -1175,7 +1181,7 @@ class ChatRouter:
         if bonus_type_key == "quarterly_sales_incentive":
             display_bonus_type = "Q2 Sales incentive"
             display_period = req.get("period", "Q2 2026-27")
-            card_title = "Q2 Sales Incentive Summary"
+            card_title = "Q2 sales incentive summary"
             emp_formulas = [
                 f"{e['employee_id']} ({get_employee_name(e['employee_id'])}): Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
                 for e in req.get("employees", [])
@@ -1183,7 +1189,7 @@ class ChatRouter:
         else:
             display_bonus_type = "Annual performance bonus"
             display_period = req.get("period", "FY 2025-26")
-            card_title = "Team Bonus Run Summary"
+            card_title = "Team bonus run summary"
             emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
             e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
             e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
@@ -1233,7 +1239,7 @@ class ChatRouter:
                 {
                     "id": "card-approval-s4",
                     "type": "approval_card",
-                    "title": "HR Authorization",
+                    "title": "HR authorization",
                     "certainty": "Needs HR decision",
                     "data": {
                         "scope_label": f"{display_bonus_type} • {len(req.get('employees', []))} employees evaluated",
@@ -1254,8 +1260,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": None,
+                "certainty": gross_certainty,
                 "panel": {
-                    "title": "Bonus Eligibility & Scope Roster",
+                    "title": "Bonus eligibility & scope roster",
                     "formulas": emp_formulas,
                     "rule_citations": [
                         "Bonus proration rule: Joiners pro-rated by active days in performance year",
@@ -1277,7 +1284,7 @@ class ChatRouter:
                 {
                     "id": "card-bonus-s5",
                     "type": "proposal_summary",
-                    "title": "Employee Bonus Evaluation",
+                    "title": "Employee bonus evaluation",
                     "certainty": "Incomplete",
                     "data": {
                         "employee_name": "Meera Nair",
@@ -1290,10 +1297,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s5",
                     "type": "approval_card",
-                    "title": "HR Authorization (Blocked)",
+                    "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
-                        "scope_label": "Meera Nair (E09)",
+                        "scope_label": "Meera Nair · E09",
                         "notice": "Cannot approve bonus without verified performance rating.",
                         "actions": [],
                         "disabled": True
@@ -1309,8 +1316,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E09",
+                "certainty": r.get("certainty", "Incomplete"),
                 "panel": {
-                    "title": "Missing Performance Record",
+                    "title": "Missing performance record",
                     "formulas": [
                         "Performance rating for FY 2025-26: Not available in generated data",
                         "Bonus calculation: Blocked until rating is supplied"
@@ -1333,7 +1341,7 @@ class ChatRouter:
                 {
                     "id": "card-settlement-s6",
                     "type": "proposal_summary",
-                    "title": "Full & Final Settlement Proposal",
+                    "title": "Full & final settlement proposal",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "employee_name": "Rahul Verma",
@@ -1346,7 +1354,7 @@ class ChatRouter:
                 {
                     "id": "card-components-s6",
                     "type": "component_list",
-                    "title": "Settlement Components Ledger",
+                    "title": "Settlement components ledger",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "hero_label": "Final net settlement",
@@ -1365,10 +1373,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s6",
                     "type": "approval_card",
-                    "title": "HR Authorization",
+                    "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "scope_label": "Rahul Verma (E10) • Exit Settlement",
+                        "scope_label": "Rahul Verma · E10 · Exit Settlement",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
@@ -1386,8 +1394,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E10",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "Settlement Proof & Component Ledger",
+                    "title": "Settlement proof & component ledger",
                     "employee_name": "Rahul Verma",
                     "employee_id": "E10",
                     "formulas": [
@@ -1417,7 +1426,7 @@ class ChatRouter:
                 {
                     "id": "card-settlement-s7",
                     "type": "proposal_summary",
-                    "title": "Full & Final Settlement Proposal",
+                    "title": "Full & final settlement proposal",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "employee_name": "Lakshmi Reddy",
@@ -1429,7 +1438,7 @@ class ChatRouter:
                 {
                     "id": "card-components-s7",
                     "type": "component_list",
-                    "title": "Settlement Components",
+                    "title": "Settlement components",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
                         "components": [
@@ -1440,10 +1449,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s7",
                     "type": "approval_card",
-                    "title": "HR Authorization",
+                    "title": "HR authorization",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "scope_label": "Lakshmi Reddy (E11)",
+                        "scope_label": "Lakshmi Reddy · E11",
                         "notice": get_message("C04"),
                         "actions": ["Approve proposal for payroll", "Edit with reason", "Reject proposal"],
                         "status": "pending",
@@ -1460,8 +1469,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E11",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "Gratuity Service Eligibility Proof",
+                    "title": "Gratuity service eligibility proof",
                     "formulas": [
                         "Tenure: Continuous service is less than 5-year threshold",
                         f"Gratuity payable = {format_inr(grat_amt)}"
@@ -1490,7 +1500,7 @@ class ChatRouter:
                 {
                     "id": "card-settlement-s8",
                     "type": "proposal_summary",
-                    "title": "Incomplete Settlement Proposal",
+                    "title": "Incomplete settlement proposal",
                     "certainty": "Incomplete",
                     "data": {
                         "employee_name": "Imran Khan",
@@ -1502,10 +1512,10 @@ class ChatRouter:
                 {
                     "id": "card-components-s8",
                     "type": "component_list",
-                    "title": "Recovery Line Items",
+                    "title": "Recovery line items",
                     "certainty": "Incomplete",
                     "data": {
-                        "hero_label": "Final Net",
+                        "hero_label": "Final net",
                         "hero_amount": None,
                         "known_recoveries": recov_subtotal,
                         "known_recoveries_subtotal": recov_subtotal,
@@ -1519,10 +1529,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s8",
                     "type": "approval_card",
-                    "title": "HR Authorization (Blocked)",
+                    "title": "HR authorization (blocked)",
                     "certainty": "Incomplete",
                     "data": {
-                        "scope_label": "Imran Khan (E12)",
+                        "scope_label": "Imran Khan · E12",
                         "notice": "Cannot approve an incomplete settlement while clearance is pending.",
                         "actions": [],
                         "disabled": True
@@ -1538,8 +1548,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E12",
+                "certainty": r.get("certainty", "Incomplete"),
                 "panel": {
-                    "title": "Asset Clearance Status",
+                    "title": "Asset clearance status",
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance pending: Company laptop not received",
@@ -1610,13 +1621,13 @@ class ChatRouter:
                 {
                     "id": "card-hero-s9",
                     "type": "number_hero",
-                    "title": "Take-Home Pay Comparison",
+                    "title": "Take-home pay comparison",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "hero_label": "September Take-Home",
+                        "hero_label": "September take-home",
                         "hero_amount": after_net,
                         "net_change": net_change,
-                        "previous_month_label": "August Take-Home",
+                        "previous_month_label": "August take-home",
                         "previous_month_amount": before_net
                     }
                 },
@@ -1642,8 +1653,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E05",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "September Pay Breakdown",
+                    "title": "September pay breakdown",
                     "formulas": [
                         f"Take-home pay = earned gross − total employee deductions = {format_inr(after_gross)} − {format_inr(after_tot_ded)} = {format_inr(after_net)} (change: {format_inr(net_change)})",
                         f"Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = {format_inr(before_gross)} × 3 ÷ 30 = {format_inr(gross_diff)}",
@@ -1687,10 +1699,10 @@ class ChatRouter:
                 {
                     "id": "card-hero-s10",
                     "type": "number_hero",
-                    "title": "TDS Deduction Increase",
+                    "title": "TDS deduction increase",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "hero_label": "September TDS Deduction",
+                        "hero_label": "September TDS deduction",
                         "hero_amount": after_tds,
                         "tds_increase": tds_increase
                     }
@@ -1719,8 +1731,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E06",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "Tax Calculation Proof",
+                    "title": "Tax calculation proof",
                     "formulas": [
                         f"Declared previous employer gross income = {format_inr(prev_gross)}",
                         f"Tax already deducted by previous employer = {format_inr(prev_tds)}",
@@ -1765,10 +1778,10 @@ class ChatRouter:
                 {
                     "id": "card-hero-s11",
                     "type": "number_hero",
-                    "title": "Take-Home Pay Change",
+                    "title": "Take-home pay change",
                     "certainty": r.get("certainty", "Complete for this scope"),
                     "data": {
-                        "hero_label": "Take-Home Net Change",
+                        "hero_label": "Take-home net change",
                         "hero_amount": net_change,
                         "earnings_status": "No salary earning component change"
                     }
@@ -1795,8 +1808,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E16",
+                "certainty": r.get("certainty", "Complete for this scope"),
                 "panel": {
-                    "title": "Earnings & Deduction Proof",
+                    "title": "Earnings & deduction proof",
                     "formulas": [
                         f"Basic pay: Unchanged at {format_inr(basic_val)}",
                         f"Special allowance: Unchanged at {format_inr(special_val)}",
@@ -1830,7 +1844,7 @@ class ChatRouter:
                 {
                     "id": "card-settlement-s13",
                     "type": "proposal_summary",
-                    "title": "Settlement Breakdown (Unresolved Component)",
+                    "title": "Settlement breakdown (unresolved component)",
                     "certainty": "Incomplete",
                     "data": {
                         "employee_name": "Imran Khan",
@@ -1842,10 +1856,10 @@ class ChatRouter:
                 {
                     "id": "card-components-s13",
                     "type": "component_list",
-                    "title": "Settlement Ledger Lines",
+                    "title": "Settlement ledger lines",
                     "certainty": "Incomplete",
                     "data": {
-                        "hero_label": "Final Net",
+                        "hero_label": "Final net",
                         "hero_amount": None,
                         "known_recoveries": recov_subtotal,
                         "known_recoveries_subtotal": recov_subtotal,
@@ -1859,10 +1873,10 @@ class ChatRouter:
                 {
                     "id": "card-approval-s13",
                     "type": "approval_card",
-                    "title": "Partial Authorization",
+                    "title": "Partial authorization",
                     "certainty": "Incomplete",
                     "data": {
-                        "scope_label": "Imran Khan (E12)",
+                        "scope_label": "Imran Khan · E12",
                         "notice": "Approving verified component lines only. Unresolved asset recovery remains held and excluded from net payout.",
                         "actions": ["Approve verified lines only", "Edit with reason", "Reject proposal"],
                         "status": "pending",
@@ -1879,8 +1893,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": "E12",
+                "certainty": r.get("certainty", "Incomplete"),
                 "panel": {
-                    "title": "Settlement Line Review",
+                    "title": "Settlement line review",
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance hold: Laptop status unconfirmed",
@@ -1943,6 +1958,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": data.get("certainty", "Complete for this scope") if data else "Complete for this scope",
                 "panel": None
             }
         }
@@ -1964,10 +1980,10 @@ class ChatRouter:
             cards.append({
                 "id": f"card-pf-{month}",
                 "type": "number_hero",
-                "title": f"PF Contribution — {month_name}",
+                "title": f"PF contribution — {month_name}",
                 "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
                 "data": {
-                    "hero_label": f"{month_name} Employee PF Contribution",
+                    "hero_label": f"{month_name} employee PF contribution",
                     "hero_amount": pf_val,
                     "employee_id": emp_id,
                     "month": month
@@ -1986,6 +2002,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": data.get("pf_certainty", "Complete for this scope") if data else "Complete for this scope",
                 "panel": None
             }
         }
@@ -2041,10 +2058,10 @@ class ChatRouter:
             cards.append({
                 "id": f"card-tds-{month}",
                 "type": "number_hero",
-                "title": f"TDS Deduction — {month_name}",
+                "title": f"TDS deduction — {month_name}",
                 "certainty": engine_certainty,
                 "data": {
-                    "hero_label": f"{month_name} TDS Deduction",
+                    "hero_label": f"{month_name} TDS deduction",
                     "hero_amount": tds_val,
                     "employee_id": emp_id,
                     "month": month
@@ -2063,8 +2080,9 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": engine_certainty,
                 "panel": {
-                    "title": f"TDS Calculation — {month_name}",
+                    "title": f"TDS calculation — {month_name}",
                     "formulas": [
                         tds_formula
                     ],
@@ -2086,10 +2104,10 @@ class ChatRouter:
             cards.append({
                 "id": f"card-lop-{month}",
                 "type": "number_hero",
-                "title": f"Attendance & Loss of Pay — {month_name}",
+                "title": f"Attendance & loss of pay — {month_name}",
                 "certainty": "Complete for this scope",
                 "data": {
-                    "hero_label": "Recorded LOP Days",
+                    "hero_label": "Recorded LOP days",
                     "hero_amount": lop_days,
                     "month": month_name,
                     "employee_id": emp_id
@@ -2108,6 +2126,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": "Complete for this scope",
                 "panel": None
             }
         }
@@ -2131,14 +2150,14 @@ class ChatRouter:
                 {
                     "id": f"card-compare-{month_a}-{month_b}",
                     "type": "number_hero",
-                    "title": f"{name_a} vs {name_b} Pay Comparison",
+                    "title": f"{name_a} vs {name_b} pay comparison",
                     "certainty": "Complete for this scope",
                     "data": {
-                        "hero_label": "Net Pay Change",
+                        "hero_label": "Net pay change",
                         "hero_amount": net_change,
-                        "previous_month_label": f"{name_a} Take-Home",
+                        "previous_month_label": f"{name_a} take-home",
                         "previous_month_amount": net_a,
-                        "current_month_label": f"{name_b} Take-Home",
+                        "current_month_label": f"{name_b} take-home",
                         "current_month_amount": net_b,
                         "employee_id": emp_id
                     }
@@ -2151,6 +2170,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": "Complete for this scope",
                 "panel": None
             }
         }
@@ -2168,7 +2188,7 @@ class ChatRouter:
                 {
                     "id": "card-tax-regime",
                     "type": "certainty_label",
-                    "title": "Recorded Tax Regime",
+                    "title": "Recorded tax regime",
                     "certainty": "Complete for this scope",
                     "data": {
                         "tax_regime": regime_raw,
@@ -2184,6 +2204,7 @@ class ChatRouter:
                 "role": role,
                 "surface": surface,
                 "employee_id": emp_id,
+                "certainty": "Complete for this scope",
                 "panel": None
             }
         }
@@ -2248,7 +2269,7 @@ class ChatRouter:
                 {
                     "id": "card-refusal",
                     "type": "refusal_card",
-                    "title": "Permission Denied",
+                    "title": "Permission denied",
                     "certainty": "Permission denied",
                     "data": {
                         "message": get_message("C10"),
@@ -2443,7 +2464,7 @@ class ChatRouter:
                 {
                     "id": f"card-edit-{prop_id}",
                     "type": "proposal_summary",
-                    "title": "Revised Proposal Summary",
+                    "title": "Revised proposal summary",
                     "certainty": "Complete for this scope",
                     "data": {
                         "proposal_id": prop_id,
@@ -2491,7 +2512,7 @@ class ChatRouter:
                 {
                     "id": f"card-reject-{prop_id}",
                     "type": "approval_card",
-                    "title": "Proposal Rejected",
+                    "title": "Proposal rejected",
                     "data": {
                         "proposal_id": prop_id,
                         "status": "rejected",
@@ -2562,7 +2583,7 @@ class ChatRouter:
                 {
                     "id": "card-query-draft",
                     "type": "query_draft",
-                    "title": "Review Query Draft",
+                    "title": "Review query draft",
                     "data": {
                         "draft": draft,
                         "notice": get_message("C12"),
@@ -2616,7 +2637,7 @@ class ChatRouter:
                 {
                     "id": "card-send-conf",
                     "type": "send_confirmation",
-                    "title": "Query Sent",
+                    "title": "Query sent",
                     "data": {
                         "query_id": sent_query["query_id"],
                         "status": "Sent",
@@ -2670,7 +2691,7 @@ class ChatRouter:
                 {
                     "id": f"card-appended-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Query Updated",
+                    "title": "Query updated",
                     "data": {
                         "query_id": q["query_id"],
                         "status": q["status"],
@@ -2735,7 +2756,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{latest['query_id']}",
                     "type": "query_status",
-                    "title": "Payroll Query Status",
+                    "title": "Payroll query status",
                     "data": {
                         "query_id": latest["query_id"],
                         "status": st,
@@ -2767,7 +2788,7 @@ class ChatRouter:
                 {
                     "id": "card-hr-queries",
                     "type": "query_status",
-                    "title": "Pending Queries",
+                    "title": "Pending queries",
                     "data": {
                         "queries": queries
                     }
@@ -2798,7 +2819,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Payroll Query In Review",
+                    "title": "Payroll query in review",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "In review",
@@ -2828,7 +2849,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Query Reply Recorded",
+                    "title": "Query reply recorded",
                     "data": {
                         "query_id": q["query_id"],
                         "status": q.get("status", "In review"),
@@ -2857,7 +2878,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Query Resolved",
+                    "title": "Query resolved",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "Resolved",
@@ -2887,7 +2908,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Resolution Disputed",
+                    "title": "Resolution disputed",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "In review",
@@ -2922,7 +2943,7 @@ class ChatRouter:
                 {
                     "id": f"card-status-{q['query_id']}",
                     "type": "query_status",
-                    "title": "Query Closed",
+                    "title": "Query closed",
                     "data": {
                         "query_id": q["query_id"],
                         "status": "Closed",
@@ -2983,7 +3004,7 @@ class ChatRouter:
                 {
                     "id": f"card-picker-{task}",
                     "type": "employee_picker",
-                    "title": "Select Employee",
+                    "title": "Select employee",
                     "certainty": "Complete for this scope",
                     "data": {
                         "task": task,

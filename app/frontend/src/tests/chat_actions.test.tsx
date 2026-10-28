@@ -746,8 +746,8 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     await waitFor(() => {
       // Wording C32 is displayed
       expect(screen.getByText('This is a proposal for the recorded Annual performance bonus for FY 2025-26.')).toBeInTheDocument();
-      // Label "Known Eligible Gross" is displayed
-      expect(screen.getByText('Known Eligible Gross')).toBeInTheDocument();
+      // Label "Known eligible gross" is displayed
+      expect(screen.getByText('Known eligible gross')).toBeInTheDocument();
       // Amount ₹2,13,929 is displayed
       expect(screen.getByText('₹2,13,929')).toBeInTheDocument();
       // Counts match engine lists
@@ -819,7 +819,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
-  it('14. Employee picker card shows names from the API (no IDs), tapping a name sends that selection and continues the task', async () => {
+  it('14. Employee picker card shows name and code on HR surfaces (Priya Sharma · E01), tapping a name sends that selection and continues the task', async () => {
     // 1. Initial chat response returns employee_picker card with candidate employees
     (api.chat as any).mockResolvedValueOnce({
       messages: [{ code: 'C01', text: 'Select an employee to prepare arrears hike:' }],
@@ -827,7 +827,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
         {
           id: 'card-picker-arrears',
           type: 'employee_picker',
-          title: 'Select Employee',
+          title: 'Select employee',
           certainty: 'Complete for this scope',
           data: {
             task: 'arrears',
@@ -858,15 +858,10 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
     const pickerCard = screen.getByTestId('employee-picker-card');
 
-    // Assert card shows employee names from the API
-    expect(pickerCard).toHaveTextContent('Priya Sharma');
-    expect(pickerCard).toHaveTextContent('Arjun Rao');
-    expect(pickerCard).toHaveTextContent('Kavya Iyer');
-
-    // Assert card does NOT show employee IDs
-    expect(pickerCard).not.toHaveTextContent('E01');
-    expect(pickerCard).not.toHaveTextContent('E02');
-    expect(pickerCard).not.toHaveTextContent('E03');
+    // Assert card shows employee names and muted codes from the API
+    expect(pickerCard).toHaveTextContent('Priya Sharma · E01');
+    expect(pickerCard).toHaveTextContent('Arjun Rao · E02');
+    expect(pickerCard).toHaveTextContent('Kavya Iyer · E03');
 
     // 2. Mock response when employee is selected (continues the task)
     (api.chat as any).mockResolvedValueOnce({
@@ -911,5 +906,33 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
   });
 
+  it('15. Employee surfaces never show employee codes (e.g. E01, E05)', async () => {
+    (api.chat as any).mockResolvedValueOnce({
+      messages: [{ code: 'C01', text: 'Your TDS for June 2026 is ₹0. Your annual taxable income remains below the tax threshold.' }],
+      cards: [],
+      chips: [{ label: 'Compare with May 2026' }],
+      state: { certainty: 'Complete for this scope' },
+    });
+
+    const { container } = render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
+
+    // Verify initial header and welcome text do not contain employee ID
+    expect(container).toHaveTextContent('Neha Gupta');
+    expect(container).not.toHaveTextContent(/\bE05\b/);
+    expect(container).not.toHaveTextContent(/\bUSER-E05\b/);
+
+    // Send inquiry
+    const composer = screen.getByTestId('composer-textarea');
+    fireEvent.change(composer, { target: { value: 'Why is my TDS zero?' } });
+    fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Your TDS for June 2026 is ₹0/)).toBeInTheDocument();
+    });
+
+    // Verify whole employee chat container has zero employee codes
+    expect(container.textContent).not.toMatch(/\bE0[1-9]\b/);
+    expect(container.textContent).not.toMatch(/\bE1[0-6]\b/);
+  });
 });
 

@@ -6,6 +6,7 @@ import path from 'path';
 
 import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
+import { AssistantTurn } from '../design-system/components/chat/AssistantTurn';
 import { MonthTableCard } from '../design-system/components/cards/MonthTableCard';
 import fixturesData from './chat_scenario_fixtures.json';
 
@@ -158,7 +159,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     await waitFor(() => {
       expect(screen.getByTestId('panel-hr')).toBeInTheDocument();
     });
-    expect(screen.getByText('Month-by-Month Proof')).toBeInTheDocument();
+    expect(screen.getByText('Month-by-month proof')).toBeInTheDocument();
 
     // Check table data-labels and month cell
     expect(screen.getByText('Apr')).toBeInTheDocument();
@@ -235,7 +236,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
 
     // Verify numbers: September Take-home (42,780), August Take-home (48,200), net change (-5,420)
     await waitFor(() => {
-      expect(screen.getByText('September Take-Home')).toBeInTheDocument();
+      expect(screen.getByText('September take-home')).toBeInTheDocument();
     });
     expect(screen.getByText('₹42,780')).toBeInTheDocument();
     expect(screen.getByText('₹48,200')).toBeInTheDocument();
@@ -249,7 +250,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     await waitFor(() => {
       expect(screen.getByTestId('sheet-emp')).toBeInTheDocument();
     });
-    expect(screen.getByText('September Pay Breakdown')).toBeInTheDocument();
+    expect(screen.getByText('September pay breakdown')).toBeInTheDocument();
     expect(screen.getByText(/Loss of pay deduction/i)).toBeInTheDocument();
 
     // Close sheet
@@ -271,7 +272,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     sendChatMessage("Why is my September salary lower than August?");
 
     await waitFor(() => {
-      expect(screen.getByText('September Take-Home')).toBeInTheDocument();
+      expect(screen.getByText('September take-home')).toBeInTheDocument();
     });
     expect(screen.getByText('₹42,780')).toBeInTheDocument();
 
@@ -302,7 +303,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
-      expect(screen.getByText('Settlement Ledger Lines')).toBeInTheDocument();
+      expect(screen.getByText('Settlement ledger lines')).toBeInTheDocument();
     });
 
     // Known recoveries subtotal is 56,667
@@ -334,7 +335,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     sendChatMessage("Review settlement calculation for Imran Khan.");
 
     await waitFor(() => {
-      expect(screen.getByText('Settlement Ledger Lines')).toBeInTheDocument();
+      expect(screen.getByText('Settlement ledger lines')).toBeInTheDocument();
     });
     expect(screen.getByText('₹56,667')).toBeInTheDocument();
 
@@ -457,5 +458,20 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     expect(table?.innerHTML).not.toContain('style=');
 
     unmount();
+  });
+
+  it('12. Certainty badge from reply level: render e05_tds fixture (no cards) and assert "Complete for this scope" is visible', () => {
+    const fixture = fixtures['e05_tds'];
+    expect(fixture.cards).toHaveLength(0);
+    render(
+      <AssistantTurn
+        messages={fixture.messages}
+        cards={fixture.cards}
+        state={fixture.state}
+      />
+    );
+    const badge = screen.getByText('Complete for this scope');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toBeVisible();
   });
 });

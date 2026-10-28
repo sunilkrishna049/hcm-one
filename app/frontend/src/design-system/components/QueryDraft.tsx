@@ -115,7 +115,7 @@ export const QueryDraft: React.FC<QueryDraftProps> = ({
       }}>
         <div>
           <span style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)' }}>Employee: </span>
-          <strong>{initialData.employee_name} ({initialData.employee_id})</strong>
+          <strong>{initialData.employee_name} · <span style={{ color: 'var(--color-text-muted)' }}>{initialData.employee_id}</span></strong>
         </div>
         <div>
           <span style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)' }}>Pay Period: </span>

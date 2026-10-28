@@ -34,7 +34,7 @@ interface SheetEMPProps {
 }
 
 export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => {
-  const title = data?.title || 'Calculation Proof';
+  const title = data?.title || 'Calculation proof';
   const comparison = data?.comparison;
   const formulas = data?.formulas || [];
   const ruleCitations = data?.rule_citations || [];
@@ -77,7 +77,7 @@ export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => 
             {/* Pay Comparison */}
             {comparison?.before && comparison?.after && (
               <section className="hcm-sheet-section">
-                <h4 className="hcm-sheet-section-title">Pay Comparison Breakdown</h4>
+                <h4 className="hcm-sheet-section-title">Pay comparison breakdown</h4>
                 <div className="hcm-sheet-comparison-grid">
                   <div className="hcm-comparison-col">
                     <span className="hcm-comparison-month">{comparison.before.month}</span>
@@ -128,7 +128,7 @@ export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => 
             {/* Plain-Language Formulas */}
             {formulas.length > 0 && (
               <section className="hcm-sheet-section">
-                <h4 className="hcm-sheet-section-title">Plain-Language Formulas</h4>
+                <h4 className="hcm-sheet-section-title">Plain-language formulas</h4>
                 <div className="hcm-sheet-formulas-box">
                   {formulas.map((f, idx) => (
                     <div key={idx} className="hcm-sheet-formula-item">
