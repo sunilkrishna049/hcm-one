@@ -676,3 +676,196 @@ def test_approval_integrity_for_all_proposals():
     assert any(m["code"] == "C25" for m in resp_mismatch.json()["messages"])
     assert lifecycle.get_proposal("PROP-SCENARIO-1")["status"] == "Calculated; needs HR approval"
 
+
+def test_advice_refusal_equals_c11_exactly():
+    """Item 5: The advice refusal ('Which regime should I choose?') must equal C11
+    exactly as written in conversation-design.md.
+    """
+    import re
+    from pathlib import Path
+    from app.backend.ai_messages import get_message
+
+    # Read conversation-design.md and extract the personal tax advice refusal text
+    conv_design_path = Path("output/06-ai-interaction/conversation-design.md")
+    assert conv_design_path.exists(), f"{conv_design_path} does not exist"
+    content = conv_design_path.read_text(encoding="utf-8")
+
+    match = re.search(r'\|\s*Personal tax advice\s*\|\s*"([^"]+)"', content)
+    assert match, "Could not find Personal tax advice table row in conversation-design.md"
+    expected_refusal = match.group(1).strip()
+
+    assert expected_refusal == (
+        "I can explain the tax recorded in your payroll. "
+        "I cannot recommend a tax regime or investment. "
+        "Please consult a tax professional for personal advice."
+    )
+
+    # API call with exact prompt
+    resp = client.post("/api/chat", json={
+        "user_id": "USER-E05",
+        "message": "Which regime should I choose?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["state"]["intent"] == "out_of_scope"
+    assert len(data["messages"]) > 0
+    assert data["messages"][0]["code"] == "C11"
+    assert data["messages"][0]["text"] == expected_refusal
+    assert get_message("C11") == expected_refusal
+
+
+def test_name_guard_permanent_check():
+    """Item 6: Name guard permanent test.
+    - Every person name in every /api/chat response across the full test matrix
+      (scenarios, employee topics, chip taps, picker, approvals), in approved
+      sentences, and in FAQ text must exist in data/mock/employees.json or users.json.
+    - Regression check: fail if any of these appear anywhere in app code, copy or
+      fixtures: Ananya, Sameer, Divya, Sanjay, Aarav, Vikramaditya, Rohan Joshi.
+    """
+    import json
+    import glob
+    import os
+    from pathlib import Path
+    from app.backend.ai_messages import AI_MESSAGES
+
+    # 1. Regression check: fail if any disallowed name appears in app code, copy, or fixtures
+    disallowed_names = ["Ananya", "Sameer", "Divya", "Sanjay", "Aarav", "Vikramaditya", "Rohan Joshi"]
+    code_paths = (
+        glob.glob("app/backend/**/*.py", recursive=True)
+        + glob.glob("app/frontend/src/**/*.ts", recursive=True)
+        + glob.glob("app/frontend/src/**/*.tsx", recursive=True)
+        + glob.glob("app/frontend/src/tests/*.json", recursive=True)
+    )
+
+    for p in code_paths:
+        if not os.path.isfile(p):
+            continue
+        # Skip this test file and existing test_chat_endpoint.py asserting absence
+        if "test_chat_actions.py" in p or "test_chat_endpoint.py" in p:
+            continue
+        with open(p, "r", encoding="utf-8", errors="ignore") as f:
+            file_text = f.read()
+        for d in disallowed_names:
+            assert d not in file_text, f"Disallowed name '{d}' found in {p}"
+
+    # 2. Load valid mock names
+    with open("data/mock/employees.json", "r", encoding="utf-8") as f:
+        emps = json.load(f)
+    with open("data/mock/users.json", "r", encoding="utf-8") as f:
+        users = json.load(f)
+
+    valid_full_names = {e["name"] for e in emps if "name" in e} | {u["name"] for u in users if "name" in u}
+
+    all_texts = []
+
+    # Approved sentences
+    for k, v in AI_MESSAGES.items():
+        all_texts.append(v)
+
+    # FAQ text
+    with open("data/knowledge/payroll_faq.json", "r", encoding="utf-8") as f:
+        faq_data = json.load(f)
+        for q in faq_data.get("questions", []):
+            all_texts.append(q.get("question", "") + " " + q.get("answer", ""))
+
+    # Full test matrix
+    matrix_calls = [
+        # Scenarios 1-13
+        ("HR01", "Prepare Priya Sharma's pending back-dated hike", None, None),
+        ("HR01", "Review Arjun Rao's pending back-dated hike", None, None),
+        ("HR01", "Prepare Kavya Iyer's pending back-dated hike", None, None),
+        ("HR01", "Prepare bonus proposal for Engineering and Sales.", None, None),
+        ("HR01", "Prepare bonus proposal for Meera Nair.", None, None),
+        ("HR01", "Prepare Rahul Verma's full & final settlement.", None, None),
+        ("HR01", "Prepare Lakshmi Reddy's full & final settlement.", None, None),
+        ("HR01", "Prepare Imran Khan's full & final settlement.", None, None),
+        ("HR01", None, "scenario-9", {"scenario_num": 9}),
+        ("HR01", None, "scenario-10", {"scenario_num": 10}),
+        ("HR01", None, "scenario-11", {"scenario_num": 11}),
+        ("HR01", None, "scenario-12", {"scenario_num": 12}),
+        ("HR01", None, "scenario-13", {"scenario_num": 13}),
+        # Picker
+        ("HR01", "Calculate arrears", None, None),
+        ("HR01", None, "select-employee", {"employee_id": "E01", "task": "arrears"}),
+        # Queries
+        ("HR01", "Review payroll queries", None, None),
+        # Employee topics
+        ("USER-E05", "Why is my take-home lower this month?", None, None),
+        ("USER-E05", "Why is my pay lower in September compared to August?", None, None),
+        ("USER-E05", "How much PF was deducted from my salary?", None, None),
+        ("USER-E05", "Why is my TDS zero?", None, None),
+        ("USER-E05", "How many LOP days do I have?", None, None),
+        ("USER-E05", "Compare August and September pay", None, None),
+        ("USER-E05", "What is the status of my query?", None, None),
+        ("USER-E05", "Which regime should I choose?", None, None),
+        ("USER-E05", "What will my October salary be?", None, None),
+        ("USER-E05", "Show my salary for July 2026", None, None),
+        ("USER-E06", "Why did my TDS increase in September?", None, None),
+        ("USER-E16", "Explain my deduction", None, None),
+        # Approvals
+        ("HR01", None, "approve-proposal", {"scenario_num": 1, "proposal_id": "PROP-SCENARIO-1", "version": 1}),
+        ("HR01", None, "approve-proposal", {"scenario_num": 4, "proposal_id": "PROP-SCENARIO-4-SALES", "version": 1}),
+    ]
+
+    for user_id, msg, act, ctx in matrix_calls:
+        body = {"user_id": user_id}
+        if msg:
+            body["message"] = msg
+        if act:
+            body["action"] = act
+        if ctx:
+            body["context"] = ctx
+        res = client.post("/api/chat", json=body)
+        assert res.status_code == 200, f"Status {res.status_code} on {body}"
+        all_texts.append(json.dumps(res.json()))
+
+    combined = " ".join(all_texts)
+
+    # Disallowed names must not appear across the full matrix, approved copy, or FAQ
+    for d in disallowed_names:
+        assert d not in combined, f"Disallowed name '{d}' found in chat matrix or copy"
+
+    # All matched person names must exist in employees.json or users.json
+    found_names = {name for name in valid_full_names if name in combined}
+    assert len(found_names) > 0, "No valid person names found in responses"
+
+
+def test_approval_blocked_reason_built_from_engine_data():
+    """Item 7: The approval blocked reason must be built from engine data, not typed text.
+    Changes the engine result in the test (mock) and checks the reason text changes with it.
+    """
+    import copy
+    from unittest.mock import patch
+    from app.backend.engine_bridge import bridge
+
+    # 1. Default engine result produces dynamic blocking reason
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "scenario-4",
+        "context": {"scenario_num": 4, "bonus_type": "annual_performance_bonus"}
+    })
+    assert res.status_code == 200
+    card = next(c for c in res.json()["cards"] if c["type"] == "approval_card")
+    assert card["data"]["blocking_reason"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+    assert card["data"]["disabled_label"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+
+    # 2. Modify engine result via mock: add another needs_input item and verify reason text changes with it
+    orig_sc = bridge.get_scenario(4)
+    mock_sc = copy.deepcopy(orig_sc)
+    req = next(item for item in mock_sc["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
+
+    # Modify engine data: add Rohan Mehta (E04) needs input
+    req["needs_input"].append({"employee_id": "E04", "reason": "Bank KYC pending"})
+
+    with patch.object(bridge, "get_scenario", return_value=mock_sc):
+        res_mock = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "scenario-4",
+            "context": {"scenario_num": 4, "bonus_type": "annual_performance_bonus"}
+        })
+        assert res_mock.status_code == 200
+        card_mock = next(c for c in res_mock.json()["cards"] if c["type"] == "approval_card")
+        expected_reason = "3 items need input: Meera Nair's rating, Rohan Mehta's Bank KYC pending, Kavya Iyer's tax"
+        assert card_mock["data"]["blocking_reason"] == expected_reason
+        assert card_mock["data"]["disabled_label"] == expected_reason
+

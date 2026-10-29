@@ -6,6 +6,7 @@ import { ChatEMP } from '../design-system/components/chat/ChatEMP';
 import { App } from '../App';
 import { CardRenderer } from '../design-system/components/cards/CardRenderer';
 import { api } from '../services/api';
+import fixtures from './chat_scenario_fixtures.json';
 
 vi.mock('../services/api', () => ({
   api: {
@@ -852,29 +853,8 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
   });
 
   it('14. Employee picker card shows name and code on HR surfaces (Priya Sharma · E01), tapping a name sends that selection and continues the task', async () => {
-    // 1. Initial chat response returns employee_picker card with candidate employees
-    (api.chat as any).mockResolvedValueOnce({
-      messages: [{ code: 'C01', text: 'Select an employee to prepare arrears hike:' }],
-      cards: [
-        {
-          id: 'card-picker-arrears',
-          type: 'employee_picker',
-          title: 'Select employee',
-          certainty: 'Complete for this scope',
-          data: {
-            task: 'arrears',
-            prompt: 'Select an employee to prepare arrears hike:',
-            employees: [
-              { employee_id: 'E01', name: 'Priya Sharma', department: 'Engineering' },
-              { employee_id: 'E02', name: 'Arjun Rao', department: 'Marketing' },
-              { employee_id: 'E03', name: 'Kavya Iyer', department: 'Operations' },
-            ],
-          },
-        },
-      ],
-      chips: [],
-      state: { intent: 'arrears_picker', role: 'HR Admin' },
-    });
+    // 1. Initial chat response returns employee_picker card with candidate employees from real exported fixture
+    (api.chat as any).mockResolvedValueOnce((fixtures as any)['picker_arrears']);
 
     render(<ChatHR currentUser="HR01" currentScenario={1} />);
 

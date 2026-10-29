@@ -487,7 +487,7 @@ def test_chat_scenario_fixtures_freshness():
 
         assert live_res == saved_res, (
             f"Fixture freshness mismatch for Scenario {s_num}!\n"
-            f"Run 'python scratch/export_fixtures.py' to regenerate fixtures."
+            f"Run 'python app/backend/scripts/export_fixtures.py' to regenerate fixtures."
         )
 
 

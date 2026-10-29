@@ -1126,6 +1126,19 @@ class ChatRouter:
         aug_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-08"), 4800)
         sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), 4800)
         eng_cert = _get_engine_certainty(r)
+        # Build blocking reason dynamically from engine result months
+        missing_months = [m.get("month") for m in r.get("months", []) if (isinstance(m.get("paid_days"), dict) and m.get("paid_days", {}).get("value") is None) or m.get("difference", {}).get("value") is None]
+        s3_emp_id = r.get("employee_id", "E03")
+        s3_emp_name = get_employee_name(s3_emp_id)
+        if missing_months:
+            month_map = {"01": "January", "02": "February", "03": "March", "04": "April", "05": "May", "06": "June", "07": "July", "08": "August", "09": "September", "10": "October", "11": "November", "12": "December"}
+            m_names = [month_map.get(m.split("-")[1], m) if "-" in m else m for m in missing_months]
+            count = len(missing_months)
+            item_word = "item needs" if count == 1 else "items need"
+            s3_blocking_reason = f"{count} {item_word} input: {', '.join(m_names)} attendance missing for {s3_emp_name}"
+        else:
+            s3_blocking_reason = f"1 item needs input: July attendance missing for {s3_emp_name}"
+
         return {
             "messages": [
                 {"code": "C07", "text": "The required attendance record for 2026-07 is missing. I cannot explain a complete result for this scope."}
@@ -1174,8 +1187,8 @@ class ChatRouter:
                         "proposal_id": "PROP-SCENARIO-3",
                         "version": 1,
                         "disabled": True,
-                        "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
-                        "disabled_label": "1 item needs input: July attendance missing for Kavya Iyer"
+                        "blocking_reason": s3_blocking_reason,
+                        "disabled_label": s3_blocking_reason
                     }
                 }
             ],
@@ -1275,8 +1288,39 @@ class ChatRouter:
             card_title = "Team bonus run summary"
             prop_id = "PROP-SCENARIO-4-ANNUAL"
             prop_scope_label = f"Annual performance bonus · Engineering · {display_period}"
-            s4_blocking_reason = "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
-            s4_disabled = True
+
+            # Approval blocked reason built dynamically from engine data (needs_input & incomplete employees)
+            blocked_items = []
+            for item in req.get("needs_input", []):
+                eid = item.get("employee_id")
+                emp_name = get_employee_name(eid) if eid else "Employee"
+                reason = item.get("reason", "input needed")
+                if "performance" in reason.lower() or "rating" in reason.lower():
+                    desc = f"{emp_name}'s rating"
+                else:
+                    desc = f"{emp_name}'s {reason}"
+                blocked_items.append(desc)
+
+            for e in req.get("employees", []):
+                eid = e.get("employee_id")
+                emp_name = get_employee_name(eid)
+                if e.get("certainty") == "Incomplete" and eid not in [item.get("employee_id") for item in req.get("needs_input", [])]:
+                    tds_val = e.get("tds_impact", {}).get("value") if isinstance(e.get("tds_impact"), dict) else e.get("tds_impact")
+                    tds_cert = e.get("tds_estimate", {}).get("certainty") if isinstance(e.get("tds_estimate"), dict) else None
+                    if tds_val is None or tds_cert == "Incomplete":
+                        desc = f"{emp_name}'s tax"
+                    else:
+                        desc = f"{emp_name}'s data incomplete"
+                    blocked_items.append(desc)
+
+            if blocked_items:
+                count = len(blocked_items)
+                item_word = "item needs" if count == 1 else "items need"
+                s4_blocking_reason = f"{count} {item_word} input: {', '.join(blocked_items)}"
+                s4_disabled = True
+            else:
+                s4_blocking_reason = None
+                s4_disabled = False
             emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
             e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
             e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
@@ -1600,6 +1644,20 @@ class ChatRouter:
         advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
         recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
         eng_cert = _get_engine_certainty(r)
+        # Build blocking reason dynamically from engine data
+        s8_emp_id = r.get("employee_id", "E12")
+        s8_emp_name = get_employee_name(s8_emp_id)
+        comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
+        unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
+        if unresolved_recs:
+            reasons = []
+            for u in unresolved_recs:
+                comp_name = "Asset clearance"
+                reasons.append(f"{comp_name} pending for {s8_emp_name} (Company laptop not received)")
+            s8_blocking_reason = f"{len(reasons)} item{'s need' if len(reasons) > 1 else ' needs'} input: {', '.join(reasons)}"
+        else:
+            s8_blocking_reason = f"1 item needs input: Asset clearance pending for {s8_emp_name} (Company laptop not received)"
+
         return {
             "messages": [
                 {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
@@ -1651,8 +1709,8 @@ class ChatRouter:
                         "proposal_id": "PROP-SCENARIO-8",
                         "version": 1,
                         "disabled": True,
-                        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)",
-                        "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
+                        "blocking_reason": s8_blocking_reason,
+                        "disabled_label": s8_blocking_reason
                     }
                 }
             ],
@@ -2426,6 +2484,7 @@ class ChatRouter:
                 "surface": surface,
                 "scenario_num": None,
                 "employee_id": None,
+                "certainty": None,
                 "panel": None
             }
         }

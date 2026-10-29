@@ -1238,8 +1238,8 @@
       "surface": "CHAT-HR",
       "scenario_num": null,
       "employee_id": null,
-      "panel": null,
-      "certainty": null
+      "certainty": null,
+      "panel": null
     }
   },
   "13": {
@@ -1826,6 +1826,83 @@
       "role": "Employee",
       "surface": "CHAT-EMP",
       "employee_id": "E05",
+      "panel": null,
+      "certainty": null
+    }
+  },
+  "picker_arrears": {
+    "messages": [
+      {
+        "code": "C01",
+        "text": "Please select an employee to calculate arrears for:"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-picker-arrears",
+        "type": "employee_picker",
+        "title": "Select employee",
+        "data": {
+          "task": "arrears",
+          "prompt": "Please select an employee to calculate arrears for:",
+          "employees": [
+            {
+              "employee_id": "E01",
+              "name": "Priya Sharma",
+              "department": "Engineering",
+              "subtitle": "Pending revision · 10% hike from 2026-04-01"
+            },
+            {
+              "employee_id": "E02",
+              "name": "Arjun Rao",
+              "department": "Operations",
+              "subtitle": "Pending revision · 10% hike from 2026-08-01"
+            },
+            {
+              "employee_id": "E03",
+              "name": "Kavya Iyer",
+              "department": "Engineering",
+              "subtitle": "Pending revision · 8% hike from 2026-07-01"
+            }
+          ]
+        }
+      }
+    ],
+    "chips": [
+      {
+        "label": "Priya Sharma",
+        "action": "select-employee",
+        "payload": {
+          "employee_id": "E01",
+          "task": "arrears",
+          "name": "Priya Sharma"
+        }
+      },
+      {
+        "label": "Arjun Rao",
+        "action": "select-employee",
+        "payload": {
+          "employee_id": "E02",
+          "task": "arrears",
+          "name": "Arjun Rao"
+        }
+      },
+      {
+        "label": "Kavya Iyer",
+        "action": "select-employee",
+        "payload": {
+          "employee_id": "E03",
+          "task": "arrears",
+          "name": "Kavya Iyer"
+        }
+      }
+    ],
+    "state": {
+      "intent": "arrears_picker",
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "scenario_num": null,
+      "employee_id": null,
       "panel": null,
       "certainty": null
     }

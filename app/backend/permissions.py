@@ -122,6 +122,7 @@ def build_c10_permission_reply(user: dict, reason: str = "Access boundary enforc
             "surface": surface,
             "scenario_num": None,
             "employee_id": emp_id,
+            "certainty": None,
             "panel": None
         }
     }
