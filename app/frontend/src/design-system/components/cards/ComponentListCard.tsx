@@ -2,10 +2,14 @@ import React from 'react';
 import { formatINR, formatHumanDate } from '../../../utils/format';
 
 interface SettlementComponent {
-  name: string;
-  amount: number | null;
-  status: 'Eligible' | 'Ineligible' | 'Unresolved' | 'Verified' | string;
+  name?: string;
+  label?: string;
+  name_code?: string;
+  amount?: number | null;
+  status?: 'Eligible' | 'Ineligible' | 'Unresolved' | 'Verified' | string;
   note?: string;
+  reason?: string;
+  blocked_reason?: string;
 }
 
 interface ComponentListCardProps {
@@ -13,7 +17,7 @@ interface ComponentListCardProps {
     id: string;
     type: string;
     title: string;
-    certainty: string;
+    certainty?: string;
     data: {
       hero_label?: string;
       hero_amount?: number | null;
@@ -21,7 +25,8 @@ interface ComponentListCardProps {
       total_deductions?: number | null;
       known_recoveries_subtotal?: number | null;
       known_recoveries?: number | null;
-      components: SettlementComponent[];
+      components?: SettlementComponent[];
+      items?: SettlementComponent[];
       due_date?: string;
     };
   };
@@ -30,6 +35,14 @@ interface ComponentListCardProps {
 
 export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) => {
   const d = card.data;
+  const rawRows = (d.items && d.items.length > 0) ? d.items : (d.components || []);
+
+  const displayRows = rawRows.map((r) => ({
+    name: r.label || r.name_code || r.name || '',
+    note: r.note || r.reason || r.blocked_reason || '',
+    status: r.status || '',
+    amount: r.amount,
+  }));
 
   return (
     <div className="hcm-rich-card hcm-card-component-list" data-testid={`card-${card.id}`}>
@@ -68,20 +81,24 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
 
       {/* Component Rows */}
       <div className="hcm-component-table">
-        {d.components.map((comp, idx) => (
+        {displayRows.map((comp, idx) => (
           <div key={idx} className="hcm-component-row">
             <div className="hcm-comp-name-col">
               <strong>{comp.name}</strong>
               {comp.note && <div className="hcm-comp-note">{comp.note}</div>}
             </div>
-            <div className="hcm-comp-status-col">
-              <span className={`hcm-comp-status-badge hcm-status-${comp.status.toLowerCase()}`}>
-                {comp.status}
-              </span>
-            </div>
-            <div className="hcm-comp-amount-col tnum">
-              {formatINR(comp.amount)}
-            </div>
+            {comp.status && (
+              <div className="hcm-comp-status-col">
+                <span className={`hcm-comp-status-badge hcm-status-${comp.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                  {comp.status}
+                </span>
+              </div>
+            )}
+            {comp.amount !== null && comp.amount !== undefined && (
+              <div className="hcm-comp-amount-col tnum">
+                {formatINR(comp.amount)}
+              </div>
+            )}
           </div>
         ))}
       </div>

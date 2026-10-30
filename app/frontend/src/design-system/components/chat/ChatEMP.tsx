@@ -189,8 +189,11 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   const handleChipSelect = (chip: ChipItem) => {
     setClearSignal((s) => s + 1);
     if (onClearPrefill) onClearPrefill();
-    if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof') {
+    if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof' || chip.label === 'Show breakdown') {
       setIsSheetOpen(true);
+      if (chip.action) {
+        handleAction(chip.action, chip.payload);
+      }
       return;
     }
     if (chip.action) {

@@ -69,6 +69,7 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
+        "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
         "scope_label": "Kavya Iyer · Apr–Sep 2026",
         "scope": {
             "employee_id": "E03",
@@ -85,6 +86,7 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+        "disabled_reason": "Can't approve yet: 2 items need input.",
         "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
         "scope": {
             "department": "Engineering",
@@ -101,6 +103,7 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+        "disabled_reason": "Can't approve yet: 2 items need input.",
         "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
         "scope": {
             "department": "Engineering",
@@ -162,6 +165,7 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
+        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",
@@ -178,6 +182,7 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
+        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",

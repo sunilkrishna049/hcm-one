@@ -100,8 +100,8 @@ def test_scenario_04_chat():
     assert cards["proposal_summary"]["data"]["ineligible_count"] == 1
     assert cards["proposal_summary"]["data"]["needs_input_count"] == 1
     assert cards["proposal_summary"]["data"]["known_eligible_gross_certainty"] == "Complete for this scope"
-    assert data["messages"][0]["code"] == "C32"
-    assert "This is a proposal for the recorded Annual performance bonus for FY 2025-26." in data["messages"][0]["text"]
+    assert data["messages"][0]["code"] == "C54"
+    assert "Engineering annual performance bonus (FY 2025-26): 4 eligible, 1 not eligible, 1 waiting for input." in data["messages"][0]["text"]
 
 
 def test_ambiguous_bonus_request_clarifying_question():
@@ -139,8 +139,8 @@ def test_bonus_selection_dispatches_proposal():
     assert res_ann.status_code == 200
     ann_data = res_ann.json()
     assert ann_data["state"]["scenario_num"] == 4
-    assert ann_data["messages"][0]["code"] == "C32"
-    assert ann_data["messages"][0]["text"] == "This is a proposal for the recorded Annual performance bonus for FY 2025-26."
+    assert ann_data["messages"][0]["code"] == "C54"
+    assert ann_data["messages"][0]["text"] == "Engineering annual performance bonus (FY 2025-26): 4 eligible, 1 not eligible, 1 waiting for input."
 
     # Selecting sales incentive returns sales proposal with C32
     res_sales = client.post("/api/chat", json={
@@ -149,8 +149,8 @@ def test_bonus_selection_dispatches_proposal():
     })
     assert res_sales.status_code == 200
     sales_data = res_sales.json()
-    assert sales_data["messages"][0]["code"] == "C32"
-    assert sales_data["messages"][0]["text"] == "This is a proposal for the recorded Q2 Sales incentive for Q2 2026-27."
+    assert sales_data["messages"][0]["code"] == "C55"
+    assert sales_data["messages"][0]["text"] == "Q2 Sales incentive (Q2 2026-27): 3 eligible, 0 not eligible."
 
 
 def test_no_c03_in_bonus_or_settlement_replies():
@@ -280,7 +280,7 @@ def test_scenario_09_chat():
     assert res.status_code == 200
     data = res.json()
     assert data["state"]["scenario_num"] == 9
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"] == "C58"
     assert "lower" in data["messages"][0]["text"]
     cards = {c["type"]: c for c in data["cards"]}
     assert cards["number_hero"]["data"]["hero_amount"] == 42780

@@ -1,6 +1,5 @@
 import React from 'react';
 import { formatINR, formatHumanDate } from '../../../utils/format';
-import { CertaintyLabel } from '../CertaintyLabel';
 
 interface ProposalSummaryCardProps {
   card: {
@@ -110,9 +109,6 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
                 <span className="hcm-kv-label">Known eligible gross</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <strong className="hcm-kv-value tnum">{formatINR(d.known_eligible_gross ?? d.gross_eligible_total)}</strong>
-                  {(d.known_eligible_gross_certainty || card.certainty) && (
-                    <CertaintyLabel certainty={d.known_eligible_gross_certainty || card.certainty} />
-                  )}
                 </div>
               </div>
             </div>

@@ -1262,7 +1262,12 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     fireEvent.click(sendBtn);
     expect(mockSend).not.toHaveBeenCalled();
 
-    // 3. Confirm and click Send -> sends exact query_id and reply text
+    // 3. Confirm and click Send -> starts empty, types text, and sends exact query_id and reply text
+    const textarea = screen.getByRole('textbox', { name: /HR Reply Draft/i }) as HTMLTextAreaElement;
+    expect(textarea.value).toBe('');
+    expect(textarea.placeholder).toBe('Type your reply to Neha Gupta');
+    fireEvent.change(textarea, { target: { value: 'Attendance records reviewed and verified against biometric logs.' } });
+
     const confirmCheckbox = screen.getByLabelText(/Confirm reply before sending/i);
     fireEvent.click(confirmCheckbox);
     expect(sendBtn).not.toBeDisabled();
@@ -1303,4 +1308,161 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     fireEvent.click(resolveBtn);
     expect(mockResolve).toHaveBeenCalledWith('QUERY-E05-SEPTEMBER');
   });
+
+  describe('Live-test fixes F1-F10 verification', () => {
+    it('F1: ComponentListCard renders non-empty rows with title and recorded reasons', () => {
+      const mockCard = {
+        id: 'card-ready',
+        type: 'component_list',
+        title: 'Ready to approve',
+        certainty: 'Complete for this scope',
+        data: {
+          title: 'Ready to approve',
+          count: 2,
+          items: [
+            { label: 'Salary revision · Priya Sharma · E01', status: 'Ready' },
+            { label: 'Annual performance bonus · Engineering · FY 2025-26', status: 'Ready' },
+          ],
+        },
+      };
+      const { unmount } = render(<CardRenderer card={mockCard} />);
+      expect(screen.getByText('Ready to approve')).toBeInTheDocument();
+      expect(screen.getByText('Salary revision · Priya Sharma · E01')).toBeInTheDocument();
+      expect(screen.getByText('Annual performance bonus · Engineering · FY 2025-26')).toBeInTheDocument();
+      unmount();
+
+      const mockNeedsInputCard = {
+        id: 'card-needs-input',
+        type: 'component_list',
+        title: 'Needs input first',
+        certainty: 'Incomplete',
+        data: {
+          title: 'Needs input first',
+          count: 1,
+          items: [
+            { label: 'Meera Nair · E09', reason: 'Meera Nair · E09: performance record missing', status: 'Pending input' },
+          ],
+        },
+      };
+      render(<CardRenderer card={mockNeedsInputCard} />);
+      expect(screen.getByText('Needs input first')).toBeInTheDocument();
+      expect(screen.getByText('Meera Nair · E09: performance record missing')).toBeInTheDocument();
+    });
+
+    it('F2 Guard: Cards never render a certainty badge (.hcm-certainty-badge)', () => {
+      const testCards = [
+        {
+          id: 'card-summary',
+          type: 'proposal_summary',
+          title: 'Team bonus run summary',
+          certainty: 'Complete for this scope',
+          data: {
+            title: 'Team bonus run summary',
+            metrics: [{ label: 'Eligible', value: '4' }],
+          },
+        },
+        {
+          id: 'card-ready',
+          type: 'component_list',
+          title: 'Ready to approve',
+          certainty: 'Complete for this scope',
+          data: {
+            title: 'Ready to approve',
+            items: [{ label: 'Salary revision · Priya Sharma · E01' }],
+          },
+        },
+      ];
+      for (const card of testCards) {
+        const { container, unmount } = render(<CardRenderer card={card} />);
+        const badge = container.querySelector('.hcm-certainty-badge');
+        expect(badge).toBeNull();
+        unmount();
+      }
+    });
+
+    it('F4: ApprovalCard renders visible reason line directly above buttons when disabled', () => {
+      const disabledCard = {
+        id: 'card-approval-disabled',
+        type: 'approval_card',
+        title: 'Approval',
+        certainty: 'Incomplete',
+        data: {
+          scope_label: 'Engineering Bonus · FY 2025-26',
+          notice: 'Approving records this version.',
+          actions: ['Approve proposal for payroll'],
+          status: 'pending',
+          proposal_id: 'PROP-BONUS-ENG',
+          version: 1,
+          disabled: true,
+          blocking_reason: "Can't approve yet: 1 item needs input.",
+        },
+      };
+      const { container } = render(<CardRenderer card={disabledCard} />);
+      const reasonEl = container.querySelector('.hcm-approval-disabled-reason');
+      expect(reasonEl).not.toBeNull();
+      expect(reasonEl).toHaveTextContent("Can't approve yet: 1 item needs input.");
+      const approveBtn = screen.getByRole('button', { name: /Approve proposal for payroll/i });
+      expect(approveBtn).toBeDisabled();
+      expect(approveBtn.getAttribute('aria-describedby')).toBe('approval-reason-card-approval-disabled');
+    });
+
+    it('F5 & F10: QueryDraftCard starts empty with placeholder and no duplicate notice', () => {
+      const card = {
+        id: 'card-draft',
+        type: 'query_draft',
+        title: 'Reply Draft',
+        certainty: 'Incomplete',
+        data: {
+          query_id: 'Q-01',
+          employee_label: 'Siddharth Jain · E02',
+          name_code: 'Siddharth Jain · E02',
+          period: 'September 2026',
+          category: 'Tax deduction (TDS)',
+          description: 'Why did TDS increase?',
+        },
+      };
+      render(<CardRenderer card={card} />);
+      const textarea = screen.getByRole('textbox', { name: /HR Reply Draft/i }) as HTMLTextAreaElement;
+      expect(textarea.value).toBe('');
+      expect(textarea.placeholder).toBe('Type your reply to Siddharth Jain');
+      expect(screen.queryByText(/Nothing is sent until HR clicks Send and confirms/i)).toBeNull();
+      expect(screen.getByText(/Confirm reply before sending/i)).toBeInTheDocument();
+    });
+
+    it('F10: QueryStatusCard renders HR reply for non-resolved and HR resolution reply for resolved', () => {
+      const inReviewCard = {
+        id: 'card-q-review',
+        type: 'query_status',
+        title: 'Query Status',
+        certainty: 'Incomplete',
+        data: {
+          query_id: 'Q-02',
+          status: 'In review',
+          description: 'Check deduction',
+          reply_text: 'Reviewing biometrics',
+        },
+      };
+      const { unmount } = render(<CardRenderer card={inReviewCard} />);
+      expect(screen.getByText('HR reply:')).toBeInTheDocument();
+      expect(screen.queryByText('HR resolution reply:')).toBeNull();
+      unmount();
+
+      const resolvedCard = {
+        id: 'card-q-resolved',
+        type: 'query_status',
+        title: 'Query Status',
+        certainty: 'Complete for this scope',
+        data: {
+          query_id: 'Q-02',
+          status: 'Resolved',
+          description: 'Check deduction',
+          resolution: 'Updated in October payroll',
+        },
+      };
+      render(<CardRenderer card={resolvedCard} />);
+      expect(screen.getByText('HR resolution reply:')).toBeInTheDocument();
+      expect(screen.queryByText('HR reply:')).toBeNull();
+    });
+  });
+
 });

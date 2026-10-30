@@ -203,9 +203,14 @@ body {
 table,
 .number-hero,
 .number-card-value,
-.stat-amount {
+.stat-amount,
+.hcm-comp-amount-col,
+.hcm-reason-amount,
+.hcm-hero-amount,
+.hcm-net-change-pill {
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Monospace font exclusively for IDs and technical references */

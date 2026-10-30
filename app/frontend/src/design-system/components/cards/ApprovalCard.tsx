@@ -155,7 +155,23 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
 
         {/* Actions Group (explicit clicks only - hidden once approved, rejected, edited, or if actions is empty) */}
         {!isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && (
-          <div className="hcm-approval-actions">
+          <div>
+            {isApprovalDisabled && blockingReason && (
+              <div
+                id={`approval-reason-${card.id}`}
+                className="hcm-approval-disabled-reason"
+                data-testid="approval-disabled-reason"
+                style={{
+                  marginBottom: 'var(--space-2)',
+                  fontSize: 'var(--font-size-small)',
+                  color: 'var(--color-status-error-text)',
+                  fontWeight: 'var(--font-weight-medium)',
+                }}
+              >
+                {blockingReason}
+              </div>
+            )}
+            <div className="hcm-approval-actions">
             <button
               type="button"
               className={`hcm-button hcm-button-primary ${isApprovalDisabled ? 'hcm-button-disabled' : ''}`}
@@ -182,6 +198,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
             >
               Reject proposal
             </button>
+            </div>
           </div>
         )}
 

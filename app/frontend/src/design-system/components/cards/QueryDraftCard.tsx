@@ -41,14 +41,14 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
   const isReplyDraft = Boolean(d.query_id || d.draft_reply || card.id?.includes('card-draft-QUERY-'));
   const draft: any = (d as any).draft || {};
   const [description, setDescription] = useState(
-    (d as any).draft_reply || (d as any).reply_text || draft.description || (d as any).description || ''
+    isReplyDraft ? '' : ((d as any).draft_reply || (d as any).reply_text || draft.description || (d as any).description || '')
   );
   const [confirmed, setConfirmed] = useState(false);
 
   // HR Reply Draft view
   if (isReplyDraft) {
     const qId = d.query_id || 'QUERY-E05-SEPTEMBER';
-    const noticeText = d.notice || 'Nothing is sent until HR clicks Send and confirms.';
+    const empName = (d.employee_label ? d.employee_label.split('·')[0].trim() : (d.name_code ? d.name_code.split('·')[0].trim() : 'employee'));
 
     return (
       <div className="hcm-rich-card hcm-card-query-draft" data-testid={`card-${card.id}`}>
@@ -82,13 +82,10 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
               id="reply-text"
               className="hcm-textarea"
               rows={3}
+              placeholder={`Type your reply to ${empName}`}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
-
-          <div className="hcm-approval-notice" style={{ marginTop: 'var(--space-3)' }}>
-            <p>{noticeText}</p>
           </div>
 
           {/* Confirmation Checkbox */}

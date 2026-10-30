@@ -1,5 +1,5 @@
 import React from "react";
-import { CertaintyLabel, type CertaintyType } from "./CertaintyLabel";
+import type { CertaintyType } from "./CertaintyLabel";
 import { Button } from "./Button";
 import { SourceLink } from "./SourceLink";
 import { Calculator, Flag } from "lucide-react";
@@ -26,7 +26,6 @@ export const NumberCard: React.FC<NumberCardProps> = ({
   value,
   amount,
   currency = "INR",
-  certainty,
   isHero = false,
   isMobile = false,
   variant,
@@ -69,7 +68,6 @@ export const NumberCard: React.FC<NumberCardProps> = ({
       <div className="hcm-number-card-amount" style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
         <span className={`${amountClass} tnum`}>{displayAmount}</span>
         {isAvailable && currency && <span className="hcm-currency-label">{currency}</span>}
-        {certainty && <CertaintyLabel certainty={certainty} />}
       </div>
 
       {source && (

@@ -329,6 +329,10 @@ class PayrollAICrew:
             if not scenario_num or retrieval_data.get("state", {}).get("intent") == "faq_question":
                 return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
+            # F3: Turn off AI drafting for bonus intents - bonus summary replies use templates only (C54 / C55)
+            if classifier_res and (classifier_res.intent == "bonus_proposal" or scenario_num in (4, 5)):
+                return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
+
             facts_list = retrieval_data.get("facts_list", {})
             active_emp_id = facts_list.get("employee_id") or user.get("employee_id")
 

@@ -58,6 +58,11 @@ AI_MESSAGES = {
     "C51": "Mark {Name}'s query as resolved?",
     "C52": "Did you mean one of these?",
     "C53": "Your PAN and bank details are masked and can't be shown in chat.",
+    "C54": "{bonus_name}: {eligible} eligible, {not_eligible} not eligible, {waiting} waiting for input.",
+    "C55": "{bonus_name}: {eligible} eligible, {not_eligible} not eligible.",
+    "C56": "Can't approve yet: {Name}'s {missing_item} is missing.",
+    "C57": "Can't approve yet: {n} items need input.",
+    "C58": "Your {month} take-home is {amount} lower than {previous_month}. The main recorded reasons are below.",
     "FAQ": "Here is the recorded meaning from the payroll glossary:",
     "REJECTED": "The proposal has been rejected.",
     "NO_QUERY": "You do not have any open payroll queries recorded.",
@@ -81,6 +86,9 @@ AI_MESSAGES_HR = {
     "C50": "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
     "C51": "Mark {Name}'s query as resolved?",
     "C53": "{Name}'s PAN and bank details are masked and can't be shown in chat.",
+    "C56": "Can't approve yet: {Name}'s {missing_item} is missing.",
+    "C57": "Can't approve yet: {n} items need input.",
+    "C58": "{Name}'s {month} take-home is {amount} lower than {previous_month}. The main recorded reasons are below.",
     "HR_NO_QUERY": "No open payroll query was found for {Name}.",
     "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
 }
@@ -119,6 +127,22 @@ def get_message(code: str, role: str = "Employee", **kwargs) -> str:
             kwargs["lower_or_higher"] = kwargs["lower or higher"]
         if "declared months" in kwargs and "declared_months" not in kwargs:
             kwargs["declared_months"] = kwargs["declared months"]
+        if "Bonus name" in kwargs and "bonus_name" not in kwargs:
+            kwargs["bonus_name"] = kwargs["Bonus name"]
+        if "bonus name" in kwargs and "bonus_name" not in kwargs:
+            kwargs["bonus_name"] = kwargs["bonus name"]
+        if "n_eligible" in kwargs and "eligible" not in kwargs:
+            kwargs["eligible"] = kwargs["n_eligible"]
+        if "n_not_eligible" in kwargs and "not_eligible" not in kwargs:
+            kwargs["not_eligible"] = kwargs["n_not_eligible"]
+        if "n_waiting" in kwargs and "waiting" not in kwargs:
+            kwargs["waiting"] = kwargs["n_waiting"]
+        if "waiting_for_input" in kwargs and "waiting" not in kwargs:
+            kwargs["waiting"] = kwargs["waiting_for_input"]
+        if "missing item" in kwargs and "missing_item" not in kwargs:
+            kwargs["missing_item"] = kwargs["missing item"]
+        if "missing_item" in kwargs and "missing item" not in kwargs:
+            kwargs["missing item"] = kwargs["missing_item"]
         try:
             return template.format(**kwargs)
         except KeyError:

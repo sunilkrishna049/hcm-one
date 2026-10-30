@@ -393,6 +393,7 @@
           "version": 1,
           "disabled": true,
           "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
+          "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
           "disabled_label": "1 item needs input: July attendance missing for Kavya Iyer"
         }
       }
@@ -432,8 +433,8 @@
   "4": {
     "messages": [
       {
-        "code": "C32",
-        "text": "This is a proposal for the recorded Annual performance bonus for FY 2025-26."
+        "code": "C54",
+        "text": "Engineering annual performance bonus (FY 2025-26): 4 eligible, 1 not eligible, 1 waiting for input."
       }
     ],
     "cards": [
@@ -500,6 +501,7 @@
           "version": 1,
           "disabled": true,
           "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
+          "disabled_reason": "Can't approve yet: 2 items need input.",
           "disabled_label": "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
         }
       }
@@ -882,6 +884,7 @@
           "version": 1,
           "disabled": true,
           "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
+          "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
           "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
         }
       }
@@ -919,7 +922,7 @@
   "9": {
     "messages": [
       {
-        "code": "C30",
+        "code": "C58",
         "text": "Your September take-home is ₹5,420 lower than August. The main recorded reasons are below."
       },
       {
@@ -951,7 +954,7 @@
           "reasons": [
             {
               "cause": "Loss of Pay (LOP)",
-              "detail": "3 days unpaid leave",
+              "detail": "3 LOP days recorded",
               "amount": -5000
             },
             {
@@ -1312,6 +1315,7 @@
           "version": 1,
           "disabled": true,
           "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
+          "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
           "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
         }
       }

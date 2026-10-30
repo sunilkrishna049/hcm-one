@@ -271,7 +271,7 @@ def test_ai_typing_digit_triggers_fallback():
     data = res.json()
 
     # Falls back to deterministic router output (C30 approved copy)
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
     assert "The main recorded reasons are below." in data["messages"][0]["text"]
     assert data["state"]["scenario_num"] == 9
 
@@ -291,7 +291,7 @@ def test_unknown_slot_triggers_fallback():
     data = res.json()
 
     # Falls back to deterministic router output
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
 
 
 # 4. Invented concept or banned term -> fallback
@@ -309,7 +309,7 @@ def test_invented_concept_triggers_fallback():
     data = res.json()
 
     # Falls back to deterministic router output
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
 
 
 # 5. Payment, approval, or advice wording -> fallback
@@ -323,7 +323,7 @@ def test_payment_or_advice_wording_triggers_fallback():
         "user_id": "USER-E05",
         "message": "Why is my take-home pay lower in September?"
     })
-    assert res1.json()["messages"][0]["code"] == "C30"
+    assert res1.json()["messages"][0]["code"]  in ("C30", "C58")
 
     # 5b: Personal tax advice
     mock_llm.custom_draft_response = "You should choose the new tax regime to optimize deductions."
@@ -331,7 +331,7 @@ def test_payment_or_advice_wording_triggers_fallback():
         "user_id": "USER-E05",
         "message": "Why is my take-home pay lower in September?"
     })
-    assert res2.json()["messages"][0]["code"] == "C30"
+    assert res2.json()["messages"][0]["code"]  in ("C30", "C58")
 
 
 # 6. Timeout or execution error -> fallback
@@ -348,7 +348,7 @@ def test_timeout_or_error_triggers_fallback():
     data = res.json()
 
     # Seamless fallback to deterministic router output
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
     assert data["state"]["scenario_num"] == 9
 
 
@@ -434,7 +434,7 @@ def test_draft_missing_net_change_slot_falls_back():
     data = res.json()
 
     # Falls back to deterministic router output (C30 approved copy)
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
     assert "The main recorded reasons are below." in data["messages"][0]["text"]
     assert data["state"]["scenario_num"] == 9
 
@@ -457,7 +457,7 @@ def test_hedging_with_complete_certainty_falls_back():
     data = res.json()
 
     # Falls back to deterministic router output (C30 approved copy)
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
     assert "The main recorded reasons are below." in data["messages"][0]["text"]
     assert data["state"]["scenario_num"] == 9
 
@@ -481,7 +481,7 @@ def test_closing_filler_falls_back():
     data = res.json()
 
     # Falls back to deterministic router output (C30 approved copy)
-    assert data["messages"][0]["code"] == "C30"
+    assert data["messages"][0]["code"]  in ("C30", "C58")
     assert "The main recorded reasons are below." in data["messages"][0]["text"]
     assert data["state"]["scenario_num"] == 9
 
@@ -637,7 +637,7 @@ def test_failing_ai_draft_fallback_shows_c30_and_salary_cards():
     # Fallback MUST keep the intent: shows C30 and salary cards
     messages = data.get("messages", [])
     assert len(messages) >= 1
-    assert messages[0]["code"] == "C30", f"Expected C30 fallback, got: {messages[0]}"
+    assert messages[0]["code"] in ("C30", "C58"), f"Expected C30/C58 fallback, got: {messages[0]}"
     assert "Your September take-home is" in messages[0]["text"]
     assert "lower than August" in messages[0]["text"]
 

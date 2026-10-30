@@ -166,6 +166,12 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (HR_QUERY_REPLY):** "Reply recorded for {Name}'s query." (Approved by: Project owner).
 - **Approved wording (C53):** "{Name}'s PAN and bank details are masked and can't be shown in chat." (Approved by: Project owner).
   Employee version: "Your PAN and bank details are masked and can't be shown in chat." (Approved by: Project owner).
+- **Approved wording (C54):** "{Bonus name}: {n} eligible, {n} not eligible, {n} waiting for input." (Approved by: Project owner).
+- **Approved wording (C55):** "{Bonus name}: {n} eligible, {n} not eligible." (Approved by: Project owner).
+- **Approved wording (C56):** "Can't approve yet: {Name}'s {missing item} is missing." (Approved by: Project owner).
+- **Approved wording (C57):** "Can't approve yet: {n} items need input." (Approved by: Project owner).
+- **Approved wording (C58):** "Your {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
+  HR version: "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
 
 ## 8. Example conversations (5)
 

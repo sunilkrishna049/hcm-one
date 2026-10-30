@@ -58,7 +58,9 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   const displayTime = time || formatLocalTime(new Date());
 
   // Ordering: Lead sentences (e.g. C30) first, then cards, then C27 follow-up offer
-  const leadMessages = messages.filter((m) => m.code !== 'C27');
+  // F8: When refusal card is present, drop the duplicate bubble text and keep the red card
+  const hasRefusalCard = cards.some((c) => c.type === 'refusal_card');
+  const leadMessages = messages.filter((m) => m.code !== 'C27' && (!hasRefusalCard || m.code !== 'C10'));
   const followUpMessages = messages.filter((m) => m.code === 'C27');
 
   return (

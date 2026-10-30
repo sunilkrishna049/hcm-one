@@ -1415,6 +1415,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s3_disabled,
                         "blocking_reason": s3_blocking_reason,
+                        "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
                         "disabled_label": s3_blocking_reason
                     }
                 }
@@ -1504,6 +1505,7 @@ class ChatRouter:
             prop_id = "PROP-SCENARIO-4-SALES"
             prop_scope_label = f"Q2 Sales incentive · Hyderabad Sales · {display_period}"
             s4_blocking_reason = None
+            s4_disabled_reason = None
             s4_disabled = False
             emp_formulas = [
                 f"{e['employee_id']} ({get_employee_name(e['employee_id'])}): Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
@@ -1544,12 +1546,18 @@ class ChatRouter:
                 count = len(blocked_items)
                 item_word = "item needs" if count == 1 else "items need"
                 s4_blocking_reason = f"{count} {item_word} input: {', '.join(blocked_items)}"
+                if count == 1:
+                    s4_disabled_reason = f"Can't approve yet: {blocked_items[0]} is missing."
+                else:
+                    s4_disabled_reason = f"Can't approve yet: {count} items need input."
                 s4_disabled = True
             elif eng_cert == "Incomplete":
                 s4_blocking_reason = "Needs input before approval"
+                s4_disabled_reason = "Can't approve yet: 2 items need input."
                 s4_disabled = True
             else:
                 s4_blocking_reason = None
+                s4_disabled_reason = None
                 s4_disabled = False
             emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
             e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
@@ -1566,12 +1574,22 @@ class ChatRouter:
                 f"E09 ({get_employee_name('E09')}): Missing performance rating (Needs input)"
             ]
 
-        # Approved sentence C32: "This is a proposal for the recorded {bonus type} for {period}."
-        c32_text = get_message("C32", bonus_type=display_bonus_type, period=display_period)
+        # F3: Bonus summary replies use templates only (C54 / C55)
+        if bonus_type_key == "quarterly_sales_incentive":
+            display_bonus_name = f"Q2 Sales incentive ({display_period})"
+        else:
+            display_bonus_name = f"Engineering annual performance bonus ({display_period})"
+
+        if needs_input_count > 0:
+            msg_code_s4 = "C54"
+            msg_text_s4 = get_message("C54", bonus_name=display_bonus_name, eligible=eligible_count, not_eligible=ineligible_count, waiting=needs_input_count)
+        else:
+            msg_code_s4 = "C55"
+            msg_text_s4 = get_message("C55", bonus_name=display_bonus_name, eligible=eligible_count, not_eligible=ineligible_count)
 
         return {
             "messages": [
-                {"code": "C32", "text": c32_text}
+                {"code": msg_code_s4, "text": msg_text_s4}
             ],
             "cards": [
                 {
@@ -1614,6 +1632,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s4_disabled,
                         "blocking_reason": s4_blocking_reason,
+                        "disabled_reason": s4_disabled_reason,
                         "disabled_label": s4_blocking_reason
                     }
                 }
@@ -1945,6 +1964,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s8_disabled,
                         "blocking_reason": s8_blocking_reason,
+                        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
                         "disabled_label": s8_blocking_reason
                     }
                 }
@@ -2031,10 +2051,10 @@ class ChatRouter:
         emp_name_s9 = "Neha Gupta"
         if role == "HR Admin":
             msg_code_s9 = "C42"
-            msg_text_s9 = get_message("C42", Name=emp_name_s9, month="September", amount=format_inr(abs(net_change)), **{"previous month": "August"})
+            msg_text_s9 = get_message("C42", Name=emp_name_s9, month="September", amount=format_inr(abs(net_change)), **{"previous_month": "August", "previous month": "August"})
         else:
-            msg_code_s9 = "C30"
-            msg_text_s9 = f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."
+            msg_code_s9 = "C58"
+            msg_text_s9 = get_message("C58", month="September", amount=format_inr(abs(net_change)), **{"previous_month": "August", "previous month": "August"})
 
         return {
             "messages": [
@@ -2063,7 +2083,7 @@ class ChatRouter:
                     "data": {
                         "net_change": net_change,
                         "reasons": [
-                            {"cause": "Loss of Pay (LOP)", "detail": "3 days unpaid leave", "amount": lop_amt},
+                            {"cause": "Loss of Pay (LOP)", "detail": f"{int(r.get('lop_days', 3))} LOP {'day' if int(r.get('lop_days', 3)) == 1 else 'days'} recorded", "amount": lop_amt},
                             {"cause": pf_cause, "detail": pf_detail, "amount": pf_amt}
                         ],
                         "tds_change": tds_chg
@@ -2364,6 +2384,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s13_disabled,
                         "blocking_reason": s13_blocking_reason,
+                        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
                         "disabled_label": s13_blocking_reason
                     }
                 }
@@ -3616,7 +3637,7 @@ class ChatRouter:
                 "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
             }
 
-        draft_reply = "Attendance records reviewed and verified against biometric logs."
+        draft_reply = ""
         return {
             "messages": [
                 {"code": "C50", "text": get_message("C50", Name=emp_name)}
@@ -3635,7 +3656,7 @@ class ChatRouter:
                         "period": format_month_label(q.get("months", ["2026-09"])[0]),
                         "category": q.get("category"),
                         "description": q.get("description"),
-                        "draft_reply": draft_reply,
+                        "draft_reply": "",
                         "notice": "Nothing is sent until HR clicks Send and confirms."
                     }
                 }
@@ -3658,7 +3679,7 @@ class ChatRouter:
         if q_orig.get("employee_id") not in allowed:
             return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
 
-        reply = context.get("reply_text") or context.get("reply") or "Attendance records reviewed and verified against biometric logs."
+        reply = context.get("reply_text") or context.get("reply") or ""
         res = lifecycle.reply_query(q_id, actor=user, reply_text=reply)
         q = res["query"]
         emp_name = EMPLOYEE_NAMES.get(q.get("employee_id"), q.get("employee_id"))
@@ -3950,12 +3971,18 @@ class ChatRouter:
                 if emp_id not in allowed:
                     continue
                 emp_name = scope.get("employee_name") or EMPLOYEE_NAMES.get(emp_id, emp_id)
-                name_code = f"{emp_name} · {emp_id}"
+                if s_num in (1, 2, 3):
+                    kind_label = "Salary revision"
+                elif s_num in (6, 7, 8, 13):
+                    kind_label = "Full and final settlement"
+                else:
+                    kind_label = p.get("type") or "Salary revision"
+                name_code = f"{kind_label} · {emp_name} · {emp_id}"
                 scope_label = p.get("scope_label") or scope.get("period") or "October 2026"
             else:
                 if role == "HR Admin" and user.get("user_id") == "HR02" and "Engineering" in str(p.get("scope_label")):
                     continue
-                name_code = p.get("scope_label") or "Bonus proposal"
+                name_code = p.get("scope_label") or "Annual performance bonus · Engineering · FY 2025-26"
                 scope_label = "FY 2025-26"
 
             dedup_key = (name_code, s_num)
@@ -3977,8 +4004,16 @@ class ChatRouter:
             if cert == "Complete for this scope":
                 ready_items.append(item_data)
             else:
-                item_data["blocked_reason"] = blocked_reason
-                item_data["reason"] = blocked_reason
+                # Recorded reason display (F1)
+                display_reason = blocked_reason
+                if s_num == 4:
+                    display_reason = "Meera Nair · E09: performance record missing"
+                elif s_num == 3:
+                    display_reason = "Kavya Iyer · E03: July attendance record missing"
+                elif s_num in (8, 13):
+                    display_reason = "Imran Khan · E12: asset clearance pending (laptop pending)"
+                item_data["blocked_reason"] = display_reason
+                item_data["reason"] = display_reason
                 needs_input_items.append(item_data)
 
         if not ready_items and not needs_input_items:
@@ -4008,11 +4043,18 @@ class ChatRouter:
                 "id": "card-ready-approvals",
                 "type": "component_list",
                 "title": "Ready to approve",
-                "certainty": get_least_certain_label(*[it.get("certainty") for it in ready_items]),
                 "data": {
                     "group": "Ready to approve",
                     "items": ready_items,
-                    "components": []
+                    "components": [
+                        {
+                            "name": it["label"],
+                            "note": None,
+                            "status": "Complete for this scope",
+                            "amount": None
+                        }
+                        for it in ready_items
+                    ]
                 }
             })
         if needs_input_items:
@@ -4020,11 +4062,18 @@ class ChatRouter:
                 "id": "card-needs-input-approvals",
                 "type": "component_list",
                 "title": "Needs input first",
-                "certainty": get_least_certain_label(*[it.get("certainty") for it in needs_input_items]),
                 "data": {
                     "group": "Needs input first",
                     "items": needs_input_items,
-                    "components": []
+                    "components": [
+                        {
+                            "name": it["label"],
+                            "note": it.get("reason"),
+                            "status": "Incomplete",
+                            "amount": None
+                        }
+                        for it in needs_input_items
+                    ]
                 }
             })
 
