@@ -1,6 +1,8 @@
-"""Approved AI copy sentences C01 through C29 from screen-specs.md Section 7 and DEC-029.
+"""Approved AI copy sentences C01 through C52 from screen-specs.md, conversation-design.md, and DEC-029.
 No dynamic AI or LLM generation. Only authorized slot filling.
 """
+import re
+from typing import Dict, Optional
 
 AI_MESSAGES = {
     "C01": "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm.",
@@ -50,11 +52,44 @@ AI_MESSAGES = {
     "C45": "Queries can't be deleted. You can close it instead.",
     "C46": "Nothing is waiting for your approval.",
     "C47": "{n} employees have a last working day in {month}:",
+    "C48": "{n} proposals are ready for your approval.",
+    "C49": "{n} need input before they can be approved.",
+    "C50": "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
+    "C51": "Mark {Name}'s query as resolved?",
+    "C52": "Did you mean one of these?",
+    "FAQ": "Here is the recorded meaning from the payroll glossary:",
+    "REJECTED": "The proposal has been rejected.",
+    "NO_QUERY": "You do not have any open payroll queries recorded.",
+    "HR_NO_QUERY": "No open payroll query was found for {Name}.",
+    "HR_QUERY_LIST": "Here are the recorded employee queries ({n} total):",
+    "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
+}
+
+# HR variants rewrite employee-voice "Your" -> "{Name}'s", "you" -> "they/their/them"
+# per DEC-029 and Prompt 2c-2c Item 2 (name at most once, then they/their/them).
+AI_MESSAGES_HR = {
+    "C29": "{Name}'s TDS is higher because they declared income from their previous employer for {declared_months}. That income is added to their yearly income, so their expected yearly tax is higher. The tax their previous employer already deducted is counted, so it is not deducted twice.",
+    "C30": "{Name}'s {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
+    "C36": "{n} days of loss of pay were recorded in {Name}'s {month} attendance.",
+    "C37": "{Name}'s PF deduction for {month} is {amount}.",
+    "C38": "{Name}'s tax deducted (TDS) for {month} is {amount}. It's worked out as their remaining yearly tax divided by the months left in the tax year.",
+    "C39": "Here is {Name}'s {month} payslip:",
+    "C41": "{Name} is on the {regime} tax regime for {tax_year}.",
+    "C42": "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below.",
+    "C43": "{Name}'s {month} query is {status}. No reply has been recorded yet.",
+    "C50": "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
+    "C51": "Mark {Name}'s query as resolved?",
+    "HR_NO_QUERY": "No open payroll query was found for {Name}.",
+    "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
 }
 
 
-def get_message(code: str, **kwargs) -> str:
+def get_message(code: str, role: str = "Employee", **kwargs) -> str:
     template = AI_MESSAGES.get(code, "")
+    is_hr = role == "HR Admin" or "Name" in kwargs or "name" in kwargs or kwargs.get("role") == "HR Admin"
+    if is_hr and code in AI_MESSAGES_HR:
+        template = AI_MESSAGES_HR[code]
+
     if kwargs:
         if "first name" in kwargs and "first_name" not in kwargs:
             kwargs["first_name"] = kwargs["first name"]
@@ -72,9 +107,43 @@ def get_message(code: str, **kwargs) -> str:
             kwargs["previous_month"] = kwargs["previous month"]
         if "previous_month" in kwargs and "previous month" not in kwargs:
             kwargs["previous month"] = kwargs["previous_month"]
+        if "later month" in kwargs and "later_month" not in kwargs:
+            kwargs["later_month"] = kwargs["later month"]
+        if "earlier month" in kwargs and "earlier_month" not in kwargs:
+            kwargs["earlier_month"] = kwargs["earlier month"]
+        if "net change amount" in kwargs and "net_change_amount" not in kwargs:
+            kwargs["net_change_amount"] = kwargs["net change amount"]
+        if "lower or higher" in kwargs and "lower_or_higher" not in kwargs:
+            kwargs["lower_or_higher"] = kwargs["lower or higher"]
+        if "declared months" in kwargs and "declared_months" not in kwargs:
+            kwargs["declared_months"] = kwargs["declared months"]
         try:
             return template.format(**kwargs)
         except KeyError:
             return template
     return template
 
+
+def template_to_regex(template: str) -> re.Pattern:
+    """Converts a format template like '{Name}'s query is {status}.' to a matching regex pattern."""
+    pat = re.escape(template)
+    pat = re.sub(r'\\\{.*?\\\}', r'.+?', pat)
+    return re.compile(f'^{pat}$')
+
+
+def validate_message_text(code: str, text: str) -> bool:
+    """Validates that a message code exists and its text equals the filled template."""
+    candidate_templates = []
+    if code in AI_MESSAGES:
+        candidate_templates.append(AI_MESSAGES[code])
+    if code in AI_MESSAGES_HR:
+        candidate_templates.append(AI_MESSAGES_HR[code])
+
+    if not candidate_templates:
+        return False
+
+    for tmpl in candidate_templates:
+        reg = template_to_regex(tmpl)
+        if reg.match(text):
+            return True
+    return False

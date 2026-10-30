@@ -294,8 +294,16 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   onEdit={(payload) => handleAction('edit', { reason: 'Adjusted by HR', ...payload })}
                   onReject={(payload) => handleAction('reject', { reason: 'Rejected by HR', ...payload })}
                   onApplySelection={(choice) => handleAction('apply-selection', { choice })}
-                  onSendQuery={(desc) => handleAction('send-query', { description: desc })}
-                  onCancelQueryDraft={() => handleAction('cancel-draft')}
+                  onSendQuery={(desc, qid) => {
+                    if (qid) {
+                      handleAction('confirm-reply-query', { query_id: qid, reply_text: desc });
+                    } else {
+                      handleAction('send-query', { description: desc });
+                    }
+                  }}
+                  onCancelQueryDraft={() => {
+                    // Cancel sends nothing per Item 6
+                  }}
                   onTakeIntoReview={(qid) => handleAction('take-into-review', { query_id: qid })}
                   onResolveQuery={(qid) => handleAction('resolve-query', { query_id: qid, reply_text: 'Attendance reviewed and verified against punch records.' })}
                   onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}

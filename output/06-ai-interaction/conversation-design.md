@@ -153,6 +153,11 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C45):** "Queries can't be deleted. You can close it instead." (Approved by: Project owner).
 - **Approved wording (C46):** "Nothing is waiting for your approval." (Approved by: Project owner).
 - **Approved wording (C47):** "{n} employees have a last working day in {month}:" (Approved by: Project owner).
+- **Approved wording (C48):** "{n} proposals are ready for your approval." (Approved by: Project owner).
+- **Approved wording (C49):** "{n} need input before they can be approved." (Approved by: Project owner).
+- **Approved wording (C50):** "Draft a reply to {Name}'s query. Nothing is sent until you confirm." (Approved by: Project owner).
+- **Approved wording (C51):** "Mark {Name}'s query as resolved?" (Approved by: Project owner).
+- **Approved wording (C52):** "Did you mean one of these?" (Approved by: Project owner).
 
 ## 8. Example conversations (5)
 

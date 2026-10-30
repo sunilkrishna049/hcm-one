@@ -1,5 +1,5 @@
 /**
- * Approved AI sentences C01 through C29 from screen-specs.md Section 7 and DEC-029.
+ * Approved AI sentences C01 through C52 from screen-specs.md, conversation-design.md, and DEC-029.
  * Exact approved text. No LLM generation. Only slot interpolation.
  */
 
@@ -36,6 +36,26 @@ export const AI_MESSAGES: Record<string, string> = {
   C30: "Your {later_month} take-home is {net_change_amount} {lower_or_higher} than {earlier_month}. The main recorded reasons are below.",
   C31: "Hi {first_name}. What would you like to do today?",
   C32: "This is a proposal for the recorded {bonus_type} for {period}.",
+  C33: "I didn't quite get that. Here is what I can help with:",
+  C34: "I don't have a record of that in your payroll data. You can raise a query with HR.",
+  C35: "I can show your pay for {available_months} only.",
+  C36: "{n} days of loss of pay were recorded in your {month} attendance. If that's not right, you can raise a query.",
+  C37: "Your PF deduction for {month} is {amount}.",
+  C38: "Your tax deducted (TDS) for {month} is {amount}. It's worked out as your remaining yearly tax divided by the months left in the tax year.",
+  C39: "Here is your {month} payslip:",
+  C40: "Your {month} query is {status}. No reply has been recorded yet.",
+  C41: "You are on the {regime} tax regime for {tax_year}.",
+  C42: "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below.",
+  C43: "{Name}'s {month} query is {status}. No reply has been recorded yet.",
+  C44: "Your {month} query is {status}. Here is HR's reply:",
+  C45: "Queries can't be deleted. You can close it instead.",
+  C46: "Nothing is waiting for your approval.",
+  C47: "{n} employees have a last working day in {month}:",
+  C48: "{n} proposals are ready for your approval.",
+  C49: "{n} need input before they can be approved.",
+  C50: "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
+  C51: "Mark {Name}'s query as resolved?",
+  C52: "Did you mean one of these?",
 };
 
 export function getAIMessage(code: string, slots?: Record<string, string>): string {
@@ -47,4 +67,3 @@ export function getAIMessage(code: string, slots?: Record<string, string>): stri
     return slots[trimmed] ?? slots[underscoreKey] ?? `{${key}}`;
   });
 }
-

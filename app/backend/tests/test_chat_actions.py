@@ -1203,7 +1203,7 @@ def test_hr_voice_across_all_scenarios():
     assert "Siddharth Jain's September take-home is" in data10["messages"][0]["text"]
     # HR version of C29
     assert data10["messages"][1]["code"] == "C29"
-    assert "Siddharth Jain's TDS is higher because Siddharth Jain declared income" in data10["messages"][1]["text"]
+    assert "Siddharth Jain's TDS is higher because they declared income from their previous employer" in data10["messages"][1]["text"]
     assert "you" not in data10["messages"][1]["text"].lower()
     assert "your" not in data10["messages"][1]["text"].lower()
 
@@ -1305,7 +1305,8 @@ def test_hr_query_word_routing_and_full_loop():
     # 7. 'Mark Neha's query resolved': button with confirmation
     resolve_prompt = client.post("/api/chat", json={"user_id": "HR01", "message": "Mark Neha's query resolved"})
     assert resolve_prompt.status_code == 200
-    assert resolve_prompt.json()["messages"][0]["code"] == "CONFIRM_RESOLVE"
+    assert resolve_prompt.json()["messages"][0]["code"] == "C51"
+    assert resolve_prompt.json()["messages"][0]["text"] == "Mark Neha Gupta's query as resolved?"
     assert any(chip["action"] == "confirm-resolve-query" for chip in resolve_prompt.json()["chips"])
     # Not yet marked resolved in data
     neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
@@ -1346,11 +1347,17 @@ def test_hr_list_questions():
     assert appr_res.status_code == 200
     appr_data = appr_res.json()
     assert appr_data["state"]["intent"] == "approvals_list"
-    assert "proposals are waiting for your approval:" in appr_data["messages"][0]["text"]
-    assert len(appr_data["cards"]) == 1
-    items = appr_data["cards"][0]["data"]["items"]
-    assert any("Priya Sharma" in it["name_code"] for it in items)
-    assert any(it["certainty"] in ("Complete for this scope", "Incomplete") for it in items)
+    assert appr_data["messages"][0]["code"] == "C48"
+    assert "proposals are ready for your approval." in appr_data["messages"][0]["text"]
+    assert appr_data["messages"][1]["code"] == "C49"
+    assert "need input before they can be approved." in appr_data["messages"][1]["text"]
+    assert len(appr_data["cards"]) == 2
+    assert appr_data["cards"][0]["title"] == "Ready to approve"
+    ready_items = appr_data["cards"][0]["data"]["items"]
+    assert any("Priya Sharma" in it["name_code"] for it in ready_items)
+    assert appr_data["cards"][1]["title"] == "Needs input first"
+    needs_input_items = appr_data["cards"][1]["data"]["items"]
+    assert any(it.get("blocked_reason") for it in needs_input_items)
 
     # 2. 'Who is leaving this month?' for HR01
     leave_res = client.post("/api/chat", json={"user_id": "HR01", "message": "Who is leaving this month?"})
@@ -1373,3 +1380,188 @@ def test_hr_list_questions():
     assert leave_data2["messages"][0]["code"] == "C47"
     assert "0 employees have a last working day in October 2026:" in leave_data2["messages"][0]["text"]
     assert len(leave_data2["cards"][0]["data"]["items"]) == 0
+
+
+# --- Prompt 2c-2c Tests ---
+
+def test_no_placeholder_leaks_full_matrix():
+    """Prompt 2c-2c Item 1: No placeholder leaks in message text across the full matrix.
+    No reply may contain 'Not available in generated data', 'None', 'null', 'undefined', '{' or '}'.
+    Fix declared-months slot in TDS-increase sentence from E06's declaration data.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    disallowed_substrings = [
+        "Not available in generated data",
+        "None",
+        "null",
+        "undefined",
+        "{",
+        "}",
+    ]
+
+    # Test Scenarios 1 to 13
+    for s_num in range(1, 14):
+        # As Employee (where applicable) and as HR01
+        for uid in ["USER-E05", "USER-E06", "USER-E16", "HR01"]:
+            res = client.post("/api/chat", json={"user_id": uid, "action": f"scenario-{s_num}"})
+            if res.status_code == 200:
+                data = res.json()
+                for m in data.get("messages", []):
+                    t = m.get("text", "")
+                    for ds in disallowed_substrings:
+                        assert ds not in t, f"Leak '{ds}' found in Scenario {s_num} for user {uid}: '{t}'"
+
+    # Specific Scenario 10 check for declared_months
+    s10_emp = client.post("/api/chat", json={"user_id": "USER-E06", "message": "Why did my TDS increase?"})
+    assert s10_emp.status_code == 200
+    tds_msg_emp = s10_emp.json()["messages"][1]["text"]
+    assert "2026-04 to 2026-06" in tds_msg_emp, f"Expected declared months '2026-04 to 2026-06' in: {tds_msg_emp}"
+
+    s10_hr = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-10"})
+    assert s10_hr.status_code == 200
+    tds_msg_hr = s10_hr.json()["messages"][1]["text"]
+    assert "2026-04 to 2026-06" in tds_msg_hr, f"Expected declared months '2026-04 to 2026-06' in: {tds_msg_hr}"
+
+    # Test list questions
+    for q in ["What needs my approval?", "Who is leaving this month?"]:
+        res = client.post("/api/chat", json={"user_id": "HR01", "message": q})
+        assert res.status_code == 200
+        for m in res.json().get("messages", []):
+            for ds in disallowed_substrings:
+                assert ds not in m.get("text", ""), f"Leak '{ds}' in '{q}': {m.get('text')}"
+
+
+def test_hr_voice_readability_full_name_at_most_once():
+    """Prompt 2c-2c Item 2: HR voice readability.
+    In HR replies, the employee's full name appears at most once per message,
+    then 'they'/'their'/'them'.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+    from app.backend.chat_router import EMPLOYEE_NAMES
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    # Check HR replies across scenarios and employee topics
+    endpoints = [
+        {"user_id": "HR01", "action": "scenario-9"},
+        {"user_id": "HR01", "action": "scenario-10"},
+        {"user_id": "HR01", "action": "scenario-11"},
+        {"user_id": "HR01", "message": "Show Neha's query"},
+        {"user_id": "HR01", "message": "Reply to Neha's query"},
+        {"user_id": "HR01", "message": "Mark Neha's query resolved"},
+    ]
+
+    for req in endpoints:
+        res = client.post("/api/chat", json=req)
+        assert res.status_code == 200
+        data = res.json()
+        for m in data.get("messages", []):
+            text = m.get("text", "")
+            for eid, fname in EMPLOYEE_NAMES.items():
+                count = text.count(fname)
+                assert count <= 1, f"Employee full name '{fname}' appeared {count} times in HR reply: '{text}'"
+
+    # Specific Scenario 10 HR wording check
+    res_s10 = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-10"})
+    msg_tds = res_s10.json()["messages"][1]["text"]
+    assert msg_tds.count("Siddharth Jain") == 1
+    assert "they declared income from their previous employer" in msg_tds
+    assert "their expected yearly tax" in msg_tds
+
+
+def test_guard_every_message_code_and_template():
+    """Prompt 2c-2c Item 5: Guard: every message in every reply has a code that exists
+    in ai_messages.py, and its text equals that template filled with data.
+    No free-text messages.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+    from app.backend.ai_messages import AI_MESSAGES, AI_MESSAGES_HR, validate_message_text
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    all_valid_codes = set(AI_MESSAGES.keys()) | set(AI_MESSAGES_HR.keys())
+
+    test_queries = [
+        {"user_id": "USER-E05", "message": "Why is my take-home pay lower in September?"},
+        {"user_id": "USER-E05", "message": "How much PF was cut in September?"},
+        {"user_id": "USER-E05", "message": "What is LOP?"},
+        {"user_id": "USER-E05", "message": "pf"},
+        {"user_id": "USER-E06", "message": "Why did my TDS increase?"},
+        {"user_id": "USER-E06", "message": "What is TDS?"},
+        {"user_id": "USER-E16", "message": "Why did my basic pay change?"},
+        {"user_id": "HR01", "message": "What needs my approval?"},
+        {"user_id": "HR01", "message": "Who is leaving this month?"},
+        {"user_id": "HR01", "message": "Show Neha's query"},
+        {"user_id": "HR01", "message": "Reply to Neha's query"},
+        {"user_id": "HR01", "message": "Delete Neha's query"},
+        {"user_id": "HR01", "message": "pf"},
+        {"user_id": "HR02", "message": "What needs my approval?"},
+        {"user_id": "HR02", "message": "Who is leaving this month?"},
+    ]
+
+    for req in test_queries:
+        res = client.post("/api/chat", json=req)
+        assert res.status_code == 200
+        data = res.json()
+        for m in data.get("messages", []):
+            code = m.get("code")
+            text = m.get("text")
+            assert code in all_valid_codes, f"Unknown message code '{code}' in reply to {req}"
+            assert validate_message_text(code, text), f"Message text does not match template for code '{code}': '{text}'"
+
+
+def test_did_you_mean_chips_resolve_to_real_answers():
+    """Prompt 2c-2c Item 7: 'Did you mean?' chips.
+    When intent is unknown or ambiguous but topic word is present, reply with C52
+    and up to 3 chips from fixed list plus 'Something else'.
+    Every chip resolves to a real answer (not C33, not C10), per user.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    # 1. Neha + "pf" test from prompt specification
+    res_pf = client.post("/api/chat", json={"user_id": "USER-E05", "message": "pf"})
+    assert res_pf.status_code == 200
+    data_pf = res_pf.json()
+    assert data_pf["messages"][0]["code"] == "C52"
+    assert data_pf["messages"][0]["text"] == "Did you mean one of these?"
+    chip_labels = [c["label"] for c in data_pf["chips"]]
+    assert "How much PF was cut in September?" in chip_labels
+    assert "What was my August PF?" in chip_labels
+    assert "What is PF?" in chip_labels
+    assert chip_labels[-1] == "Something else"
+
+    # 2. Every chip resolves to a real answer (not C33, not C10)
+    for chip in chip_labels[:-1]:  # exclude 'Something else' which intentionally falls back
+        ans_res = client.post("/api/chat", json={"user_id": "USER-E05", "message": chip})
+        assert ans_res.status_code == 200
+        ans_data = ans_res.json()
+        codes = [m.get("code") for m in ans_data.get("messages", [])]
+        assert "C33" not in codes, f"Chip '{chip}' resolved to C33 fallback!"
+        assert "C10" not in codes, f"Chip '{chip}' resolved to C10 refusal!"
+
+    # 3. 'Something else' resolves to C33
+    se_res = client.post("/api/chat", json={"user_id": "USER-E05", "message": "Something else"})
+    assert se_res.status_code == 200
+    assert se_res.json()["messages"][0]["code"] == "C33"
+
+    # 4. Confident question answers directly without C52
+    conf_res = client.post("/api/chat", json={"user_id": "USER-E05", "message": "What is PF?"})
+    assert conf_res.status_code == 200
+    assert conf_res.json()["messages"][0]["code"] == "FAQ"

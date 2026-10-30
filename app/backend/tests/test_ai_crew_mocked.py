@@ -861,3 +861,50 @@ def test_ai_on_every_c33_chip_resolves_valid_answer():
         assert not any(m["code"] == "C33" for m in chip_data.get("messages", []))
 
 
+
+# 19. Prompt 2c-2c Item 8: The drafting prompt lists the required slots
+def test_drafting_prompt_lists_required_slots():
+    """Prompt 2c-2c Item 8: The AI drafting prompt lists the required slots explicitly."""
+    from app.backend.ai.crew import build_draft_task_description, get_required_slots_for_intent
+
+    # Neha salary drop (Scenario 9 / explain_salary)
+    req_s9 = get_required_slots_for_intent("explain_salary", 9)
+    assert "{lop_amount}" in req_s9
+    assert "{net_change}" in req_s9
+    assert "{earlier_month}" in req_s9
+    assert "{later_month}" in req_s9
+    assert "{pf_change}" in req_s9
+
+    desc_s9 = build_draft_task_description(
+        raw_msg="why is my salary less this month",
+        role="Employee",
+        facts_list={"net_change": "₹5,467", "earlier_month": "August", "later_month": "September", "lop_amount": "₹4,800", "pf_change": "₹667"},
+        intent="explain_salary",
+        scenario_num=9
+    )
+    assert "{lop_amount}" in desc_s9
+    assert "{net_change}" in desc_s9
+    assert "{earlier_month}" in desc_s9
+    assert "{later_month}" in desc_s9
+    assert "{pf_change}" in desc_s9
+    assert "Required slots that MUST be included" in desc_s9
+
+    # Scenario 10 TDS
+    desc_s10 = build_draft_task_description(
+        raw_msg="why did my tds increase",
+        role="Employee",
+        facts_list={},
+        intent="explain_tds",
+        scenario_num=10
+    )
+    assert "{tds_increase}" in desc_s10
+
+    # Scenario 11 Deduction
+    desc_s11 = build_draft_task_description(
+        raw_msg="why did basic allowance change",
+        role="Employee",
+        facts_list={},
+        intent="explain_deduction",
+        scenario_num=11
+    )
+    assert "{pf_change}" in desc_s11

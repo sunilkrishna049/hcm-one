@@ -56,6 +56,45 @@ INJECTION_PATTERNS = [
 ]
 
 
+
+def get_required_slots_for_intent(intent: Optional[str], scenario_num: Optional[int]) -> List[str]:
+    """Returns required slots that drafting must include for specific explanation intents (Item 8)."""
+    if scenario_num == 9 or intent in ("explain_salary", "explain_salary_change"):
+        return ["{net_change}", "{earlier_month}", "{later_month}", "{lop_amount}", "{pf_change}"]
+    elif scenario_num == 10 or intent in ("explain_tds", "explain_tds_change"):
+        return ["{net_change}", "{earlier_month}", "{later_month}", "{tds_increase}", "{pf_change}"]
+    elif scenario_num == 11 or intent in ("explain_deduction",):
+        return ["{net_change}", "{earlier_month}", "{later_month}", "{pf_change}"]
+    return []
+
+
+def build_draft_task_description(
+    raw_msg: str,
+    role: str,
+    facts_list: dict,
+    intent: Optional[str],
+    scenario_num: Optional[int]
+) -> str:
+    allowed_slots_str = ", ".join([f"{{{k}}}" for k in facts_list.keys()])
+    req_slots = get_required_slots_for_intent(intent, scenario_num)
+    req_instruction = f"Required slots that MUST be included in your draft: {', '.join(req_slots)}.\n" if req_slots else ""
+
+    return (
+        f"Write a short, natural payroll reply (1 to 3 sentences, maximum 60 words) for {role}.\n"
+        f"User message: '{raw_msg}'\n"
+        f"Available facts slots: {allowed_slots_str}\n"
+        f"{req_instruction}"
+        "RULES:\n"
+        "1. For salary and TDS explanations: lead with the net change amount {net_change} and the two months {earlier_month} and {later_month}, then the reasons with their amounts (including {lop_amount} for LOP and {pf_change} for PF), in plain words. State facts directly.\n"
+        "2. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots like {net_change}, {later_month}, {lop_amount}.\n"
+        "3. Do NOT type any digits (0-9).\n"
+        "4. State facts directly. Do NOT use hedging words (no may, might, possibly, could be, perhaps, likely, seems) when facts are complete.\n"
+        "5. Absolutely NO closing filler (no 'If you have further questions', 'please let me know', 'Hope this helps', 'Feel free to ask'). End immediately after stating facts.\n"
+        "6. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
+        "7. Do NOT make payment promises or give tax regime recommendations."
+    )
+
+
 class PayrollAICrew:
     def __init__(self, llm: Optional[Any] = None):
         self._custom_llm = llm
@@ -96,6 +135,7 @@ class PayrollAICrew:
         """
         start_time = time.time()
         context = context or {}
+        run_tag = context.get("tag") if isinstance(context, dict) else None
         raw_msg = (message or "").strip()
         lower_msg = raw_msg.lower()
 
@@ -119,7 +159,8 @@ class PayrollAICrew:
                     guards_result={"prompt_injection_gate": "FAIL"},
                     fallback_triggered=True,
                     fallback_reason="Prompt injection prevented before LLM call",
-                    latency_ms=(time.time() - start_time) * 1000
+                    latency_ms=(time.time() - start_time) * 1000,
+                    tag=run_tag
                 )
                 return _router._build_refusal(role, surface, "Prompt injection prevented.")
 
@@ -255,21 +296,9 @@ class PayrollAICrew:
                 raw_draft = self._custom_llm.draft(raw_msg, facts_list, scenario_num, role)
             else:
                 drafting_agent = create_drafting_agent(llm)
-                allowed_slots_str = ", ".join([f"{{{k}}}" for k in facts_list.keys()])
+                draft_desc = build_draft_task_description(raw_msg, role, facts_list, classifier_res.intent if classifier_res else None, scenario_num)
                 draft_task = Task(
-                    description=(
-                        f"Write a short, natural payroll reply (1 to 3 sentences, maximum 60 words) for {role}.\n"
-                        f"User message: '{raw_msg}'\n"
-                        f"Available facts slots: {allowed_slots_str}\n"
-                        "RULES:\n"
-                        "1. For salary and TDS explanations: lead with the net change amount {net_change} and the two months {earlier_month} and {later_month}, then the reasons with their amounts, in plain words. State facts directly.\n"
-                        "2. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots like {net_change}, {later_month}.\n"
-                        "3. Do NOT type any digits (0-9).\n"
-                        "4. State facts directly. Do NOT use hedging words (no may, might, possibly, could be, perhaps, likely, seems) when facts are complete.\n"
-                        "5. Absolutely NO closing filler (no 'If you have further questions', 'please let me know', 'Hope this helps', 'Feel free to ask'). End immediately after stating facts.\n"
-                        "6. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
-                        "7. Do NOT make payment promises or give tax regime recommendations."
-                    ),
+                    description=draft_desc,
                     expected_output="Plain text reply with slot tokens and zero digits",
                     agent=drafting_agent
                 )
@@ -300,7 +329,8 @@ class PayrollAICrew:
                     guards_result={"guard_check": "FAIL", "failed_guard": guard_result.failed_guard},
                     fallback_triggered=True,
                     fallback_reason=guard_result.error_message,
-                    latency_ms=(time.time() - start_time) * 1000
+                    latency_ms=(time.time() - start_time) * 1000,
+                    tag=run_tag
                 )
                 if classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
                     fallback_resp = self._build_deterministic_fallback_for_intent(
@@ -351,7 +381,8 @@ class PayrollAICrew:
                 fallback_triggered=False,
                 fallback_reason=None,
                 latency_ms=(time.time() - start_time) * 1000,
-                metrics={"used_slots": guard_result.used_slots}
+                metrics={"used_slots": guard_result.used_slots},
+                tag=run_tag
             )
 
             return response
@@ -369,7 +400,8 @@ class PayrollAICrew:
                 guards_result={"execution_error": str(e)},
                 fallback_triggered=True,
                 fallback_reason=f"Exception in AI Crew: {str(e)}",
-                latency_ms=(time.time() - start_time) * 1000
+                latency_ms=(time.time() - start_time) * 1000,
+                tag=run_tag
             )
             if classifier_res and classifier_res.confidence >= 0.65 and classifier_res.intent in ALLOWED_INTENTS:
                 target_m = classifier_res.entities.get("month") if classifier_res.entities else None

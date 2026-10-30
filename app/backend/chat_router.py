@@ -463,6 +463,100 @@ def format_inr(amount: Optional[float | int]) -> str:
     return f"{sign}₹{formatted}"
 
 
+TOPIC_CHIPS_TABLE = {
+    "USER-E05": {
+        "pf": ["How much PF was cut in September?", "What was my August PF?", "What is PF?"],
+        "tds": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "tax": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "lop": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "leave": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "salary": ["Why is my take-home pay lower in September?", "Explain my September pay", "Explain my August pay"],
+        "pay": ["Why is my take-home pay lower in September?", "Explain my September pay", "Explain my August pay"],
+        "payslip": ["Why is my take-home pay lower in September?", "Explain my September pay", "Explain my August pay"],
+        "bonus": ["What is the annual performance bonus?", "What is statutory bonus?", "Draft a query for HR"],
+        "arrears": ["What are salary arrears?", "Draft a query for HR"],
+        "hike": ["What are salary arrears?", "Draft a query for HR"],
+        "settlement": ["What is leave encashment?", "What is Gratuity?", "Draft a query for HR"],
+        "query": ["What's happening with my query?", "Draft a query for HR"]
+    },
+    "USER-E06": {
+        "pf": ["How much PF was cut in September?", "What was my August PF?", "What is PF?"],
+        "tds": ["Why did my TDS increase?", "What is TDS?", "Which tax regime am I in?"],
+        "tax": ["Why did my TDS increase?", "What is TDS?", "Which tax regime am I in?"],
+        "lop": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "leave": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "salary": ["Why did my TDS increase?", "Explain my September pay", "Explain my August pay"],
+        "pay": ["Why did my TDS increase?", "Explain my September pay", "Explain my August pay"],
+        "payslip": ["Why did my TDS increase?", "Explain my September pay", "Explain my August pay"],
+        "bonus": ["What is the annual performance bonus?", "What is statutory bonus?", "Draft a query for HR"],
+        "arrears": ["What are salary arrears?", "Draft a query for HR"],
+        "hike": ["What are salary arrears?", "Draft a query for HR"],
+        "settlement": ["What is leave encashment?", "What is Gratuity?", "Draft a query for HR"],
+        "query": ["What's happening with my query?", "Draft a query for HR"]
+    },
+    "USER-E16": {
+        "pf": ["How much PF was cut in September?", "What was my August PF?", "What is PF?"],
+        "tds": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "tax": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "lop": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "leave": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "salary": ["Why did my basic pay change?", "Explain my September pay", "Explain my August pay"],
+        "pay": ["Why did my basic pay change?", "Explain my September pay", "Explain my August pay"],
+        "payslip": ["Why did my basic pay change?", "Explain my September pay", "Explain my August pay"],
+        "bonus": ["What is the annual performance bonus?", "What is statutory bonus?", "Draft a query for HR"],
+        "arrears": ["What are salary arrears?", "Draft a query for HR"],
+        "hike": ["What are salary arrears?", "Draft a query for HR"],
+        "settlement": ["What is leave encashment?", "What is Gratuity?", "Draft a query for HR"],
+        "query": ["What's happening with my query?", "Draft a query for HR"]
+    },
+    "DEFAULT_EMPLOYEE": {
+        "pf": ["How much PF was cut in September?", "What was my August PF?", "What is PF?"],
+        "tds": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "tax": ["Why is my TDS zero?", "What is TDS?", "Which tax regime am I in?"],
+        "lop": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "leave": ["How many LOP days were recorded in September?", "What was my August LOP?", "What is LOP?"],
+        "salary": ["Explain my September pay", "Explain my August pay", "Compare August and September pay"],
+        "pay": ["Explain my September pay", "Explain my August pay", "Compare August and September pay"],
+        "payslip": ["Explain my September pay", "Explain my August pay", "Compare August and September pay"],
+        "bonus": ["What is the annual performance bonus?", "What is statutory bonus?", "Draft a query for HR"],
+        "arrears": ["What are salary arrears?", "Draft a query for HR"],
+        "hike": ["What are salary arrears?", "Draft a query for HR"],
+        "settlement": ["What is leave encashment?", "What is Gratuity?", "Draft a query for HR"],
+        "query": ["What's happening with my query?", "Draft a query for HR"]
+    },
+    "HR01": {
+        "pf": ["What is PF?", "What is basic pay?"],
+        "tds": ["What is TDS?", "What is basic pay?"],
+        "tax": ["What is TDS?", "What is basic pay?"],
+        "lop": ["What is LOP?", "What is leave encashment?", "What needs my approval?"],
+        "leave": ["What is LOP?", "What is leave encashment?", "What needs my approval?"],
+        "salary": ["What needs my approval?", "Who is leaving this month?", "Calculate arrears"],
+        "pay": ["What needs my approval?", "Who is leaving this month?", "Calculate arrears"],
+        "payslip": ["What needs my approval?", "Who is leaving this month?", "Calculate arrears"],
+        "bonus": ["What is the difference between gross and net pay?", "What needs my approval?"],
+        "arrears": ["Which employees have a pending hike?", "Calculate arrears", "What needs my approval?"],
+        "hike": ["Which employees have a pending hike?", "Calculate arrears", "What needs my approval?"],
+        "settlement": ["Prepare full and final settlement", "Who is leaving this month?", "What needs my approval?"],
+        "query": ["Show Neha's query", "Review payroll queries"]
+    },
+    "HR02": {
+        "pf": ["What is PF?", "What is basic pay?"],
+        "tds": ["What is TDS?", "What is basic pay?"],
+        "tax": ["What is TDS?", "What is basic pay?"],
+        "lop": ["What is LOP?", "What is leave encashment?", "What needs my approval?"],
+        "leave": ["What is LOP?", "What is leave encashment?", "What needs my approval?"],
+        "salary": ["What needs my approval?", "Calculate arrears"],
+        "pay": ["What needs my approval?", "Calculate arrears"],
+        "payslip": ["What needs my approval?", "Calculate arrears"],
+        "bonus": ["Prepare the Sales quarterly incentive", "What needs my approval?"],
+        "arrears": ["Which employees have a pending hike?", "Calculate arrears", "What needs my approval?"],
+        "hike": ["Which employees have a pending hike?", "Calculate arrears", "What needs my approval?"],
+        "settlement": ["Prepare full and final settlement", "What needs my approval?"],
+        "query": ["Review payroll queries"]
+    }
+}
+
+
 class ChatRouter:
     def handle_chat(self, user_id: str, message: str = "", action: Optional[str] = None, context: Optional[dict] = None) -> dict:
         user = USERS.get(user_id, USERS.get("HR01", {}))
@@ -726,8 +820,9 @@ class ChatRouter:
             return self._handle_show_calculation(user, role, surface, context)
 
         # FAQ lookup priority for general definition questions
-        if not faq_matcher.is_personal_pay_question(lower_msg):
-            if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or len(lower_msg.split()) <= 4:
+        topic_words_set = {"pf", "tds", "tax", "lop", "leave", "salary", "pay", "payslip", "bonus", "arrears", "hike", "settlement", "query"}
+        if not faq_matcher.is_personal_pay_question(lower_msg) and lower_msg.strip() not in topic_words_set:
+            if re.search(r"^(what is|what are|explain|who is|can hcm one|does approving|why is my bank|what does|how does)\b", lower_msg) or "faq" in lower_msg or (len(lower_msg.split()) <= 4 and not any(re.search(r"\b" + re.escape(tw) + r"\b", lower_msg) for tw in topic_words_set)):
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
                     return self._build_faq_response(matched_faq, conf, role, surface, user)
@@ -888,7 +983,7 @@ class ChatRouter:
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
                     return self._build_faq_response(matched_faq, conf, role, surface, user=user)
-            return self._build_unknown_fallback(role, surface, user=user)
+            return self._build_unknown_fallback(role, surface, user=user, raw_msg=raw_msg)
 
         # Scenario 10 (Siddharth Jain / TDS increase)
         if re.search(r"\b(siddharth|e06)\b", lower_msg) or ("tds" in lower_msg and ("increase" in lower_msg or "higher" in lower_msg or "deduction" in lower_msg or "tax" in lower_msg or "why" in lower_msg or "change" in lower_msg)) or lower_msg.strip() == "tds":
@@ -899,7 +994,7 @@ class ChatRouter:
                 matched_faq, conf = faq_matcher.match(raw_msg)
                 if matched_faq and conf >= 0.70:
                     return self._build_faq_response(matched_faq, conf, role, surface, user=user)
-            return self._build_unknown_fallback(role, surface, user=user)
+            return self._build_unknown_fallback(role, surface, user=user, raw_msg=raw_msg)
 
         # Scenario 9 (Neha Gupta / September salary drop / personal pay drop queries)
         is_salary_drop_query = bool(re.search(
@@ -913,7 +1008,7 @@ class ChatRouter:
             has_access_s9 = (role == "HR Admin" and "E05" in (user.get("allowed_employee_ids") or [])) or user.get("employee_id") == "E05"
             if has_access_s9:
                 return self._build_scenario_9(user, role, surface)
-            return self._build_unknown_fallback(role, surface, user=user)
+            return self._build_unknown_fallback(role, surface, user=user, raw_msg=raw_msg)
 
         # HR Tasks with Employee Picker (Part C)
         if role == "HR Admin":
@@ -947,13 +1042,13 @@ class ChatRouter:
             return self._handle_hr_query_review(user, role, surface, context)
 
         # Fallback to FAQ keyword match
-        if not faq_matcher.is_personal_pay_question(lower_msg):
+        if not faq_matcher.is_personal_pay_question(lower_msg) and lower_msg.strip() not in topic_words_set:
             matched_faq, conf = faq_matcher.match(raw_msg)
             if matched_faq and conf >= 0.70:
                 return self._build_faq_response(matched_faq, conf, role, surface, user=user)
 
         # 6. Fallback Response (Never hallucinate)
-        return self._build_unknown_fallback(role, surface, user=user)
+        return self._build_unknown_fallback(role, surface, user=user, raw_msg=raw_msg)
 
     # --- Scenario Builders ---
 
@@ -1986,6 +2081,7 @@ class ChatRouter:
         prev_gross = disp.get("previous_employer_declared_gross", {}).get("value")
         prev_tds = disp.get("previous_employer_tds", {}).get("value")
         rem_tax = disp.get("remaining_yearly_tax", {}).get("value")
+        declared_months = disp.get("declared_month_range", {}).get("value") or "2026-04 to 2026-06"
 
         tax_rules = get_rule_file("tax-rules.json")
         rules_ver = tax_rules.get("rules_version", "Northwind demo rules v1")
@@ -1994,11 +2090,11 @@ class ChatRouter:
         eng_cert = _get_engine_certainty(r)
         emp_name_s10 = "Siddharth Jain"
         if role == "HR Admin":
-            msg_s10_1 = {"code": "C42", "text": f"{emp_name_s10}'s September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."}
-            msg_s10_2 = {"code": "C29", "text": f"{emp_name_s10}'s TDS is higher because {emp_name_s10} declared income from {emp_name_s10}'s previous employer for Not available in generated data. That income is added to {emp_name_s10}'s yearly income, so {emp_name_s10}'s expected yearly tax is higher. The tax {emp_name_s10}'s previous employer already deducted is counted, so it is not deducted twice."}
+            msg_s10_1 = {"code": "C42", "text": get_message("C42", Name=emp_name_s10, month="September", amount=format_inr(net_change), **{"previous month": "August"})}
+            msg_s10_2 = {"code": "C29", "text": get_message("C29", Name=emp_name_s10, declared_months=declared_months)}
         else:
-            msg_s10_1 = {"code": "C30", "text": f"Your September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."}
-            msg_s10_2 = {"code": "C29", "text": "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."}
+            msg_s10_1 = {"code": "C30", "text": get_message("C30", later_month="September", net_change_amount=format_inr(net_change), lower_or_higher="lower", earlier_month="August")}
+            msg_s10_2 = {"code": "C29", "text": get_message("C29", declared_months=declared_months)}
 
         return {
             "messages": [
@@ -2299,7 +2395,7 @@ class ChatRouter:
             card["certainty"] = cert
 
         if role == "HR Admin":
-            msg_text = f"Here is {emp_name}'s {month_name} payslip:"
+            msg_text = get_message("C39", Name=emp_name, month=month_name)
         else:
             msg_text = get_message("C39", month=month_name)
 
@@ -2352,7 +2448,7 @@ class ChatRouter:
 
         if role == "HR Admin":
             emp_name = get_employee_name(emp_id)
-            msg_text = f"{emp_name}'s PF deduction for {month_name} is {amount_str}."
+            msg_text = get_message("C37", Name=emp_name, month=month_name, amount=amount_str)
         else:
             msg_text = get_message("C37", month=month_name, amount=amount_str)
 
@@ -2438,7 +2534,7 @@ class ChatRouter:
 
         if role == "HR Admin":
             emp_name = get_employee_name(emp_id)
-            msg_text = f"{emp_name}'s tax deducted (TDS) for {month_name} is {amount_str}. It's worked out as {emp_name}'s remaining yearly tax divided by the months left in the tax year."
+            msg_text = get_message("C38", Name=emp_name, month=month_name, amount=amount_str)
         else:
             msg_text = get_message("C38", month=month_name, amount=amount_str)
 
@@ -2473,7 +2569,7 @@ class ChatRouter:
         lop_days = data["lop_days"] if data else 3
         if role == "HR Admin":
             emp_name = get_employee_name(emp_id)
-            text = f"{lop_days} days of loss of pay were recorded in {emp_name}'s {month_name} attendance."
+            text = get_message("C36", Name=emp_name, n=lop_days, month=month_name)
         else:
             text = get_message("C36", n=lop_days, month=month_name)
         cert = _get_engine_certainty(data, "lop_certainty")
@@ -2592,7 +2688,7 @@ class ChatRouter:
 
         if role == "HR Admin":
             emp_name = get_employee_name(emp_id)
-            msg_text = f"{emp_name} is on the {regime_raw} tax regime for 2026-27."
+            msg_text = get_message("C41", Name=emp_name, regime=regime_raw, tax_year="2026-27")
         else:
             msg_text = get_message("C41", regime=regime_raw, tax_year="2026-27")
 
@@ -2692,7 +2788,47 @@ class ChatRouter:
             }
         }
 
-    def _build_unknown_fallback(self, role: str, surface: str, user: Optional[dict] = None) -> dict:
+    def _build_unknown_fallback(self, role: str, surface: str, user: Optional[dict] = None, raw_msg: str = "") -> dict:
+        lower_msg = (raw_msg or "").lower()
+        uid = (user or {}).get("user_id", "")
+        eid = (user or {}).get("employee_id", "")
+
+        # Prompt 2c-2c Item 7: "Did you mean?" chips when intent is unknown or low confidence, but a topic word is present
+        # Topic words: pf, tds, tax, lop, leave, salary, pay, payslip, bonus, arrears, hike, settlement, query
+        topic_words = ["pf", "tds", "tax", "lop", "leave", "salary", "pay", "payslip", "bonus", "arrears", "hike", "settlement", "query"]
+        matched_topic = None
+        if not ("unknown query" in lower_msg or "random nonsense" in lower_msg):
+            for tw in topic_words:
+                if re.search(r"\b" + re.escape(tw) + r"\b", lower_msg):
+                    matched_topic = tw
+                    break
+
+        if matched_topic:
+            user_table = TOPIC_CHIPS_TABLE.get(uid)
+            if not user_table:
+                if role == "HR Admin":
+                    user_table = TOPIC_CHIPS_TABLE.get("HR01", {})
+                else:
+                    user_table = TOPIC_CHIPS_TABLE.get("DEFAULT_EMPLOYEE", {})
+            questions = user_table.get(matched_topic, [])
+            chips = [{"label": q} for q in questions[:3]]
+            chips.append({"label": "Something else"})
+            return {
+                "messages": [
+                    {"code": "C52", "text": get_message("C52")}
+                ],
+                "cards": [],
+                "chips": chips,
+                "state": {
+                    "intent": "did_you_mean",
+                    "role": role,
+                    "surface": surface,
+                    "scenario_num": None,
+                    "employee_id": eid,
+                    "panel": None
+                }
+            }
+
         fallback_text = get_message("C33")
         return {
             "messages": [
@@ -3445,7 +3581,7 @@ class ChatRouter:
         draft_reply = "Attendance records reviewed and verified against biometric logs."
         return {
             "messages": [
-                {"code": "HR_QUERY_DRAFT", "text": f"Draft a reply to {emp_name}'s query. Nothing is sent until you confirm."}
+                {"code": "C50", "text": get_message("C50", Name=emp_name)}
             ],
             "cards": [
                 {
@@ -3490,7 +3626,7 @@ class ChatRouter:
         emp_name = EMPLOYEE_NAMES.get(q.get("employee_id"), q.get("employee_id"))
         return {
             "messages": [
-                {"code": "C16", "text": f"Reply recorded for {emp_name}'s query."}
+                {"code": "HR_QUERY_REPLY", "text": get_message("HR_QUERY_REPLY", Name=emp_name)}
             ],
             "cards": [
                 {
@@ -3529,7 +3665,7 @@ class ChatRouter:
         if not context.get("confirmed") and not context.get("reply_text"):
             return {
                 "messages": [
-                    {"code": "CONFIRM_RESOLVE", "text": f"Mark {emp_name}'s query as resolved?"}
+                    {"code": "C51", "text": get_message("C51", Name=emp_name)}
                 ],
                 "cards": [
                     {
@@ -3759,7 +3895,8 @@ class ChatRouter:
     def _handle_approvals_list(self, user: dict, role: str, surface: str) -> dict:
         allowed = set(user.get("allowed_employee_ids") or [])
         all_props = lifecycle.get_all_proposals()
-        waiting_items = []
+        ready_items = []
+        needs_input_items = []
         seen_keys = set()
 
         for pid, p in all_props.items():
@@ -3788,15 +3925,25 @@ class ChatRouter:
                 continue
             seen_keys.add(dedup_key)
 
-            waiting_items.append({
-                "proposal_id": pid,
-                "scenario_num": s_num,
+            cert = p.get("certainty")
+            blocked_reason = p.get("blocking_reason") or p.get("blocked_reason")
+            item_data = {
+                "label": name_code,
                 "name_code": name_code,
                 "scope": scope_label,
-                "certainty": p.get("certainty")
-            })
+                "certainty": cert,
+                "action_label": "Open",
+                "proposal_id": pid,
+                "scenario_num": s_num
+            }
+            if cert == "Complete for this scope":
+                ready_items.append(item_data)
+            else:
+                item_data["blocked_reason"] = blocked_reason
+                item_data["reason"] = blocked_reason
+                needs_input_items.append(item_data)
 
-        if not waiting_items:
+        if not ready_items and not needs_input_items:
             return {
                 "messages": [
                     {"code": "C46", "text": get_message("C46")}
@@ -3811,39 +3958,49 @@ class ChatRouter:
                 }
             }
 
+        messages = []
+        if ready_items:
+            messages.append({"code": "C48", "text": get_message("C48", n=len(ready_items))})
+        if needs_input_items:
+            messages.append({"code": "C49", "text": get_message("C49", n=len(needs_input_items))})
+
+        cards = []
+        if ready_items:
+            cards.append({
+                "id": "card-ready-approvals",
+                "type": "component_list",
+                "title": "Ready to approve",
+                "certainty": get_least_certain_label(*[it.get("certainty") for it in ready_items]),
+                "data": {
+                    "group": "Ready to approve",
+                    "items": ready_items,
+                    "components": []
+                }
+            })
+        if needs_input_items:
+            cards.append({
+                "id": "card-needs-input-approvals",
+                "type": "component_list",
+                "title": "Needs input first",
+                "certainty": get_least_certain_label(*[it.get("certainty") for it in needs_input_items]),
+                "data": {
+                    "group": "Needs input first",
+                    "items": needs_input_items,
+                    "components": []
+                }
+            })
+
         chips = []
-        for it in waiting_items[:4]:
+        for it in (ready_items + needs_input_items)[:4]:
             chips.append({
                 "label": f"Open {it['name_code'].split('·')[0].strip()}",
                 "action": f"scenario-{it['scenario_num']}",
                 "payload": {"scenario_num": it["scenario_num"], "proposal_id": it["proposal_id"]}
             })
 
-        card = {
-            "id": "card-pending-approvals",
-            "type": "component_list",
-            "title": "Proposals waiting for approval",
-            "data": {
-                "items": [
-                    {
-                        "label": it["name_code"],
-                        "name_code": it["name_code"],
-                        "scope": it["scope"],
-                        "certainty": it["certainty"],
-                        "action_label": "Open",
-                        "proposal_id": it["proposal_id"],
-                        "scenario_num": it["scenario_num"]
-                    }
-                    for it in waiting_items
-                ]
-            }
-        }
-
         return {
-            "messages": [
-                {"code": "APPROVALS_LIST", "text": f"{len(waiting_items)} proposals are waiting for your approval:"}
-            ],
-            "cards": [card],
+            "messages": messages,
+            "cards": cards,
             "chips": chips,
             "state": {
                 "intent": "approvals_list",

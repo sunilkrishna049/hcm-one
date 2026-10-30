@@ -1217,5 +1217,90 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       expect(mockApprove).not.toHaveBeenCalled();
     });
   });
-});
 
+  it('21. HR Query loop frontend test: Send on reply draft sends exact query_id and reply text only after confirm; Resolve sends exact query_id only after confirm; Cancel sends nothing', async () => {
+    const mockSend = vi.fn();
+    const mockCancel = vi.fn();
+    const mockResolve = vi.fn();
+
+    const replyDraftCard = {
+      id: 'card-draft-QUERY-E05-SEPTEMBER',
+      type: 'query_draft',
+      title: "Reply to Neha Gupta's query",
+      certainty: 'Complete for this scope',
+      data: {
+        query_id: 'QUERY-E05-SEPTEMBER',
+        employee_label: 'Neha Gupta · E05',
+        name_code: 'Neha Gupta · E05',
+        period: 'September 2026',
+        category: 'Loss of Pay (LOP)',
+        description: 'Please review September LOP deduction of 3 days.',
+        draft_reply: 'Attendance records reviewed and verified against biometric logs.',
+        notice: 'Nothing is sent until HR clicks Send and confirms.',
+      },
+    };
+
+    const { unmount } = render(
+      <CardRenderer
+        card={replyDraftCard}
+        onSendQuery={mockSend}
+        onCancelQueryDraft={mockCancel}
+      />
+    );
+
+    expect(screen.getByText(/Reply to Neha Gupta's query/i)).toBeInTheDocument();
+    const sendBtn = screen.getByRole('button', { name: /Send reply/i });
+    const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
+
+    // 1. Cancel sends nothing to onSendQuery
+    fireEvent.click(cancelBtn);
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockCancel).toHaveBeenCalled();
+
+    // 2. Click Send without confirm -> disabled, mockSend is NOT called
+    expect(sendBtn).toBeDisabled();
+    fireEvent.click(sendBtn);
+    expect(mockSend).not.toHaveBeenCalled();
+
+    // 3. Confirm and click Send -> sends exact query_id and reply text
+    const confirmCheckbox = screen.getByLabelText(/Confirm reply before sending/i);
+    fireEvent.click(confirmCheckbox);
+    expect(sendBtn).not.toBeDisabled();
+
+    fireEvent.click(sendBtn);
+    expect(mockSend).toHaveBeenCalledWith(
+      'Attendance records reviewed and verified against biometric logs.',
+      'QUERY-E05-SEPTEMBER'
+    );
+
+    unmount();
+
+    // 4. Test Resolve query sends exact query_id
+    const statusCard = {
+      id: 'card-status-rev',
+      type: 'query_status',
+      title: 'Employee Queries',
+      certainty: 'Complete for this scope',
+      data: {
+        queries: [
+          {
+            query_id: 'QUERY-E05-SEPTEMBER',
+            status: 'In review',
+            description: 'Please review September LOP deduction of 3 days.',
+          },
+        ],
+      },
+    };
+
+    render(
+      <CardRenderer
+        card={statusCard}
+        onResolveQuery={mockResolve}
+      />
+    );
+
+    const resolveBtn = screen.getByRole('button', { name: /Resolve query/i });
+    fireEvent.click(resolveBtn);
+    expect(mockResolve).toHaveBeenCalledWith('QUERY-E05-SEPTEMBER');
+  });
+});

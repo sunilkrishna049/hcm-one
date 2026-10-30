@@ -21,7 +21,7 @@ interface CardRendererProps {
   onEdit?: (payload?: any) => void;
   onReject?: (payload?: any) => void;
   onApplySelection?: (choice: string) => void;
-  onSendQuery?: (description: string) => void;
+  onSendQuery?: (description: string, queryId?: string) => void;
   onCancelQueryDraft?: () => void;
   onTakeIntoReview?: (queryId: string) => void;
   onResolveQuery?: (queryId: string) => void;

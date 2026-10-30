@@ -11,6 +11,10 @@ from ..config import RUNTIME_DIR
 
 import os
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 _OVERRIDE_LOG_FILE: Optional[Path] = None
 
 
@@ -52,7 +56,8 @@ def log_ai_run(
     fallback_triggered: bool,
     fallback_reason: Optional[str],
     latency_ms: float,
-    metrics: Optional[Dict[str, Any]] = None
+    metrics: Optional[Dict[str, Any]] = None,
+    tag: Optional[str] = None,
 ) -> None:
     """Appends a masked execution record to data/runtime/ai_runs.jsonl."""
     record = {
@@ -68,6 +73,9 @@ def log_ai_run(
         "latency_ms": round(latency_ms, 2),
         "metrics": metrics or {}
     }
+    if tag:
+        record["tag"] = tag
+        logger.info(f"[{tag}] user={mask_user_id(user_id)} intent={intent} scenario={scenario_num} fallback={fallback_triggered} reason={fallback_reason}")
 
     try:
         target_file = get_log_file()
