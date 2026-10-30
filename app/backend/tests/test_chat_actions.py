@@ -1068,6 +1068,7 @@ def test_static_guard_no_engine_defaults_in_app_code():
 
     val_pattern = re.compile(r'\.get\(\s*["\']value["\']\s*,\s*[-+]?[0-9]')
     emp_pattern = re.compile(r'\.get\(\s*["\']employee_id["\']\s*,\s*["\'][A-Za-z0-9_-]+["\']\)')
+    val_or_pattern = re.compile(r'\.get\(\s*["\']value["\']\s*\)\s*or\s*(["\'][^"\']+["\']|[-+]?[0-9])')
 
     violations = []
     for fpath in backend_files + frontend_files:
@@ -1080,6 +1081,8 @@ def test_static_guard_no_engine_defaults_in_app_code():
                 violations.append(f"{fpath.name}:{line_num}: {stripped} [forbidden .get('value', <number>)]")
             if emp_pattern.search(line):
                 violations.append(f"{fpath.name}:{line_num}: {stripped} [forbidden .get('employee_id', '<id>')]")
+            if val_or_pattern.search(line):
+                violations.append(f"{fpath.name}:{line_num}: {stripped} [forbidden .get('value') or '<literal>']")
 
     assert not violations, "Found forbidden engine default patterns in app code:\n" + "\n".join(violations)
 
@@ -1421,12 +1424,12 @@ def test_no_placeholder_leaks_full_matrix():
     s10_emp = client.post("/api/chat", json={"user_id": "USER-E06", "message": "Why did my TDS increase?"})
     assert s10_emp.status_code == 200
     tds_msg_emp = s10_emp.json()["messages"][1]["text"]
-    assert "2026-04 to 2026-06" in tds_msg_emp, f"Expected declared months '2026-04 to 2026-06' in: {tds_msg_emp}"
+    assert "April to June 2026" in tds_msg_emp, f"Expected declared months 'April to June 2026' in: {tds_msg_emp}"
 
     s10_hr = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-10"})
     assert s10_hr.status_code == 200
     tds_msg_hr = s10_hr.json()["messages"][1]["text"]
-    assert "2026-04 to 2026-06" in tds_msg_hr, f"Expected declared months '2026-04 to 2026-06' in: {tds_msg_hr}"
+    assert "April to June 2026" in tds_msg_hr, f"Expected declared months 'April to June 2026' in: {tds_msg_hr}"
 
     # Test list questions
     for q in ["What needs my approval?", "Who is leaving this month?"]:

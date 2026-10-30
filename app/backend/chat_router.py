@@ -156,6 +156,16 @@ def format_available_months_phrase(months: List[str]) -> str:
     return f"{start_name} {start_parts[0]} to {end_name} {end_parts[0]}"
 
 
+def format_month_range_phrase(range_str: Optional[str]) -> str:
+    """Format month range '2026-04 to 2026-06' to 'April to June 2026'."""
+    if not range_str:
+        return ""
+    parts = [p.strip() for p in range_str.split("to")]
+    if len(parts) == 2 and re.match(r"^\d{4}-\d{2}$", parts[0]) and re.match(r"^\d{4}-\d{2}$", parts[1]):
+        return format_available_months_phrase(parts)
+    return range_str
+
+
 def normalize_month_code(m_str: Optional[str]) -> str:
     """Normalizes any month string (e.g. 'September 2026', 'september', '2026-09') to 'YYYY-MM'."""
     if not m_str:
@@ -2081,7 +2091,12 @@ class ChatRouter:
         prev_gross = disp.get("previous_employer_declared_gross", {}).get("value")
         prev_tds = disp.get("previous_employer_tds", {}).get("value")
         rem_tax = disp.get("remaining_yearly_tax", {}).get("value")
-        declared_months = disp.get("declared_month_range", {}).get("value") or "2026-04 to 2026-06"
+        raw_declared_range = disp.get("declared_month_range", {}).get("value")
+        if not raw_declared_range:
+            logger.warning("Masked warning: Engine field 'declared_month_range' is missing; omitted from display.")
+            declared_months = None
+        else:
+            declared_months = format_month_range_phrase(raw_declared_range)
 
         tax_rules = get_rule_file("tax-rules.json")
         rules_ver = tax_rules.get("rules_version", "Northwind demo rules v1")
@@ -2091,17 +2106,18 @@ class ChatRouter:
         emp_name_s10 = "Siddharth Jain"
         if role == "HR Admin":
             msg_s10_1 = {"code": "C42", "text": get_message("C42", Name=emp_name_s10, month="September", amount=format_inr(net_change), **{"previous month": "August"})}
-            msg_s10_2 = {"code": "C29", "text": get_message("C29", Name=emp_name_s10, declared_months=declared_months)}
+            msg_s10_2 = {"code": "C29", "text": get_message("C29", Name=emp_name_s10, declared_months=declared_months)} if declared_months else None
         else:
             msg_s10_1 = {"code": "C30", "text": get_message("C30", later_month="September", net_change_amount=format_inr(net_change), lower_or_higher="lower", earlier_month="August")}
-            msg_s10_2 = {"code": "C29", "text": get_message("C29", declared_months=declared_months)}
+            msg_s10_2 = {"code": "C29", "text": get_message("C29", declared_months=declared_months)} if declared_months else None
+
+        messages = [msg_s10_1]
+        if msg_s10_2:
+            messages.append(msg_s10_2)
+        messages.append({"code": "C27", "text": get_message("C27")})
 
         return {
-            "messages": [
-                msg_s10_1,
-                msg_s10_2,
-                {"code": "C27", "text": get_message("C27")}
-            ],
+            "messages": messages,
             "cards": [
                 {
                     "id": "card-hero-s10",

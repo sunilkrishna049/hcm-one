@@ -6,7 +6,7 @@ import re
 from typing import Dict, Optional, Set, Tuple
 
 from ..engine_bridge import bridge
-from ..chat_router import format_inr, get_employee_name, get_rule_file
+from ..chat_router import format_inr, get_employee_name, get_rule_file, format_month_range_phrase
 
 
 def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Optional[str] = None) -> Dict[str, str]:
@@ -203,7 +203,7 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
             "prior_tds_amt": format_inr(prior_tds_amt),
             "pf_change": format_inr(pf_amt),
             "after_tds": format_inr(after_tds),
-            "declared_months": "April to July 2026",
+            "declared_months": format_month_range_phrase(disp.get("declared_month_range", {}).get("value")) if disp.get("declared_month_range", {}).get("value") else "",
             "primary_reason": "previous employer income declaration",
             "secondary_reason": "PF ceiling change"
         }
