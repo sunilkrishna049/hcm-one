@@ -1174,3 +1174,202 @@ def test_missing_engine_value_logs_masked_warning_and_fails(caplog):
             # Assert that expecting an engine value when missing causes test failure (contract verification)
             with pytest.raises(AssertionError):
                 assert prop_card["data"]["old_monthly_salary_total"] == 120000
+
+
+def test_hr_voice_across_all_scenarios():
+    """PART A (Item 1 & 11): When signed-in user is HR and the reply is about an employee,
+    never use 'Your'/'your'/'you' for that employee. Use their name.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.chat_router import EMPLOYEE_NAMES
+
+    client = TestClient(app)
+
+    # 1. Scenario 9: Neha Gupta take-home drop
+    res9 = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-9", "context": {"scenario_num": 9}})
+    assert res9.status_code == 200
+    data9 = res9.json()
+    assert data9["messages"][0]["code"] == "C42"
+    assert "Neha Gupta's September take-home is" in data9["messages"][0]["text"]
+    assert "Your" not in data9["messages"][0]["text"]
+    assert "your" not in data9["messages"][0]["text"]
+
+    # 2. Scenario 10: Siddharth Jain TDS increase
+    res10 = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-10", "context": {"scenario_num": 10}})
+    assert res10.status_code == 200
+    data10 = res10.json()
+    assert data10["messages"][0]["code"] == "C42"
+    assert "Siddharth Jain's September take-home is" in data10["messages"][0]["text"]
+    # HR version of C29
+    assert data10["messages"][1]["code"] == "C29"
+    assert "Siddharth Jain's TDS is higher because Siddharth Jain declared income" in data10["messages"][1]["text"]
+    assert "you" not in data10["messages"][1]["text"].lower()
+    assert "your" not in data10["messages"][1]["text"].lower()
+
+    # 3. Scenario 11: Pooja Das take-home drop
+    res11 = client.post("/api/chat", json={"user_id": "HR01", "action": "scenario-11", "context": {"scenario_num": 11}})
+    assert res11.status_code == 200
+    data11 = res11.json()
+    assert data11["messages"][0]["code"] == "C42"
+    assert "Pooja Das's September take-home is" in data11["messages"][0]["text"]
+    assert "Your" not in data11["messages"][0]["text"]
+
+
+def test_hr_query_word_routing_and_full_loop():
+    """PART B & D (Items 2-8 & 11):
+    - HR mentions employee AND query word: never jumps to salary scenario.
+    - Full query loop: show -> reply draft -> confirm send -> resolve confirm -> Neha sees reply.
+    - Delete query refused (C45).
+    - HR02 refused access to Neha's query (C10).
+    - Missing or wrong query_id changes nothing.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    # 1. Routing: 'Show Neha's query' routes to query, not salary scenario
+    show_res = client.post("/api/chat", json={"user_id": "HR01", "message": "Show Neha's query"})
+    assert show_res.status_code == 200
+    show_data = show_res.json()
+    assert show_data["state"]["intent"] == "hr_query_review"
+    assert show_data["messages"][0]["code"] == "C43"
+    assert "Neha Gupta's September query is In review. No reply has been recorded yet." in show_data["messages"][0]["text"]
+    assert len(show_data["cards"]) == 1
+    q_card = show_data["cards"][0]
+    assert q_card["type"] == "query_status"
+    assert q_card["data"]["name_code"] == "Neha Gupta · E05"
+    assert q_card["data"]["period"] == "September 2026"
+    assert q_card["data"]["category"] == "salary"
+    assert q_card["data"]["description"] == "Please check my September attendance."
+    assert q_card["data"]["status"] == "In review"
+    # No invented dates, reviewer or reply
+    assert "reply_text" not in q_card["data"]
+    assert "reviewer" not in q_card["data"]
+
+    # 2. 'Delete Neha's query' -> C45
+    del_res = client.post("/api/chat", json={"user_id": "HR01", "message": "Delete Neha's query"})
+    assert del_res.status_code == 200
+    assert del_res.json()["messages"][0]["code"] == "C45"
+    assert del_res.json()["messages"][0]["text"] == "Queries can't be deleted. You can close it instead."
+
+    # 3. HR02 (Sales only) cannot access Neha's query (permission gate -> C10)
+    hr02_show = client.post("/api/chat", json={"user_id": "HR02", "message": "Show Neha's query"})
+    assert hr02_show.status_code == 200
+    assert hr02_show.json()["messages"][0]["code"] == "C10"
+
+    hr02_del = client.post("/api/chat", json={"user_id": "HR02", "message": "Delete Neha's query"})
+    assert hr02_del.status_code == 200
+    assert hr02_del.json()["messages"][0]["code"] == "C10"
+
+    hr02_reply = client.post("/api/chat", json={"user_id": "HR02", "message": "Reply to Neha's query"})
+    assert hr02_reply.status_code == 200
+    assert hr02_reply.json()["messages"][0]["code"] == "C10"
+
+    hr02_resolve = client.post("/api/chat", json={"user_id": "HR02", "message": "Mark Neha's query resolved"})
+    assert hr02_resolve.status_code == 200
+    assert hr02_resolve.json()["messages"][0]["code"] == "C10"
+
+    # 4. Wrong or missing query_id changes nothing
+    bad_res = client.post("/api/chat", json={"user_id": "HR01", "action": "confirm-reply-query", "context": {"query_id": "QUERY-FAKE-999", "reply_text": "Bad"}})
+    assert bad_res.status_code == 200
+    assert bad_res.json()["messages"][0]["code"] == "C10"
+    # Verify Neha's query was unchanged
+    neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert neha_q.get("hr_reply") is None
+
+    # 5. 'Reply to Neha's query': draft card; nothing sent until confirmed
+    draft_reply_res = client.post("/api/chat", json={"user_id": "HR01", "message": "Reply to Neha's query"})
+    assert draft_reply_res.status_code == 200
+    draft_rep_data = draft_reply_res.json()
+    assert draft_rep_data["cards"][0]["type"] == "query_draft"
+    assert "Nothing is sent until" in draft_rep_data["cards"][0]["data"]["notice"]
+    assert draft_rep_data["cards"][0]["data"]["status"] == "In review"
+    # Verify nothing was sent yet
+    neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert neha_q.get("hr_reply") is None
+
+    # 6. HR clicks Send (confirm-reply-query)
+    confirm_rep = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "confirm-reply-query",
+        "context": {"query_id": "QUERY-E05-SEPTEMBER", "reply_text": "Attendance punch log verified."}
+    })
+    assert confirm_rep.status_code == 200
+    neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert neha_q.get("hr_reply") == "Attendance punch log verified."
+
+    # 7. 'Mark Neha's query resolved': button with confirmation
+    resolve_prompt = client.post("/api/chat", json={"user_id": "HR01", "message": "Mark Neha's query resolved"})
+    assert resolve_prompt.status_code == 200
+    assert resolve_prompt.json()["messages"][0]["code"] == "CONFIRM_RESOLVE"
+    assert any(chip["action"] == "confirm-resolve-query" for chip in resolve_prompt.json()["chips"])
+    # Not yet marked resolved in data
+    neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert neha_q.get("status") == "In review"
+
+    # 8. HR confirms resolve
+    confirm_resolve = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "confirm-resolve-query",
+        "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
+    })
+    assert confirm_resolve.status_code == 200
+    assert confirm_resolve.json()["messages"][0]["code"] == "C23"
+    neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert neha_q.get("status") == "Resolved"
+
+    # 9. Neha asks 'What's happening with my query?' -> gets C44 + reply
+    neha_check = client.post("/api/chat", json={"user_id": "USER-E05", "message": "What's happening with my query?"})
+    assert neha_check.status_code == 200
+    assert neha_check.json()["messages"][0]["code"] == "C44"
+    assert "Your September 2026 query is Resolved. Here is HR's reply: Attendance punch log verified." in neha_check.json()["messages"][0]["text"]
+
+
+def test_hr_list_questions():
+    """PART C & D (Items 9, 10 & 11):
+    - 'What needs my approval?': lists waiting proposals, buttons to open each; C46 if none.
+    - 'Who is leaving this month?': lists leavers in open payroll month with C47.
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+
+    # 1. 'What needs my approval?' for HR01
+    appr_res = client.post("/api/chat", json={"user_id": "HR01", "message": "What needs my approval?"})
+    assert appr_res.status_code == 200
+    appr_data = appr_res.json()
+    assert appr_data["state"]["intent"] == "approvals_list"
+    assert "proposals are waiting for your approval:" in appr_data["messages"][0]["text"]
+    assert len(appr_data["cards"]) == 1
+    items = appr_data["cards"][0]["data"]["items"]
+    assert any("Priya Sharma" in it["name_code"] for it in items)
+    assert any(it["certainty"] in ("Complete for this scope", "Incomplete") for it in items)
+
+    # 2. 'Who is leaving this month?' for HR01
+    leave_res = client.post("/api/chat", json={"user_id": "HR01", "message": "Who is leaving this month?"})
+    assert leave_res.status_code == 200
+    leave_data = leave_res.json()
+    assert leave_data["state"]["intent"] == "leavers_list"
+    assert leave_data["messages"][0]["code"] == "C47"
+    assert "3 employees have a last working day in October 2026:" in leave_data["messages"][0]["text"]
+    l_items = leave_data["cards"][0]["data"]["items"]
+    assert len(l_items) == 3
+    names = [it["name_code"] for it in l_items]
+    assert any("Rahul Verma" in n for n in names)
+    assert any("Lakshmi Reddy" in n for n in names)
+    assert any("Imran Khan" in n for n in names)
+
+    # 3. 'Who is leaving this month?' for HR02 (Sales only: E13, E14, E15 -> 0 October leavers)
+    leave_res2 = client.post("/api/chat", json={"user_id": "HR02", "message": "Who is leaving this month?"})
+    assert leave_res2.status_code == 200
+    leave_data2 = leave_res2.json()
+    assert leave_data2["messages"][0]["code"] == "C47"
+    assert "0 employees have a last working day in October 2026:" in leave_data2["messages"][0]["text"]
+    assert len(leave_data2["cards"][0]["data"]["items"]) == 0

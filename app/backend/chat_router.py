@@ -624,6 +624,10 @@ class ChatRouter:
                 return self._handle_append_query(user, role, surface, context)
             elif act in ("query-status", "check my query status"):
                 return self._handle_query_status(user, role, surface, context)
+            elif act in ("confirm-reply-query", "confirm-reply"):
+                return self._handle_confirm_reply_query(user, role, surface, context)
+            elif act in ("confirm-resolve-query", "confirm-resolve"):
+                return self._handle_resolve_query(user, role, surface, {**context, "confirmed": True})
             elif act in ("take-into-review", "take for review", "take into review", "hr-take-into-review"):
                 return self._handle_take_into_review(user, role, surface, context)
             elif act in ("reply-query", "reply", "hr-reply"):
@@ -634,6 +638,10 @@ class ChatRouter:
                 return self._handle_dispute_query(user, role, surface, context)
             elif act in ("close-query", "close", "employee-close", "acknowledge and close"):
                 return self._handle_close_query(user, role, surface, context)
+            elif act in ("approvals-list", "what-needs-approval", "pending-approvals"):
+                return self._handle_approvals_list(user, role, surface)
+            elif act in ("leavers-list", "who-is-leaving", "leavers-this-month"):
+                return self._handle_leavers_list(user, role, surface)
             elif act in ("show-calculation", "show calculation", "show calculation proof", "view full month breakdown"):
                 return self._handle_show_calculation(user, role, surface, context)
             elif act == "apply-selection":
@@ -669,7 +677,29 @@ class ChatRouter:
 
         # 5. Natural Language Intent Mapping
 
-        # Direct Natural Language Action Matchers
+        # Direct Natural Language Action Matchers: List questions (Items 9 & 10)
+        if re.search(r"\b(who is leaving|who is leaving this month|leaving this month|leavers this month|employees leaving)\b", lower_msg):
+            return self._handle_leavers_list(user, role, surface)
+        if re.search(r"\b(what needs my approval|what needs approval|pending approval|proposals for approval|approval queue)\b", lower_msg):
+            return self._handle_approvals_list(user, role, surface)
+
+        # Item 2: Routing when HR mentions an employee AND a query word (query, reply, resolve, close, delete)
+        if role == "HR Admin":
+            query_words = ["query", "reply", "resolve", "close", "delete"]
+            has_query_kw = any(re.search(rf"\b{qw}\b", lower_msg) for qw in query_words)
+            mentioned_ids = get_mentioned_employee_ids(raw_msg)
+            emp_target_id = None
+            if mentioned_ids:
+                emp_target_id = mentioned_ids[0]
+            else:
+                for eid, ename in EMPLOYEE_NAMES.items():
+                    first_name = ename.split()[0].lower()
+                    if first_name in lower_msg or ename.lower() in lower_msg:
+                        emp_target_id = eid
+                        break
+            if has_query_kw and emp_target_id:
+                return self._handle_hr_employee_query_flow(user, role, surface, emp_target_id, raw_msg, context)
+
         if re.search(r"^(approve proposal|approve for payroll|approve\b)", lower_msg):
             return self._handle_approve_proposal(user, role, surface, context)
         if re.search(r"^(edit with reason|edit proposal)", lower_msg):
@@ -1871,9 +1901,17 @@ class ChatRouter:
             ]
 
         eng_cert = _get_engine_certainty(r)
+        emp_name_s9 = "Neha Gupta"
+        if role == "HR Admin":
+            msg_code_s9 = "C42"
+            msg_text_s9 = get_message("C42", Name=emp_name_s9, month="September", amount=format_inr(abs(net_change)), **{"previous month": "August"})
+        else:
+            msg_code_s9 = "C30"
+            msg_text_s9 = f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."
+
         return {
             "messages": [
-                {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
+                {"code": msg_code_s9, "text": msg_text_s9},
                 {"code": "C27", "text": get_message("C27")}
             ],
             "cards": [
@@ -1954,10 +1992,18 @@ class ChatRouter:
         tax_year = tax_rules.get("tax_year", {}).get("value", {}).get("year", "2026-27")
 
         eng_cert = _get_engine_certainty(r)
+        emp_name_s10 = "Siddharth Jain"
+        if role == "HR Admin":
+            msg_s10_1 = {"code": "C42", "text": f"{emp_name_s10}'s September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."}
+            msg_s10_2 = {"code": "C29", "text": f"{emp_name_s10}'s TDS is higher because {emp_name_s10} declared income from {emp_name_s10}'s previous employer for Not available in generated data. That income is added to {emp_name_s10}'s yearly income, so {emp_name_s10}'s expected yearly tax is higher. The tax {emp_name_s10}'s previous employer already deducted is counted, so it is not deducted twice."}
+        else:
+            msg_s10_1 = {"code": "C30", "text": f"Your September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."}
+            msg_s10_2 = {"code": "C29", "text": "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."}
+
         return {
             "messages": [
-                {"code": "C30", "text": f"Your September take-home is {format_inr(net_change)} lower than August. The main recorded reasons are below."},
-                {"code": "C29", "text": "Your TDS is higher because you declared income from your previous employer for Not available in generated data. That income is added to your yearly income, so your expected yearly tax is higher. The tax your previous employer already deducted is counted, so it is not deducted twice."},
+                msg_s10_1,
+                msg_s10_2,
                 {"code": "C27", "text": get_message("C27")}
             ],
             "cards": [
@@ -2038,9 +2084,17 @@ class ChatRouter:
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
 
         eng_cert = _get_engine_certainty(r)
+        emp_name_s11 = "Pooja Das"
+        if role == "HR Admin":
+            msg_code_s11 = "C42"
+            msg_text_s11 = f"{emp_name_s11}'s September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."
+        else:
+            msg_code_s11 = "C30"
+            msg_text_s11 = f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."
+
         return {
             "messages": [
-                {"code": "C30", "text": f"Your September take-home is {format_inr(abs(net_change))} lower than August. The main recorded reasons are below."},
+                {"code": msg_code_s11, "text": msg_text_s11},
                 {"code": "C26", "text": get_message("C26")},
                 {"code": "C27", "text": get_message("C27")}
             ],
@@ -2244,9 +2298,14 @@ class ChatRouter:
         if cert:
             card["certainty"] = cert
 
+        if role == "HR Admin":
+            msg_text = f"Here is {emp_name}'s {month_name} payslip:"
+        else:
+            msg_text = get_message("C39", month=month_name)
+
         return {
             "messages": [
-                {"code": "C39", "text": get_message("C39", month=month_name)}
+                {"code": "C39", "text": msg_text}
             ],
             "cards": [card],
             "chips": _get_user_fallback_chips(user),
@@ -2291,9 +2350,15 @@ class ChatRouter:
                 c["certainty"] = cert
             cards.append(c)
 
+        if role == "HR Admin":
+            emp_name = get_employee_name(emp_id)
+            msg_text = f"{emp_name}'s PF deduction for {month_name} is {amount_str}."
+        else:
+            msg_text = get_message("C37", month=month_name, amount=amount_str)
+
         return {
             "messages": [
-                {"code": "C37", "text": get_message("C37", month=month_name, amount=amount_str)}
+                {"code": "C37", "text": msg_text}
             ],
             "cards": cards,
             "chips": _get_user_fallback_chips(user),
@@ -2371,9 +2436,15 @@ class ChatRouter:
                 c["certainty"] = engine_certainty
             cards.append(c)
 
+        if role == "HR Admin":
+            emp_name = get_employee_name(emp_id)
+            msg_text = f"{emp_name}'s tax deducted (TDS) for {month_name} is {amount_str}. It's worked out as {emp_name}'s remaining yearly tax divided by the months left in the tax year."
+        else:
+            msg_text = get_message("C38", month=month_name, amount=amount_str)
+
         return {
             "messages": [
-                {"code": "C38", "text": get_message("C38", month=month_name, amount=amount_str)}
+                {"code": "C38", "text": msg_text}
             ],
             "cards": cards,
             "chips": chips,
@@ -2400,7 +2471,11 @@ class ChatRouter:
         data = get_employee_payroll_data(emp_id, month)
         month_name = format_month_label(month)
         lop_days = data["lop_days"] if data else 3
-        text = get_message("C36", n=lop_days, month=month_name)
+        if role == "HR Admin":
+            emp_name = get_employee_name(emp_id)
+            text = f"{lop_days} days of loss of pay were recorded in {emp_name}'s {month_name} attendance."
+        else:
+            text = get_message("C36", n=lop_days, month=month_name)
         cert = _get_engine_certainty(data, "lop_certainty")
 
         cards = []
@@ -2470,9 +2545,21 @@ class ChatRouter:
             comp_card["certainty"] = cert
         cards.append(comp_card)
 
+        if role == "HR Admin":
+            emp_name = EMPLOYEE_NAMES.get(emp_id, "The employee")
+            if net_change == 0:
+                msg_comp = f"{emp_name}'s {name_b} take-home is unchanged from {name_a}."
+            else:
+                msg_comp = f"{emp_name}'s {name_b} take-home is {format_inr(abs(net_change))} {direction} than {name_a}. The main recorded reasons are below."
+        else:
+            if net_change == 0:
+                msg_comp = f"Your {name_b} take-home is unchanged from {name_a}."
+            else:
+                msg_comp = f"Your {name_b} take-home is {format_inr(abs(net_change))} {direction} than {name_a}. The main recorded reasons are below."
+
         return {
             "messages": [
-                {"code": "C30", "text": f"Your {name_b} take-home is {format_inr(abs(net_change))} {direction} than {name_a}. The main recorded reasons are below."}
+                {"code": "C30", "text": msg_comp}
             ],
             "cards": cards,
             "chips": _get_user_fallback_chips(user),
@@ -2503,9 +2590,15 @@ class ChatRouter:
             }
         }
 
+        if role == "HR Admin":
+            emp_name = get_employee_name(emp_id)
+            msg_text = f"{emp_name} is on the {regime_raw} tax regime for 2026-27."
+        else:
+            msg_text = get_message("C41", regime=regime_raw, tax_year="2026-27")
+
         return {
             "messages": [
-                {"code": "C41", "text": get_message("C41", regime=regime_raw, tax_year="2026-27")}
+                {"code": "C41", "text": msg_text}
             ],
             "cards": [reg_card],
             "chips": _get_user_fallback_chips(user),
@@ -3217,9 +3310,8 @@ class ChatRouter:
             msg_code = "C40"
             msg_text = get_message("C40", month=q_month_name, status=st)
         else:
-            code_map = {"Sent": "C15", "In review": "C16", "Resolved": "C23", "Closed": "C24", "Draft": "C17"}
-            msg_code = code_map.get(st, "C15")
-            msg_text = get_message(msg_code)
+            msg_code = "C44"
+            msg_text = f"{get_message('C44', month=q_month_name, status=st)} {hr_reply}"
 
         return {
             "messages": [
@@ -3280,10 +3372,12 @@ class ChatRouter:
     def _handle_take_into_review(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
         if not q_id:
-            queries = lifecycle.get_queries()
-            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
-        res = lifecycle.take_into_review(q_id, actor=user)
-        q = res["query"]
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            res = lifecycle.take_into_review(q_id, actor=user)
+            q = res["query"]
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
         return {
             "messages": [
                 {"code": "C16", "text": get_message("C16")}
@@ -3309,14 +3403,94 @@ class ChatRouter:
     def _handle_reply_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
         if not q_id:
-            queries = lifecycle.get_queries()
-            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            q = lifecycle.get_query(q_id)
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if q.get("employee_id") not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
+        emp_name = EMPLOYEE_NAMES.get(q.get("employee_id"), q.get("employee_id"))
+        reply_arg = context.get("reply_text")
+        if reply_arg:
+            res = lifecycle.reply_query(q_id, actor=user, reply_text=reply_arg)
+            q_res = res["query"]
+            return {
+                "messages": [
+                    {"code": "C16", "text": get_message("C16")}
+                ],
+                "cards": [
+                    {
+                        "id": f"card-status-{q_res['query_id']}",
+                        "type": "query_status",
+                        "title": "Query reply recorded",
+                        "data": {
+                            "query_id": q_res["query_id"],
+                            "employee_label": f"{emp_name} · {q_res.get('employee_id')}",
+                            "name_code": f"{emp_name} · {q_res.get('employee_id')}",
+                            "status": q_res.get("status", "In review"),
+                            "description": q_res.get("description"),
+                            "reply_text": q_res.get("hr_reply")
+                        }
+                    }
+                ],
+                "chips": [
+                    {"label": "Mark query resolved", "action": "confirm-resolve-query", "payload": {"query_id": q_res["query_id"], "confirmed": True}}
+                ],
+                "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+            }
+
+        draft_reply = "Attendance records reviewed and verified against biometric logs."
+        return {
+            "messages": [
+                {"code": "HR_QUERY_DRAFT", "text": f"Draft a reply to {emp_name}'s query. Nothing is sent until you confirm."}
+            ],
+            "cards": [
+                {
+                    "id": f"card-draft-{q['query_id']}",
+                    "type": "query_draft",
+                    "title": f"Reply to {emp_name}'s query",
+                    "data": {
+                        "query_id": q["query_id"],
+                        "employee_id": q.get("employee_id"),
+                        "employee_label": f"{emp_name} · {q.get('employee_id')}",
+                        "name_code": f"{emp_name} · {q.get('employee_id')}",
+                        "status": q.get("status", "In review"),
+                        "period": format_month_label(q.get("months", ["2026-09"])[0]),
+                        "category": q.get("category"),
+                        "description": q.get("description"),
+                        "draft_reply": draft_reply,
+                        "notice": "Nothing is sent until HR clicks Send and confirms."
+                    }
+                }
+            ],
+            "chips": [
+                {"label": "Send reply", "action": "confirm-reply-query", "payload": {"query_id": q["query_id"], "employee_id": q.get("employee_id"), "reply_text": draft_reply}}
+            ],
+            "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+        }
+
+    def _handle_confirm_reply_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
+        q_id = context.get("query_id")
+        if not q_id:
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            q_orig = lifecycle.get_query(q_id)
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if q_orig.get("employee_id") not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
         reply = context.get("reply_text") or context.get("reply") or "Attendance records reviewed and verified against biometric logs."
         res = lifecycle.reply_query(q_id, actor=user, reply_text=reply)
         q = res["query"]
+        emp_name = EMPLOYEE_NAMES.get(q.get("employee_id"), q.get("employee_id"))
         return {
             "messages": [
-                {"code": "C16", "text": get_message("C16")}
+                {"code": "C16", "text": f"Reply recorded for {emp_name}'s query."}
             ],
             "cards": [
                 {
@@ -3325,22 +3499,60 @@ class ChatRouter:
                     "title": "Query reply recorded",
                     "data": {
                         "query_id": q["query_id"],
+                        "employee_label": f"{emp_name} · {q.get('employee_id')}",
+                        "name_code": f"{emp_name} · {q.get('employee_id')}",
                         "status": q.get("status", "In review"),
                         "description": q.get("description"),
                         "reply_text": q.get("hr_reply")
                     }
                 }
             ],
-            "chips": [],
+            "chips": [
+                {"label": "Mark query resolved", "action": "confirm-resolve-query", "payload": {"query_id": q["query_id"], "confirmed": True}}
+            ],
             "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
         }
 
     def _handle_resolve_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
         if not q_id:
-            queries = lifecycle.get_queries()
-            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
-        reply = context.get("reply_text") or "Attendance reviewed and verified against punch records."
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            q_orig = lifecycle.get_query(q_id)
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if q_orig.get("employee_id") not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
+        emp_name = EMPLOYEE_NAMES.get(q_orig.get("employee_id"), q_orig.get("employee_id"))
+        if not context.get("confirmed") and not context.get("reply_text"):
+            return {
+                "messages": [
+                    {"code": "CONFIRM_RESOLVE", "text": f"Mark {emp_name}'s query as resolved?"}
+                ],
+                "cards": [
+                    {
+                        "id": f"card-confirm-resolve-{q_id}",
+                        "type": "query_status",
+                        "title": "Resolve query confirmation",
+                        "data": {
+                            "query_id": q_id,
+                            "employee_label": f"{emp_name} · {q_orig.get('employee_id')}",
+                            "name_code": f"{emp_name} · {q_orig.get('employee_id')}",
+                            "status": q_orig.get("status"),
+                            "description": q_orig.get("description"),
+                            "notice": "Action requires confirmation."
+                        }
+                    }
+                ],
+                "chips": [
+                    {"label": "Confirm resolve", "action": "confirm-resolve-query", "payload": {"query_id": q_id, "confirmed": True}}
+                ],
+                "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+            }
+
+        reply = context.get("reply_text") or (q_orig.get("hr_reply") if q_orig else None) or "Attendance reviewed and verified against punch records."
         res = lifecycle.resolve_query(q_id, actor=user, reply_text=reply)
         q = res["query"]
         return {
@@ -3354,6 +3566,8 @@ class ChatRouter:
                     "title": "Query resolved",
                     "data": {
                         "query_id": q["query_id"],
+                        "employee_label": f"{emp_name} · {q.get('employee_id')}",
+                        "name_code": f"{emp_name} · {q.get('employee_id')}",
                         "status": "Resolved",
                         "description": q.get("description"),
                         "reply_text": q.get("hr_reply"),
@@ -3368,8 +3582,15 @@ class ChatRouter:
     def _handle_dispute_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
         if not q_id:
-            queries = lifecycle.get_queries()
-            q_id = queries[0]["query_id"] if queries else "QUERY-E05-20260901"
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            q = lifecycle.get_query(q_id)
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if q.get("employee_id") not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
         reason = context.get("reason", "Employee disputed resolution.")
         res = lifecycle.dispute_query(q_id, actor=user, reason=reason)
         q = res["query"]
@@ -3397,9 +3618,15 @@ class ChatRouter:
     def _handle_close_query(self, user: dict, role: str, surface: str, context: dict) -> dict:
         q_id = context.get("query_id")
         if not q_id:
-            queries = lifecycle.get_queries()
-            resolved_q = next((q for q in queries if q.get("status") == "Resolved"), None)
-            q_id = resolved_q["query_id"] if resolved_q else (queries[0]["query_id"] if queries else "QUERY-E05-20260901")
+            return self._build_refusal(role, surface, "Missing query ID.", user=user)
+        try:
+            q = lifecycle.get_query(q_id)
+        except Exception:
+            return self._build_refusal(role, surface, "Invalid query ID.", user=user)
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if q.get("employee_id") not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
         try:
             res = lifecycle.close_query(q_id, actor=user)
             q = res["query"]
@@ -3427,6 +3654,283 @@ class ChatRouter:
             ],
             "chips": [],
             "state": {"intent": "query_status", "role": role, "surface": surface, "panel": None}
+        }
+
+    def _handle_hr_employee_query_flow(self, user: dict, role: str, surface: str, emp_target_id: str, raw_msg: str, context: dict) -> dict:
+        allowed = set(user.get("allowed_employee_ids") or [])
+        if emp_target_id not in allowed:
+            return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
+
+        emp_name = EMPLOYEE_NAMES.get(emp_target_id, emp_target_id)
+        queries = lifecycle.get_queries(employee_id=emp_target_id)
+        if not queries:
+            return {
+                "messages": [
+                    {"code": "NO_QUERY", "text": f"No open payroll query was found for {emp_name}."}
+                ],
+                "cards": [],
+                "chips": _get_user_fallback_chips(user),
+                "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+            }
+
+        latest = queries[-1]
+        q_id = latest["query_id"]
+        period_str = format_month_label(latest.get("months", ["2026-09"])[0])
+        q_month_simple = MONTH_NAMES.get(latest.get("months", ["2026-09"])[0].split("-")[1], "September")
+        st = latest.get("status", "In review")
+        lower_msg = raw_msg.lower()
+
+        # Item 7: Delete request
+        if "delete" in lower_msg:
+            return {
+                "messages": [
+                    {"code": "C45", "text": get_message("C45")}
+                ],
+                "cards": [
+                    {
+                        "id": f"card-status-{q_id}",
+                        "type": "query_status",
+                        "title": f"{emp_name}'s query",
+                        "data": {
+                            "query_id": q_id,
+                            "employee_label": f"{emp_name} · {emp_target_id}",
+                            "name_code": f"{emp_name} · {emp_target_id}",
+                            "period": period_str,
+                            "category": latest.get("category"),
+                            "description": latest.get("description"),
+                            "status": st
+                        }
+                    }
+                ],
+                "chips": [
+                    {"label": "Close query instead", "action": "close-query", "payload": {"query_id": q_id}}
+                ],
+                "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+            }
+
+        # Item 5: Resolve request
+        if "resolve" in lower_msg or "mark" in lower_msg:
+            return self._handle_resolve_query(user, role, surface, {"query_id": q_id, "confirmed": False})
+
+        # Item 4: Reply request
+        if "reply" in lower_msg:
+            return self._handle_reply_query(user, role, surface, {"query_id": q_id})
+
+        # Item 3: Show request
+        hr_reply = latest.get("hr_reply")
+        if not hr_reply:
+            msg_code = "C43"
+            msg_text = get_message("C43", Name=emp_name, month=q_month_simple, status=st)
+        else:
+            msg_code = "HR_QUERY_SHOW"
+            msg_text = f"{emp_name}'s {q_month_simple} query is {st}. HR reply: {hr_reply}"
+
+        card_data = {
+            "query_id": q_id,
+            "employee_label": f"{emp_name} · {emp_target_id}",
+            "name_code": f"{emp_name} · {emp_target_id}",
+            "period": period_str,
+            "category": latest.get("category"),
+            "description": latest.get("description"),
+            "status": st
+        }
+        if hr_reply:
+            card_data["reply_text"] = hr_reply
+
+        return {
+            "messages": [
+                {"code": msg_code, "text": msg_text}
+            ],
+            "cards": [
+                {
+                    "id": f"card-status-{q_id}",
+                    "type": "query_status",
+                    "title": f"{emp_name}'s query",
+                    "data": card_data
+                }
+            ],
+            "chips": [
+                {"label": "Reply to query", "action": "reply-query", "payload": {"query_id": q_id, "employee_id": emp_target_id}},
+                {"label": "Mark query resolved", "action": "resolve-query", "payload": {"query_id": q_id, "employee_id": emp_target_id}}
+            ],
+            "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+        }
+
+    def _handle_approvals_list(self, user: dict, role: str, surface: str) -> dict:
+        allowed = set(user.get("allowed_employee_ids") or [])
+        all_props = lifecycle.get_all_proposals()
+        waiting_items = []
+        seen_keys = set()
+
+        for pid, p in all_props.items():
+            status = p.get("status", "")
+            if status in ("Approved for payroll", "Approved", "Rejected"):
+                continue
+
+            s_num = p.get("scenario_num")
+            scope = p.get("scope") or {}
+            emp_id = scope.get("employee_id")
+
+            if emp_id:
+                if emp_id not in allowed:
+                    continue
+                emp_name = scope.get("employee_name") or EMPLOYEE_NAMES.get(emp_id, emp_id)
+                name_code = f"{emp_name} · {emp_id}"
+                scope_label = p.get("scope_label") or scope.get("period") or "October 2026"
+            else:
+                if role == "HR Admin" and user.get("user_id") == "HR02" and "Engineering" in str(p.get("scope_label")):
+                    continue
+                name_code = p.get("scope_label") or "Bonus proposal"
+                scope_label = "FY 2025-26"
+
+            dedup_key = (name_code, s_num)
+            if dedup_key in seen_keys:
+                continue
+            seen_keys.add(dedup_key)
+
+            waiting_items.append({
+                "proposal_id": pid,
+                "scenario_num": s_num,
+                "name_code": name_code,
+                "scope": scope_label,
+                "certainty": p.get("certainty")
+            })
+
+        if not waiting_items:
+            return {
+                "messages": [
+                    {"code": "C46", "text": get_message("C46")}
+                ],
+                "cards": [],
+                "chips": _get_user_fallback_chips(user),
+                "state": {
+                    "intent": "approvals_list",
+                    "role": role,
+                    "surface": surface,
+                    "panel": None
+                }
+            }
+
+        chips = []
+        for it in waiting_items[:4]:
+            chips.append({
+                "label": f"Open {it['name_code'].split('·')[0].strip()}",
+                "action": f"scenario-{it['scenario_num']}",
+                "payload": {"scenario_num": it["scenario_num"], "proposal_id": it["proposal_id"]}
+            })
+
+        card = {
+            "id": "card-pending-approvals",
+            "type": "component_list",
+            "title": "Proposals waiting for approval",
+            "data": {
+                "items": [
+                    {
+                        "label": it["name_code"],
+                        "name_code": it["name_code"],
+                        "scope": it["scope"],
+                        "certainty": it["certainty"],
+                        "action_label": "Open",
+                        "proposal_id": it["proposal_id"],
+                        "scenario_num": it["scenario_num"]
+                    }
+                    for it in waiting_items
+                ]
+            }
+        }
+
+        return {
+            "messages": [
+                {"code": "APPROVALS_LIST", "text": f"{len(waiting_items)} proposals are waiting for your approval:"}
+            ],
+            "cards": [card],
+            "chips": chips,
+            "state": {
+                "intent": "approvals_list",
+                "role": role,
+                "surface": surface,
+                "panel": None
+            }
+        }
+
+    def _handle_leavers_list(self, user: dict, role: str, surface: str) -> dict:
+        allowed = set(user.get("allowed_employee_ids") or [])
+
+        payroll_runs_path = Path("data/mock/payroll-runs.json")
+        open_month = "2026-10"
+        if payroll_runs_path.exists():
+            try:
+                runs = json.loads(payroll_runs_path.read_text(encoding="utf-8"))
+                for r in runs:
+                    if r.get("status") == "open":
+                        open_month = r.get("month", "2026-10")
+                        break
+            except Exception:
+                pass
+
+        month_label = format_month_label(open_month)
+        exits_path = Path("data/mock/exits.json")
+        exits_data = []
+        if exits_path.exists():
+            try:
+                exits_data = json.loads(exits_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        leavers = []
+        for ex in exits_data:
+            lwd = ex.get("last_working_day", "")
+            if lwd.startswith(open_month):
+                eid = ex.get("employee_id")
+                if eid in allowed:
+                    ename = EMPLOYEE_NAMES.get(eid, eid)
+                    leavers.append({
+                        "employee_id": eid,
+                        "name": ename,
+                        "name_code": f"{ename} · {eid}",
+                        "last_working_day": lwd
+                    })
+
+        msg_c47 = get_message("C47", n=len(leavers), month=month_label)
+
+        card = {
+            "id": f"card-leavers-{open_month}",
+            "type": "component_list",
+            "title": f"Leavers — {month_label}",
+            "data": {
+                "month": month_label,
+                "items": [
+                    {
+                        "label": l["name_code"],
+                        "name_code": l["name_code"],
+                        "last_working_day": l["last_working_day"],
+                        "employee_id": l["employee_id"]
+                    }
+                    for l in leavers
+                ]
+            }
+        }
+
+        chips = []
+        for l in leavers:
+            chips.append({
+                "label": f"Prepare settlement for {l['name'].split()[0]}",
+                "action": "select-employee",
+                "payload": {"employee_id": l["employee_id"], "task": "settlement"}
+            })
+
+        return {
+            "messages": [
+                {"code": "C47", "text": msg_c47}
+            ],
+            "cards": [card],
+            "chips": chips,
+            "state": {
+                "intent": "leavers_list",
+                "role": role,
+                "surface": surface,
+                "panel": None
+            }
         }
 
     def _handle_show_calculation(self, user: dict, role: str, surface: str, context: dict) -> dict:

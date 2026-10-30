@@ -236,7 +236,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
           data: {
             queries: [
               {
-                query_id: 'QUERY-E05-20260901',
+                query_id: 'QUERY-E05-SEPTEMBER',
                 status: 'Sent',
                 description: 'Please review September LOP deduction of 3 days.',
               },
@@ -266,7 +266,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
           data: {
             queries: [
               {
-                query_id: 'QUERY-E05-20260901',
+                query_id: 'QUERY-E05-SEPTEMBER',
                 status: 'In review',
                 description: 'Please review September LOP deduction of 3 days.',
               },
@@ -285,7 +285,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
         expect.objectContaining({
           userId: 'HR01',
           action: 'take-into-review',
-          context: expect.objectContaining({ query_id: 'QUERY-E05-20260901' }),
+          context: expect.objectContaining({ query_id: 'QUERY-E05-SEPTEMBER' }),
         })
       );
     });
@@ -309,7 +309,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
         expect.objectContaining({
           userId: 'HR01',
           action: 'resolve-query',
-          context: expect.objectContaining({ query_id: 'QUERY-E05-20260901' }),
+          context: expect.objectContaining({ query_id: 'QUERY-E05-SEPTEMBER' }),
         })
       );
     });
@@ -355,7 +355,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
           title: 'Query Submitted to HR',
           certainty: 'Complete for this scope',
           data: {
-            query_id: 'QUERY-E05-20260901',
+            query_id: 'QUERY-E05-SEPTEMBER',
             status: 'Resolved',
             description: 'Please review September LOP deduction.',
             resolution: 'Manager approved 1 day regularized.',

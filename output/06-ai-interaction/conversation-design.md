@@ -146,6 +146,14 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C40):** "Your {month} query is {status}. No reply has been recorded yet." (Approved by: Project owner).
 - **Approved wording (C41):** "You are on the {regime} tax regime for {tax year}." (Approved by: Project owner).
 
+### A06-18: HR voice and HR query responses (Approved by: Project owner)
+- **Approved wording (C42):** "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
+- **Approved wording (C43):** "{Name}'s {month} query is {status}. No reply has been recorded yet." (Approved by: Project owner).
+- **Approved wording (C44):** "Your {month} query is {status}. Here is HR's reply:" (Approved by: Project owner).
+- **Approved wording (C45):** "Queries can't be deleted. You can close it instead." (Approved by: Project owner).
+- **Approved wording (C46):** "Nothing is waiting for your approval." (Approved by: Project owner).
+- **Approved wording (C47):** "{n} employees have a last working day in {month}:" (Approved by: Project owner).
+
 ## 8. Example conversations (5)
 
 All five scripts use the fictional company Northwind Technologies and fictional participants. They are content examples, not observed conversations, executed tests, actual calculations or approvals. Each numerical slot is labeled **Illustrative example, not a calculation**. Slots are intentionally unfilled. In a working demo, authorized records and Calculation code must supply every numeric input reference and derived result; the AI must never fill them from imagination. Words such as "April" and "May" identify fictional example periods, not real employee dates. No rate, amount, due date or confidence score is asserted here. (GR-3.1–GR-3.2, GR-8.1; conversation skill; BRD C-3)

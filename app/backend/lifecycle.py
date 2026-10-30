@@ -245,6 +245,12 @@ class LifecycleStore:
             return self.get_or_create_proposal(proposal_id, DEFAULT_PROPOSALS[proposal_id])
         return None
 
+    def get_all_proposals(self) -> Dict[str, dict]:
+        saved = _read_json(PROPOSALS_FILE, {})
+        all_props = dict(DEFAULT_PROPOSALS)
+        all_props.update(saved)
+        return all_props
+
     def get_or_create_proposal(self, proposal_id: str, default_data: dict) -> dict:
         proposals = _read_json(PROPOSALS_FILE, {})
         if proposal_id not in proposals:

@@ -44,6 +44,12 @@ AI_MESSAGES = {
     "C39": "Here is your {month} payslip:",
     "C40": "Your {month} query is {status}. No reply has been recorded yet.",
     "C41": "You are on the {regime} tax regime for {tax_year}.",
+    "C42": "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below.",
+    "C43": "{Name}'s {month} query is {status}. No reply has been recorded yet.",
+    "C44": "Your {month} query is {status}. Here is HR's reply:",
+    "C45": "Queries can't be deleted. You can close it instead.",
+    "C46": "Nothing is waiting for your approval.",
+    "C47": "{n} employees have a last working day in {month}:",
 }
 
 
@@ -58,6 +64,14 @@ def get_message(code: str, **kwargs) -> str:
             kwargs["available_months"] = kwargs["available months"]
         if "tax year" in kwargs and "tax_year" not in kwargs:
             kwargs["tax_year"] = kwargs["tax year"]
+        if "Name" in kwargs and "name" not in kwargs:
+            kwargs["name"] = kwargs["Name"]
+        if "name" in kwargs and "Name" not in kwargs:
+            kwargs["Name"] = kwargs["name"]
+        if "previous month" in kwargs and "previous_month" not in kwargs:
+            kwargs["previous_month"] = kwargs["previous month"]
+        if "previous_month" in kwargs and "previous month" not in kwargs:
+            kwargs["previous month"] = kwargs["previous_month"]
         try:
             return template.format(**kwargs)
         except KeyError:
