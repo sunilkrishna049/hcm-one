@@ -40,6 +40,7 @@ from .facts import build_facts_list
 from .guards import RuntimeGuardPipeline
 from .logger import log_ai_run
 from .tools import get_payroll_scenario_data, search_payroll_faq
+from .cap_manager import cap_manager
 
 _router = ChatRouter()
 _guards = RuntimeGuardPipeline(EMPLOYEE_NAMES)
@@ -220,10 +221,13 @@ class PayrollAICrew:
         if action:
             return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
-        # 1d. AI Mode Switch Check
+        # 1d. AI Mode Switch Check & Daily Cap (300 calls/day)
         llm = self._get_llm()
         if not is_ai_enabled() and self._custom_llm is None:
             # Deterministic router baseline
+            return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
+
+        if self._custom_llm is None and not cap_manager.record_live_call():
             return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
         # -------------------------------------------------------------

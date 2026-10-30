@@ -1,7 +1,7 @@
 import React from 'react';
 import { CertaintyLabel } from './CertaintyLabel';
 import { SourceLink } from './SourceLink';
-import { getAIMessage } from '../ai_messages';
+
 
 export interface ComponentItem {
   id?: string;
@@ -86,7 +86,7 @@ export const ComponentList: React.FC<ComponentListProps> = ({
                       <div>
                         <div>{item.dueDate}</div>
                         <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                          {getAIMessage('C20')}
+                          Calculated amount
                         </div>
                       </div>
                     ) : (

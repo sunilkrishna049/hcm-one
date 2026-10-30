@@ -8,6 +8,15 @@ import pytest
 from app.backend.ai.logger import set_ai_runs_log_path
 from app.backend.ai.crew import PayrollAICrew
 from app.backend.config import is_ai_enabled
+from app.backend.rate_limiter import rate_limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset chat rate limiter state between tests."""
+    rate_limiter.reset()
+    yield
+    rate_limiter.reset()
 
 
 @pytest.fixture(autouse=True)

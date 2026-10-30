@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TopDemoBar, SCENARIOS, DEMO_USERS } from './design-system/components/TopDemoBar';
+import { TopDemoBar, DEMO_USERS } from './design-system/components/TopDemoBar';
 import { Footer } from './design-system/components/Footer';
 import { ChatHR } from './design-system/components/chat/ChatHR';
 import { ChatEMP } from './design-system/components/chat/ChatEMP';
@@ -23,7 +23,6 @@ export const SCENARIO_OPENING_MESSAGES: Record<number, string> = {
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<string>('HR01');
-  const [currentScenario, setCurrentScenario] = useState<number>(1);
   const [prefilledText, setPrefilledText] = useState<string>('');
   const [chatKey, setChatKey] = useState<number>(0);
   const [isResetting, setIsResetting] = useState(false);
@@ -38,21 +37,10 @@ export function App() {
     setChatKey((k) => k + 1);
   };
 
-  const handleScenarioChange = (scenarioNum: number) => {
-    setCurrentScenario(scenarioNum);
-    const scenarioMeta = SCENARIOS.find((s) => s.id === scenarioNum);
-    const targetUser = scenarioMeta?.defaultUser || 'HR01';
-    setCurrentUser(targetUser);
-    setCurrentUserId(targetUser);
-    setPrefilledText(SCENARIO_OPENING_MESSAGES[scenarioNum] || '');
-    setChatKey((k) => k + 1);
-  };
-
   const handleResetDemo = async () => {
     setIsResetting(true);
     try {
       await api.resetDemo();
-      setCurrentScenario(1);
       setCurrentUser('HR01');
       setCurrentUserId('HR01');
       setPrefilledText('');

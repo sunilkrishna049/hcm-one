@@ -51,7 +51,7 @@ function buildErrorTurn(actionName?: string, err?: any): ChatMessageTurn {
 
 export const ChatHR: React.FC<ChatHRProps> = ({
   currentUser,
-  currentScenario,
+  currentScenario: _currentScenario,
   prefilledText,
   onClearPrefill,
   onNewChat,

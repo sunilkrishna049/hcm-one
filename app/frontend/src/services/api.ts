@@ -4,7 +4,9 @@
  * Zero frontend calculations.
  */
 
-const API_BASE = "http://localhost:8000/api";
+const ENV_API_BASE = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = ENV_API_BASE ? ENV_API_BASE.replace(/\/+$/, "") : "http://localhost:8000";
+const API_BASE = BASE_URL.endsWith("/api") ? BASE_URL : `${BASE_URL}/api`;
 
 let currentUserId = "HR01";
 

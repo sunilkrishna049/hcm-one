@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "./Button";
 import { Info, Check, Edit3, XCircle } from "lucide-react";
-import { getAIMessage } from "../ai_messages";
+
 import "../components.css";
 
 export interface ApprovalBarProps {
@@ -35,7 +35,7 @@ export const ApprovalBar: React.FC<ApprovalBarProps> = ({
     <div className={`hcm-approval-bar ${className}`} role="region" aria-label="Proposal Decision Actions">
       <div className="hcm-approval-disclaimer">
         <Info size={16} aria-hidden="true" style={{ flexShrink: 0 }} />
-        <span>{getAIMessage("C04")}</span>
+        <span>Approving records this version as ready for payroll. It does not apply the change or make a payment.</span>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-3)" }}>

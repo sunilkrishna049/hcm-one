@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, UserCheck, Play } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 export interface UserOption {
   id: string;

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 """HCM One Prototype Backend API.
 Built with FastAPI. Deterministic engine-driven. Zero dynamic LLM calls.
 """
@@ -9,7 +10,8 @@ from pydantic import BaseModel
 
 from .ai_messages import AI_MESSAGES, get_message
 from .auth import USERS, check_employee_access, check_query_access, get_current_user, set_active_demo_user
-from .config import MOCK_DIR
+from .config import MOCK_DIR, RUNTIME_DIR, FRONTEND_ORIGIN
+from .rate_limiter import check_chat_rate_limit
 from .engine_bridge import bridge
 from .lifecycle import lifecycle
 from .chat_router import chat_router
@@ -29,20 +31,50 @@ def load_employees_map() -> Dict[str, dict]:
 EMPLOYEES_MAP = load_employees_map()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan handler: create data/runtime/ if missing and run demo reset."""
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    lifecycle.reset_demo()
+    yield
+
 app = FastAPI(
     title="HCM One Prototype API",
     description="Deterministic Indian Payroll Prototype Backend",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-# Enable CORS for frontend dev server
+# CORS: Allow origin from FRONTEND_ORIGIN env var, plus localhost dev origins
+DEV_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+allowed_origins = list(DEV_ORIGINS)
+if FRONTEND_ORIGIN:
+    for orig in FRONTEND_ORIGIN.split(","):
+        o = orig.strip()
+        if o and o not in allowed_origins:
+            allowed_origins.append(o)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint for deployment monitoring."""
+    return {"status": "ok"}
 
 SCENARIOS_META = [
     {
@@ -526,7 +558,7 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = None
 
 
-@app.post("/api/chat")
+@app.post("/api/chat", dependencies=[Depends(check_chat_rate_limit)])
 def handle_chat_endpoint(req: ChatRequest, user: dict = Depends(get_current_user)):
     """Unified chat endpoint executing AI Crew / deterministic router per chat_contract.md."""
     target_user_id = req.user_id or user.get("user_id", "HR01")

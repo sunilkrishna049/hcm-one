@@ -39,9 +39,9 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
 }) => {
   const d = card.data;
   const isReplyDraft = Boolean(d.query_id || d.draft_reply || card.id?.includes('card-draft-QUERY-'));
-  const draft = d.draft || {};
+  const draft: any = (d as any).draft || {};
   const [description, setDescription] = useState(
-    d.draft_reply || d.reply_text || draft.description || d.description || ''
+    (d as any).draft_reply || (d as any).reply_text || draft.description || (d as any).description || ''
   );
   const [confirmed, setConfirmed] = useState(false);
 
@@ -179,7 +179,7 @@ export const QueryDraftCard: React.FC<QueryDraftCardProps> = ({
         <div className="hcm-evidence-section" style={{ marginTop: 'var(--space-3)' }}>
           <span className="hcm-kv-label">Attached sourced evidence:</span>
           <ul className="hcm-evidence-list">
-            {(draft.evidence || []).map((ev, i) => (
+            {(draft.evidence || []).map((ev: any, i: number) => (
               <li key={i} className="hcm-evidence-item">
                 <span className="hcm-tech-id">{ev.source}</span>
                 <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', marginLeft: 'var(--space-2)' }}>

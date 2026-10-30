@@ -24,6 +24,7 @@ dist-ssr/
 # Runtime Data & Logs
 data/runtime/
 *.log
+*.jsonl
 logs/
 
 # Secrets, Environment & Keys

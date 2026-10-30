@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { Textarea } from './Input';
-import { getAIMessage } from '../ai_messages';
+
 import { X, FileText } from 'lucide-react';
 
 export interface QueryDraftData {
@@ -51,7 +51,7 @@ export const QueryDraft: React.FC<QueryDraftProps> = ({
   };
 
   const isAppend = initialData.candidate_query_id && appendChoice === 'append';
-  const confirmationSentence = isAppend ? getAIMessage('C13') : getAIMessage('C12');
+  const confirmationSentence = isAppend ? "Appended to query" : "Query drafted";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +75,7 @@ export const QueryDraft: React.FC<QueryDraftProps> = ({
           border: '1px solid var(--color-brand-accent)'
         }}>
           <div style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--space-2)' }}>
-            {getAIMessage('C14')}
+            Submit query
           </div>
 
           <div style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)' }}>
