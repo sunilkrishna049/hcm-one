@@ -14,7 +14,7 @@ from crewai import LLM, Crew, Process, Task
 
 from ..ai_messages import get_message
 from ..auth import USERS, check_employee_access
-from ..chat_router import ChatRouter, EMPLOYEE_NAMES
+from ..chat_router import ChatRouter, EMPLOYEE_NAMES, _get_user_fallback_chips
 from ..faq_matcher import faq_matcher
 from ..permissions import get_mentioned_employee_ids, enforce_reply_permissions
 
@@ -28,6 +28,7 @@ from ..config import (
 )
 from .agents import (
     ALLOWED_INTENTS,
+    INTENT_GUIDE,
     ClassifierOutput,
     create_classifier_agent,
     create_drafting_agent,
@@ -85,13 +86,15 @@ def build_draft_task_description(
         f"Available facts slots: {allowed_slots_str}\n"
         f"{req_instruction}"
         "RULES:\n"
-        "1. For salary and TDS explanations: lead with the net change amount {net_change} and the two months {earlier_month} and {later_month}, then the reasons with their amounts (including {lop_amount} for LOP and {pf_change} for PF), in plain words. State facts directly.\n"
-        "2. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots like {net_change}, {later_month}, {lop_amount}.\n"
+        "1. For salary and TDS explanations (when {net_change} is available): lead with {net_change} and the two months {earlier_month} and {later_month}, then state reasons with amount slots in plain words.\n"
+        "2. NEVER write any numbers, amounts, percentages, or dates directly. Use ONLY named slots from Available facts slots.\n"
         "3. Do NOT type any digits (0-9).\n"
-        "4. State facts directly. Do NOT use hedging words (no may, might, possibly, could be, perhaps, likely, seems) when facts are complete.\n"
-        "5. Absolutely NO closing filler (no 'If you have further questions', 'please let me know', 'Hope this helps', 'Feel free to ask'). End immediately after stating facts.\n"
-        "6. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
-        "7. Do NOT make payment promises or give tax regime recommendations."
+        "4. CRITICAL: Strictly use 1 to 2 sentences (strictly maximum 3 sentences). Do NOT write more than 3 sentences.\n"
+        "5. CRITICAL: NEVER use a slot token that does not appear in 'Available facts slots' above. Only use slots from the available list.\n"
+        "6. State facts directly. Do NOT use hedging words (no may, might, possibly, could be, perhaps, likely, seems).\n"
+        "7. Absolutely NO closing filler (no 'If you have further questions', 'please let me know', 'Hope this helps', 'Feel free to ask'). End immediately after stating facts.\n"
+        "8. Plain, calm, respectful tone. No conversational fluff or greetings.\n"
+        "9. Do NOT make payment promises or give tax regime recommendations."
     )
 
 
@@ -178,6 +181,40 @@ class PayrollAICrew:
         if role == "Employee" and any(k in lower_msg for k in ("other people", "another person", "colleague")):
             return _router._build_scenario_12(user, role, surface)
 
+        # 1c. Masked PII (PAN / Bank Details) Guardrail (Prompt 4 Item 4 / C53)
+        if re.search(r"\bpan\b|\bpan card\b|\bpan number\b|\bbank details\b|\bbank account\b|\bbank info\b|\bbank information\b", lower_msg) and not re.search(r"\bbank deposit\b|\bbank credit\b|\bcredited in bank\b|\bcredited to bank\b", lower_msg):
+            if role == "HR Admin" or (mentioned_emp_ids and mentioned_emp_ids[0] != user.get("employee_id")):
+                target_name = EMPLOYEE_NAMES.get(mentioned_emp_ids[0], "Employee") if mentioned_emp_ids else "Employee"
+                text = get_message("C53", role="HR Admin", Name=target_name)
+            else:
+                text = get_message("C53", role="Employee")
+            log_ai_run(
+                user_id=user_id,
+                role=role,
+                surface=surface,
+                intent="masked_pii",
+                scenario_num=None,
+                guards_result={"pii_guard": "PASS"},
+                fallback_triggered=True,
+                fallback_reason="PII details masked",
+                latency_ms=(time.time() - start_time) * 1000,
+                tag=run_tag
+            )
+            return {
+                "messages": [{"code": "C53", "text": text}],
+                "cards": [],
+                "chips": _get_user_fallback_chips(user),
+                "state": {
+                    "intent": "masked_pii",
+                    "role": role,
+                    "surface": surface,
+                    "scenario_num": None,
+                    "employee_id": mentioned_emp_ids[0] if mentioned_emp_ids else user.get("employee_id"),
+                    "panel": None,
+                    "certainty": "Complete for this scope"
+                }
+            }
+
         # 1c. Deterministic Action Handling (Buttons, Chips, Governance Clicks)
         # Explicit button clicks bypass natural drafting and execute deterministic handlers
         if action:
@@ -207,7 +244,7 @@ class PayrollAICrew:
                     description=(
                         f"Classify this English payroll message: '{raw_msg}'. (English only).\n"
                         f"User Role: {role}\n"
-                        f"Allowed intents: {list(ALLOWED_INTENTS)}\n"
+                        f"{INTENT_GUIDE}\n"
                         "Extract intent, scenario_num (1-13 if applicable), and entities (employee_name, month, bonus_type).\n"
                         "NEVER include numbers or calculation amounts in your output.\n"
                         "Format strictly as JSON with keys: intent, scenario_num, entities, confidence, is_prompt_injection, clarification_needed."
@@ -537,7 +574,7 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
 
         # Tax advice out of scope
-        if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime should i choose\b", lower_msg):
+        if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime to select\b", lower_msg):
             return validate_classifier_output({"intent": "out_of_scope", "scenario_num": None}, user)
 
         if (lower_msg.startswith("what is") or lower_msg.startswith("what are") or "faq" in lower_msg) and not faq_matcher.is_personal_pay_question(lower_msg):
@@ -595,17 +632,17 @@ class PayrollAICrew:
                     elif any(k in lower_msg for k in ("pay", "salary", "payslip", "breakdown")) or "explain" in lower_msg:
                         return validate_classifier_output({"intent": "payslip_breakdown", "scenario_num": None, "entities": {"month": m_code}}, user)
 
-            if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
+            if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
                 return validate_classifier_output({"intent": "tax_regime", "scenario_num": None}, user)
-            if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
+            if re.search(r"\b(what.*happening.*query|query.*progress|track.*query|status of.*query)\b", lower_msg):
                 return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
-            if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
+            if (re.search(r"\bwhy.*is.*tds.*zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
                 return validate_classifier_output({"intent": "tds_amount", "scenario_num": None}, user)
             if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower_msg):
                 return validate_classifier_output({"intent": "lop_days", "scenario_num": None}, user)
-            if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw much pf\b", lower_msg):
+            if re.search(r"\b(how much|hw much|amount of|cut in)\b.*\bpf\b|\bmy pf\b|\bpf amount\b|\bpf was cut\b|\bhw.*much.*pf\b", lower_msg):
                 return validate_classifier_output({"intent": "pf_amount", "scenario_num": None}, user)
-            if re.search(r"\bexplain my (september|august) pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b|\bexplain my pay\b", lower_msg):
+            if re.search(r"\bexplain.*(september|august).*pay\b|\b(september|august) (payslip|breakdown|pay breakdown)\b|\b(payslip|pay) breakdown\b|\bexplain my pay\b", lower_msg):
                 return validate_classifier_output({"intent": "payslip_breakdown", "scenario_num": None}, user)
 
         # Casual phrasings and personal pay queries for Neha / salary explanation

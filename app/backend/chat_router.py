@@ -618,6 +618,28 @@ class ChatRouter:
             if "other people" in lower_msg or "another person" in lower_msg or "colleague" in lower_msg:
                 return self._build_scenario_12(user, role, surface)
 
+        # 2b. Masked PII (PAN / Bank Details) Guardrail (Prompt 4 Item 4 / C53)
+        if re.search(r"\bpan\b|\bpan card\b|\bpan number\b|\bbank details\b|\bbank account\b|\bbank info\b|\bbank information\b", lower_msg) and not re.search(r"\bbank deposit\b|\bbank credit\b|\bcredited in bank\b|\bcredited to bank\b", lower_msg):
+            if role == "HR Admin" or (mentioned_emp_ids and mentioned_emp_ids[0] != user.get("employee_id")):
+                target_name = EMPLOYEE_NAMES.get(mentioned_emp_ids[0], "Employee") if mentioned_emp_ids else "Employee"
+                text = get_message("C53", role="HR Admin", Name=target_name)
+            else:
+                text = get_message("C53", role="Employee")
+            return {
+                "messages": [{"code": "C53", "text": text}],
+                "cards": [],
+                "chips": _get_user_fallback_chips(user),
+                "state": {
+                    "intent": "masked_pii",
+                    "role": role,
+                    "surface": surface,
+                    "scenario_num": None,
+                    "employee_id": mentioned_emp_ids[0] if mentioned_emp_ids else user.get("employee_id"),
+                    "panel": None,
+                    "certainty": None
+                }
+            }
+
         # 3. Out-of-Scope Requests (Personal Tax advice, Bank account verification)
         if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime should i choose\b", lower_msg):
             tax_chips = [{"label": "What is TDS?", "action": "faq-tds", "payload": {}}]

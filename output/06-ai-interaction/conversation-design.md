@@ -158,6 +158,14 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C50):** "Draft a reply to {Name}'s query. Nothing is sent until you confirm." (Approved by: Project owner).
 - **Approved wording (C51):** "Mark {Name}'s query as resolved?" (Approved by: Project owner).
 - **Approved wording (C52):** "Did you mean one of these?" (Approved by: Project owner).
+- **Approved wording (FAQ):** "Here is the recorded meaning from the payroll glossary:" (Approved by: Project owner).
+- **Approved wording (REJECTED):** "The proposal has been rejected." (Approved by: Project owner).
+- **Approved wording (NO_QUERY):** "You do not have any open payroll queries recorded." (Approved by: Project owner).
+- **Approved wording (HR_NO_QUERY):** "No open payroll query was found for {Name}." (Approved by: Project owner).
+- **Approved wording (HR_QUERY_LIST):** "Here are the recorded employee queries ({n} total):" (Approved by: Project owner).
+- **Approved wording (HR_QUERY_REPLY):** "Reply recorded for {Name}'s query." (Approved by: Project owner).
+- **Approved wording (C53):** "{Name}'s PAN and bank details are masked and can't be shown in chat." (Approved by: Project owner).
+  Employee version: "Your PAN and bank details are masked and can't be shown in chat." (Approved by: Project owner).
 
 ## 8. Example conversations (5)
 

@@ -57,6 +57,7 @@ AI_MESSAGES = {
     "C50": "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
     "C51": "Mark {Name}'s query as resolved?",
     "C52": "Did you mean one of these?",
+    "C53": "Your PAN and bank details are masked and can't be shown in chat.",
     "FAQ": "Here is the recorded meaning from the payroll glossary:",
     "REJECTED": "The proposal has been rejected.",
     "NO_QUERY": "You do not have any open payroll queries recorded.",
@@ -79,6 +80,7 @@ AI_MESSAGES_HR = {
     "C43": "{Name}'s {month} query is {status}. No reply has been recorded yet.",
     "C50": "Draft a reply to {Name}'s query. Nothing is sent until you confirm.",
     "C51": "Mark {Name}'s query as resolved?",
+    "C53": "{Name}'s PAN and bank details are masked and can't be shown in chat.",
     "HR_NO_QUERY": "No open payroll query was found for {Name}.",
     "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
 }

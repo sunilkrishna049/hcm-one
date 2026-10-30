@@ -34,8 +34,10 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
             "net_arrears": format_inr(t["net_arrears"]["value"]),
             "hero_amount": format_inr(t["net_arrears"]["value"]),
             "gross_arrears": format_inr(t["gross_arrears"]["value"]),
-            "estimated_tds_impact": format_inr(t["estimated_tds_impact"]["value"]),
-            "employee_pf_change": format_inr(t["employee_pf_change"]["value"]),
+            "estimated_tds_impact": format_inr(t.get("tds_impact", {}).get("value")),
+            "tds_impact": format_inr(t.get("tds_impact", {}).get("value")),
+            "employee_pf_change": format_inr(t.get("pf_change", {}).get("value")),
+            "pf_change": format_inr(t.get("pf_change", {}).get("value")),
             "old_monthly_salary": format_inr(old_sal),
             "proposed_monthly_salary": format_inr(prop_sal),
             "status": "Ready for HR review; not applied"
@@ -53,7 +55,8 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
             "net_arrears": format_inr(t["net_arrears"]["value"]),
             "hero_amount": format_inr(t["net_arrears"]["value"]),
             "gross_arrears": format_inr(t["gross_arrears"]["value"]),
-            "employee_pf_change": format_inr(t["employee_pf_change"]["value"]),
+            "employee_pf_change": format_inr(t.get("pf_change", {}).get("value")),
+            "pf_change": format_inr(t.get("pf_change", {}).get("value")),
             "status": "Ready for HR review; not applied"
         }
 
@@ -113,10 +116,11 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
 
     elif scenario_num == 6:
         sc = bridge.get_scenario(6)
-        r = sc["result"]
-        final_net = r.get("net_payable", {}).get("value")
-        tot_pay = r.get("total_payables", {}).get("value")
+        r = sc.get("result", {})
+        final_net = r.get("final_net", {}).get("value")
+        tot_pay = r.get("gross_payables", {}).get("value")
         tot_ded = r.get("total_deductions", {}).get("value")
+        grat_val = r.get("components", {}).get("gratuity", {}).get("amount", {}).get("value")
         facts = {
             "employee_name": "Rahul Verma",
             "employee_first_name": "Rahul",
@@ -124,7 +128,7 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
             "final_net": format_inr(final_net),
             "total_payables": format_inr(tot_pay),
             "total_deductions": format_inr(tot_ded),
-            "gratuity": format_inr(144231),
+            "gratuity": format_inr(grat_val),
             "status": "Ready for HR review; not applied"
         }
 
@@ -139,13 +143,19 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
         }
 
     elif scenario_num == 8:
+        sc = bridge.get_scenario(8)
+        r = sc.get("result", {})
+        known_rec = r.get("known_recoveries_subtotal", {}).get("value")
+        comps = r.get("components", {})
+        notice_rec = comps.get("notice_shortfall_recovery", {}).get("amount", {}).get("value")
+        adv_rec = comps.get("loan_and_advance_recovery", {}).get("amount", {}).get("value")
         facts = {
             "employee_name": "Imran Khan",
             "employee_first_name": "Imran",
             "employee_id": "E12",
-            "known_recoveries": format_inr(56667),
-            "notice_shortfall_recovery": format_inr(46667),
-            "salary_advance": format_inr(10000),
+            "known_recoveries": format_inr(known_rec),
+            "notice_shortfall_recovery": format_inr(notice_rec),
+            "salary_advance": format_inr(adv_rec),
             "status": "Unresolved asset recovery"
         }
 
@@ -181,6 +191,7 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
 
     elif scenario_num == 10:
         sc = bridge.get_scenario(10)
+        disp = sc.get("display_inputs", {})
         r = sc["result"]
         net_change = r.get("net_change", {}).get("value")
         abs_net_change = abs(net_change)

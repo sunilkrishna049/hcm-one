@@ -908,3 +908,88 @@ def test_drafting_prompt_lists_required_slots():
         scenario_num=11
     )
     assert "{pf_change}" in desc_s11
+
+
+
+def test_c53_pan_bank_masked_employee_and_hr():
+    """Prompt 4 Item 4: PAN/bank questions reply with C53 for employee and HR."""
+    # 1. Employee asks about own PAN
+    res_emp_pan = client.post("/api/chat", json={"user_id": "USER-E05", "message": "What is my PAN?"})
+    assert res_emp_pan.status_code == 200
+    data_emp = res_emp_pan.json()
+    assert data_emp["messages"][0]["code"] == "C53"
+    assert data_emp["messages"][0]["text"] == "Your PAN and bank details are masked and can't be shown in chat."
+
+    # 2. Employee asks about own bank details
+    res_emp_bank = client.post("/api/chat", json={"user_id": "USER-E05", "message": "Show my bank details"})
+    assert res_emp_bank.status_code == 200
+    assert res_emp_bank.json()["messages"][0]["code"] == "C53"
+    assert res_emp_bank.json()["messages"][0]["text"] == "Your PAN and bank details are masked and can't be shown in chat."
+
+    # 3. HR asks about Rahul Verma's PAN
+    res_hr_pan = client.post("/api/chat", json={"user_id": "HR01", "message": "What is Rahul Verma's PAN?"})
+    assert res_hr_pan.status_code == 200
+    data_hr = res_hr_pan.json()
+    assert data_hr["messages"][0]["code"] == "C53"
+    assert data_hr["messages"][0]["text"] == "Rahul Verma's PAN and bank details are masked and can't be shown in chat."
+
+    # 4. HR asks about Rahul Verma's bank account
+    res_hr_bank = client.post("/api/chat", json={"user_id": "HR01", "message": "What is Rahul Verma's bank account?"})
+    assert res_hr_bank.status_code == 200
+    assert res_hr_bank.json()["messages"][0]["code"] == "C53"
+    assert res_hr_bank.json()["messages"][0]["text"] == "Rahul Verma's PAN and bank details are masked and can't be shown in chat."
+
+
+def test_no_eval_questions_in_agent_instructions():
+    """Prompt 4 Item 3c: Add a test that fails if any evaluation question appears in agent instructions."""
+    from app.backend.ai.eval_ai_crew import EVAL_CASES
+    agents_file = Path("app/backend/ai/agents.py").read_text(encoding="utf-8").lower()
+    crew_file = Path("app/backend/ai/crew.py").read_text(encoding="utf-8").lower()
+
+    for idx, user_id, question, _, _ in EVAL_CASES:
+        q_clean = question.strip().lower().rstrip("?.!")
+        if len(q_clean.split()) >= 3:
+            assert q_clean not in agents_file, f"Evaluation question '{question}' (case {idx}) found in agents.py!"
+            assert q_clean not in crew_file, f"Evaluation question '{question}' (case {idx}) found in crew.py!"
+
+
+def test_strict_evaluator_catches_fake_numbers():
+    """Prompt 4 Item 2: Prove that strict evaluator flags fake numbers:
+    - ₹987,654 in Priya's arrears reply
+    - '5 days' in Neha's LOP reply (Neha has 3 days)
+    - '3 eligible' in Engineering bonus reply (Engineering bonus has 4 eligible)
+    """
+    from app.backend.ai.eval_ai_crew import extract_numbers_from_text_and_cards, get_engine_numbers_for_reply
+
+    # 1. ₹987,654 injected into Priya's arrears reply
+    data_priya = chat_router.handle_chat(user_id="HR01", message="Calculate arrears for Priya Sharma.")
+    engine_nums_priya = get_engine_numbers_for_reply("HR01", "Calculate arrears for Priya Sharma.", data_priya)
+    injected_priya = {
+        "messages": [{"code": "AI", "text": "Arrears for Priya Sharma are ₹987,654 gross, with PF ₹0 and TDS ₹3,724."}],
+        "cards": data_priya.get("cards", [])
+    }
+    nums_injected_priya = extract_numbers_from_text_and_cards(injected_priya)
+    wrong_priya = [n for n in nums_injected_priya if n not in engine_nums_priya and abs(n) not in engine_nums_priya]
+    assert 987654.0 in wrong_priya, f"Evaluator failed to catch fake number 987654.0: {wrong_priya}"
+
+    # 2. '5 days' injected into Neha's LOP reply
+    data_neha = chat_router.handle_chat(user_id="USER-E05", message="How many LOP days do I have?")
+    engine_nums_neha = get_engine_numbers_for_reply("USER-E05", "How many LOP days do I have?", data_neha)
+    injected_neha = {
+        "messages": [{"code": "C36", "text": "5 days of loss of pay were recorded in September attendance."}],
+        "cards": []
+    }
+    nums_injected_neha = extract_numbers_from_text_and_cards(injected_neha)
+    wrong_neha = [n for n in nums_injected_neha if n not in engine_nums_neha and abs(n) not in engine_nums_neha]
+    assert 5.0 in wrong_neha, f"Evaluator failed to catch injected '5 days' in Neha's LOP reply: {wrong_neha}"
+
+    # 3. '3 eligible' injected into Engineering bonus reply
+    data_bonus = chat_router.handle_chat(user_id="HR01", message="Prepare the Engineering annual bonus.")
+    engine_nums_bonus = get_engine_numbers_for_reply("HR01", "Prepare the Engineering annual bonus.", data_bonus)
+    injected_bonus = {
+        "messages": [{"code": "AI", "text": "Engineering annual bonus has 3 eligible employees."}],
+        "cards": data_bonus.get("cards", [])
+    }
+    nums_injected_bonus = extract_numbers_from_text_and_cards(injected_bonus)
+    wrong_bonus = [n for n in nums_injected_bonus if n not in engine_nums_bonus and abs(n) not in engine_nums_bonus]
+    assert 3.0 in wrong_bonus, f"Evaluator failed to catch injected '3 eligible' in Engineering bonus reply: {wrong_bonus}"
