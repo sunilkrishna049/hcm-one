@@ -1136,8 +1136,13 @@ class ChatRouter:
             count = len(missing_months)
             item_word = "item needs" if count == 1 else "items need"
             s3_blocking_reason = f"{count} {item_word} input: {', '.join(m_names)} attendance missing for {s3_emp_name}"
+            s3_disabled = True
+        elif eng_cert == "Incomplete":
+            s3_blocking_reason = "Needs input before approval"
+            s3_disabled = True
         else:
-            s3_blocking_reason = f"1 item needs input: July attendance missing for {s3_emp_name}"
+            s3_blocking_reason = None
+            s3_disabled = False
 
         return {
             "messages": [
@@ -1186,7 +1191,7 @@ class ChatRouter:
                         "status": "pending",
                         "proposal_id": "PROP-SCENARIO-3",
                         "version": 1,
-                        "disabled": True,
+                        "disabled": s3_disabled,
                         "blocking_reason": s3_blocking_reason,
                         "disabled_label": s3_blocking_reason
                     }
@@ -1293,30 +1298,33 @@ class ChatRouter:
             blocked_items = []
             for item in req.get("needs_input", []):
                 eid = item.get("employee_id")
-                emp_name = get_employee_name(eid) if eid else "Employee"
+                emp_name = get_employee_name(eid) if eid else None
                 reason = item.get("reason", "input needed")
                 if "performance" in reason.lower() or "rating" in reason.lower():
-                    desc = f"{emp_name}'s rating"
+                    desc = f"{emp_name}'s rating" if emp_name else "Rating"
                 else:
-                    desc = f"{emp_name}'s {reason}"
+                    desc = f"{emp_name}'s {reason}" if emp_name else reason
                 blocked_items.append(desc)
 
             for e in req.get("employees", []):
                 eid = e.get("employee_id")
-                emp_name = get_employee_name(eid)
+                emp_name = get_employee_name(eid) if eid else None
                 if e.get("certainty") == "Incomplete" and eid not in [item.get("employee_id") for item in req.get("needs_input", [])]:
                     tds_val = e.get("tds_impact", {}).get("value") if isinstance(e.get("tds_impact"), dict) else e.get("tds_impact")
                     tds_cert = e.get("tds_estimate", {}).get("certainty") if isinstance(e.get("tds_estimate"), dict) else None
                     if tds_val is None or tds_cert == "Incomplete":
-                        desc = f"{emp_name}'s tax"
+                        desc = f"{emp_name}'s tax" if emp_name else "Tax"
                     else:
-                        desc = f"{emp_name}'s data incomplete"
+                        desc = f"{emp_name}'s data incomplete" if emp_name else "Data incomplete"
                     blocked_items.append(desc)
 
             if blocked_items:
                 count = len(blocked_items)
                 item_word = "item needs" if count == 1 else "items need"
                 s4_blocking_reason = f"{count} {item_word} input: {', '.join(blocked_items)}"
+                s4_disabled = True
+            elif eng_cert == "Incomplete":
+                s4_blocking_reason = "Needs input before approval"
                 s4_disabled = True
             else:
                 s4_blocking_reason = None
@@ -1654,9 +1662,16 @@ class ChatRouter:
             for u in unresolved_recs:
                 comp_name = "Asset clearance"
                 reasons.append(f"{comp_name} pending for {s8_emp_name} (Company laptop not received)")
-            s8_blocking_reason = f"{len(reasons)} item{'s need' if len(reasons) > 1 else ' needs'} input: {', '.join(reasons)}"
+            count = len(reasons)
+            item_word = "item needs" if count == 1 else "items need"
+            s8_blocking_reason = f"{count} {item_word} input: {', '.join(reasons)}"
+            s8_disabled = True
+        elif eng_cert == "Incomplete":
+            s8_blocking_reason = "Needs input before approval"
+            s8_disabled = True
         else:
-            s8_blocking_reason = f"1 item needs input: Asset clearance pending for {s8_emp_name} (Company laptop not received)"
+            s8_blocking_reason = None
+            s8_disabled = False
 
         return {
             "messages": [
@@ -1708,7 +1723,7 @@ class ChatRouter:
                         "status": "pending",
                         "proposal_id": "PROP-SCENARIO-8",
                         "version": 1,
-                        "disabled": True,
+                        "disabled": s8_disabled,
                         "blocking_reason": s8_blocking_reason,
                         "disabled_label": s8_blocking_reason
                     }
@@ -2015,6 +2030,27 @@ class ChatRouter:
         notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
         advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
         eng_cert = _get_engine_certainty(r)
+        # Build blocking reason dynamically from engine data
+        s13_emp_id = r.get("employee_id", "E12")
+        s13_emp_name = get_employee_name(s13_emp_id) if s13_emp_id else None
+        comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
+        unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
+        if unresolved_recs:
+            reasons = []
+            for u in unresolved_recs:
+                comp_name = "Asset clearance"
+                name_part = f" for {s13_emp_name}" if s13_emp_name else ""
+                reasons.append(f"{comp_name} hold{name_part} (Company laptop status unconfirmed)")
+            count = len(reasons)
+            item_word = "item needs" if count == 1 else "items need"
+            s13_blocking_reason = f"{count} {item_word} input: {', '.join(reasons)}"
+            s13_disabled = True
+        elif eng_cert == "Incomplete":
+            s13_blocking_reason = "Needs input before approval"
+            s13_disabled = True
+        else:
+            s13_blocking_reason = None
+            s13_disabled = False
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -2064,9 +2100,9 @@ class ChatRouter:
                         "status": "pending",
                         "proposal_id": "PROP-SCENARIO-13",
                         "version": 1,
-                        "disabled": True,
-                        "blocking_reason": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)",
-                        "disabled_label": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)"
+                        "disabled": s13_disabled,
+                        "blocking_reason": s13_blocking_reason,
+                        "disabled_label": s13_blocking_reason
                     }
                 }
             ],
@@ -2623,7 +2659,7 @@ class ChatRouter:
 
         prop_cert = existing_prop.get("certainty")
         if prop_cert != "Complete for this scope":
-            blocking_reason = existing_prop.get("blocking_reason") or "Scope is incomplete or unverified; obtain required inputs first."
+            blocking_reason = existing_prop.get("blocking_reason") or "Needs input before approval"
             s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
             return {
                 "messages": [{"code": "C07", "text": f"Cannot approve proposal: {blocking_reason}"}],

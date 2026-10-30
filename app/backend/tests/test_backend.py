@@ -180,10 +180,14 @@ def test_query_confirmation_and_append():
 
 
 def test_reset_demo():
-    # Make some runtime changes
+    # Make some runtime changes: approve a proposal and check real approved status
     client.post("/api/auth/login", json={"user_id": "HR01"})
-    client.get("/api/scenarios/scenario-01")
-    client.post("/api/proposals/PROP-HIKE-E01/approve", json={"version": 1})
+    client.post(
+        "/api/chat",
+        json={"user_id": "HR01", "action": "approve-proposal", "context": {"scenario_num": 1, "proposal_id": "PROP-SCENARIO-1", "version": 1}}
+    )
+    prop_before = lifecycle.get_proposal("PROP-SCENARIO-1")
+    assert prop_before["status"] == "Approved and ready for payroll"
 
     # Call reset
     reset_res = client.post("/api/demo/reset")
@@ -192,6 +196,11 @@ def test_reset_demo():
     # Check that events are cleared
     events = lifecycle.get_events()
     assert len(events) == 0
+
+    # Check that real approved status is cleared
+    prop_after = lifecycle.get_proposal("PROP-SCENARIO-1")
+    assert prop_after["status"] != "Approved and ready for payroll"
+    assert prop_after["status"] == "Calculated; needs HR approval"
 
 
 def test_scenarios_exact_numbers_and_c29():

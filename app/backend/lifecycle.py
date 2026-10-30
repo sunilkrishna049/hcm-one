@@ -303,7 +303,7 @@ class LifecycleStore:
         current_data = prop["versions"][str(version)]["data"]
         certainty = prop.get("certainty") or current_data.get("certainty")
         if certainty != "Complete for this scope" and not (selected_scope and not selected_scope.get("has_incomplete")):
-            blocking_reason = prop.get("blocking_reason") or "Scope is incomplete or unverified; obtain required inputs first."
+            blocking_reason = prop.get("blocking_reason") or "Needs input before approval"
             raise HTTPException(
                 status_code=400,
                 detail={

@@ -807,6 +807,46 @@ def test_name_guard_permanent_check():
         ("HR01", None, "approve-proposal", {"scenario_num": 4, "proposal_id": "PROP-SCENARIO-4-SALES", "version": 1}),
     ]
 
+    import re
+    import pytest
+
+    def check_reply_names(obj, valid_names, parent_key=""):
+        NON_PERSON_NAMES = {
+            "asset recovery", "earned salary", "gratuity", "leave encashment",
+            "notice shortfall recovery", "salary advance", "basic", "hra", "pf", "tds"
+        }
+
+        if isinstance(obj, dict):
+            if "employee_name" in obj and obj["employee_name"]:
+                val = str(obj["employee_name"]).strip()
+                assert val in valid_names, f"Unknown name '{val}' in employee_name field"
+
+            if "approver" in obj and obj["approver"]:
+                if isinstance(obj["approver"], str):
+                    val = obj["approver"].strip()
+                    if not val.startswith("HR") and not val.startswith("USER-"):
+                        assert val in valid_names, f"Unknown name '{val}' in approver field"
+                elif isinstance(obj["approver"], dict) and "name" in obj["approver"]:
+                    val = str(obj["approver"]["name"]).strip()
+                    assert val in valid_names, f"Unknown name '{val}' in approver.name field"
+
+            if "name" in obj and obj["name"]:
+                val = str(obj["name"]).strip()
+                if val.lower() not in NON_PERSON_NAMES:
+                    assert val in valid_names, f"Unknown name '{val}' in name field"
+
+            for k, v in obj.items():
+                if isinstance(v, str):
+                    m = re.match(r"^(?:Approved:\s*)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s*·\s*E\d{2}", v)
+                    if m:
+                        extracted_name = m.group(1).strip()
+                        assert extracted_name in valid_names, f"Unknown name '{extracted_name}' in label '{v}'"
+                check_reply_names(v, valid_names, k)
+
+        elif isinstance(obj, list):
+            for item in obj:
+                check_reply_names(item, valid_names, parent_key)
+
     for user_id, msg, act, ctx in matrix_calls:
         body = {"user_id": user_id}
         if msg:
@@ -817,7 +857,9 @@ def test_name_guard_permanent_check():
             body["context"] = ctx
         res = client.post("/api/chat", json=body)
         assert res.status_code == 200, f"Status {res.status_code} on {body}"
-        all_texts.append(json.dumps(res.json()))
+        payload = res.json()
+        check_reply_names(payload, valid_full_names)
+        all_texts.append(json.dumps(payload))
 
     combined = " ".join(all_texts)
 
@@ -829,35 +871,45 @@ def test_name_guard_permanent_check():
     found_names = {name for name in valid_full_names if name in combined}
     assert len(found_names) > 0, "No valid person names found in responses"
 
+    # Proof: Inject "Kiran Das" into a mocked reply -> fails
+    with pytest.raises(AssertionError) as exc_kiran:
+        check_reply_names({"cards": [{"type": "proposal_summary", "data": {"employee_name": "Kiran Das"}}]}, valid_full_names)
+    assert "Kiran Das" in str(exc_kiran.value)
+
+    # Proof: Inject "Aarav Patel" into a mocked reply -> fails
+    with pytest.raises(AssertionError) as exc_aarav:
+        check_reply_names({"cards": [{"type": "approval_card", "data": {"approver": "Aarav Patel"}}]}, valid_full_names)
+    assert "Aarav Patel" in str(exc_aarav.value)
+
 
 def test_approval_blocked_reason_built_from_engine_data():
-    """Item 7: The approval blocked reason must be built from engine data, not typed text.
-    Changes the engine result in the test (mock) and checks the reason text changes with it.
+    """Item 5: The approval blocked reason must be built from engine data for every non-complete
+    proposal (Kavya Iyer's arrears, Imran Khan's settlement, the bonus), each with a test.
+    If the engine gives no item list, show 'Needs input before approval' with no count.
     """
     import copy
     from unittest.mock import patch
     from app.backend.engine_bridge import bridge
 
-    # 1. Default engine result produces dynamic blocking reason
-    res = client.post("/api/chat", json={
+    # --- 1. Bonus Proposal (Scenario 4) ---
+    # 1a. Default engine result produces dynamic blocking reason
+    res_s4 = client.post("/api/chat", json={
         "user_id": "HR01",
         "action": "scenario-4",
         "context": {"scenario_num": 4, "bonus_type": "annual_performance_bonus"}
     })
-    assert res.status_code == 200
-    card = next(c for c in res.json()["cards"] if c["type"] == "approval_card")
-    assert card["data"]["blocking_reason"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
-    assert card["data"]["disabled_label"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+    assert res_s4.status_code == 200
+    card_s4 = next(c for c in res_s4.json()["cards"] if c["type"] == "approval_card")
+    assert card_s4["data"]["blocking_reason"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+    assert card_s4["data"]["disabled_label"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
 
-    # 2. Modify engine result via mock: add another needs_input item and verify reason text changes with it
-    orig_sc = bridge.get_scenario(4)
-    mock_sc = copy.deepcopy(orig_sc)
-    req = next(item for item in mock_sc["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
+    # 1b. Modify engine result via mock: add another needs_input item and verify reason text changes with it
+    orig_sc4 = bridge.get_scenario(4)
+    mock_sc4 = copy.deepcopy(orig_sc4)
+    req4 = next(item for item in mock_sc4["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
+    req4["needs_input"].append({"employee_id": "E04", "reason": "Bank KYC pending"})
 
-    # Modify engine data: add Rohan Mehta (E04) needs input
-    req["needs_input"].append({"employee_id": "E04", "reason": "Bank KYC pending"})
-
-    with patch.object(bridge, "get_scenario", return_value=mock_sc):
+    with patch.object(bridge, "get_scenario", return_value=mock_sc4):
         res_mock = client.post("/api/chat", json={
             "user_id": "HR01",
             "action": "scenario-4",
@@ -869,3 +921,125 @@ def test_approval_blocked_reason_built_from_engine_data():
         assert card_mock["data"]["blocking_reason"] == expected_reason
         assert card_mock["data"]["disabled_label"] == expected_reason
 
+    # 1c. Engine gives no item list when incomplete: shows "Needs input before approval" with no count
+    mock_sc4_empty = copy.deepcopy(orig_sc4)
+    req4_empty = next(item for item in mock_sc4_empty["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
+    req4_empty["needs_input"] = []
+    for e in req4_empty.get("employees", []):
+        e["certainty"] = "Complete for this scope"
+    mock_sc4_empty["result"]["certainty"] = "Incomplete"
+    with patch.object(bridge, "get_scenario", return_value=mock_sc4_empty):
+        res_empty = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "scenario-4",
+            "context": {"scenario_num": 4, "bonus_type": "annual_performance_bonus"}
+        })
+        assert res_empty.status_code == 200
+        card_empty = next(c for c in res_empty.json()["cards"] if c["type"] == "approval_card")
+        assert card_empty["data"]["blocking_reason"] == "Needs input before approval"
+        assert card_empty["data"]["disabled_label"] == "Needs input before approval"
+
+    # --- 2. Kavya Iyer's Arrears (Scenario 3) ---
+    # 2a. Default engine result produces dynamic blocking reason from missing attendance
+    res_s3 = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "scenario-3",
+        "context": {"scenario_num": 3}
+    })
+    assert res_s3.status_code == 200
+    card_s3 = next(c for c in res_s3.json()["cards"] if c["type"] == "approval_card")
+    assert card_s3["data"]["blocking_reason"] == "1 item needs input: July attendance missing for Kavya Iyer"
+    assert card_s3["data"]["disabled_label"] == "1 item needs input: July attendance missing for Kavya Iyer"
+
+    # 2b. Modify engine result to have multiple missing months
+    orig_sc3 = bridge.get_scenario(3)
+    mock_sc3 = copy.deepcopy(orig_sc3)
+    mock_sc3["result"]["months"].append({
+        "month": "2026-06",
+        "paid_days": {"value": None},
+        "difference": {"value": None}
+    })
+    with patch.object(bridge, "get_scenario", return_value=mock_sc3):
+        res_s3_multi = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "scenario-3",
+            "context": {"scenario_num": 3}
+        })
+        assert res_s3_multi.status_code == 200
+        card_s3_multi = next(c for c in res_s3_multi.json()["cards"] if c["type"] == "approval_card")
+        assert card_s3_multi["data"]["blocking_reason"] == "2 items need input: July, June attendance missing for Kavya Iyer"
+
+    # 2c. Engine gives no missing months when incomplete: shows "Needs input before approval" with no count
+    mock_sc3_empty = copy.deepcopy(orig_sc3)
+    for m in mock_sc3_empty["result"]["months"]:
+        m["paid_days"] = {"value": 30}
+        m["difference"] = {"value": 4800}
+    mock_sc3_empty["result"]["certainty"] = "Incomplete"
+    with patch.object(bridge, "get_scenario", return_value=mock_sc3_empty):
+        res_s3_empty = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "scenario-3",
+            "context": {"scenario_num": 3}
+        })
+        assert res_s3_empty.status_code == 200
+        card_s3_empty = next(c for c in res_s3_empty.json()["cards"] if c["type"] == "approval_card")
+        assert card_s3_empty["data"]["blocking_reason"] == "Needs input before approval"
+        assert card_s3_empty["data"]["disabled_label"] == "Needs input before approval"
+
+    # --- 3. Imran Khan's Settlement (Scenario 8) ---
+    # 3a. Default engine result produces dynamic blocking reason from unresolved asset clearance
+    res_s8 = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "scenario-8",
+        "context": {"scenario_num": 8}
+    })
+    assert res_s8.status_code == 200
+    card_s8 = next(c for c in res_s8.json()["cards"] if c["type"] == "approval_card")
+    assert card_s8["data"]["blocking_reason"] == "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
+    assert card_s8["data"]["disabled_label"] == "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
+
+    # 3b. Engine gives no unresolved list when incomplete: shows "Needs input before approval" with no count
+    orig_sc8 = bridge.get_scenario(8)
+    mock_sc8_empty = copy.deepcopy(orig_sc8)
+    for k, v in mock_sc8_empty["result"]["components"].items():
+        if isinstance(v, dict):
+            v["status"] = "Verified"
+    mock_sc8_empty["result"]["certainty"] = "Incomplete"
+    with patch.object(bridge, "get_scenario", return_value=mock_sc8_empty):
+        res_s8_empty = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "scenario-8",
+            "context": {"scenario_num": 8}
+        })
+        assert res_s8_empty.status_code == 200
+        card_s8_empty = next(c for c in res_s8_empty.json()["cards"] if c["type"] == "approval_card")
+        assert card_s8_empty["data"]["blocking_reason"] == "Needs input before approval"
+        assert card_s8_empty["data"]["disabled_label"] == "Needs input before approval"
+
+
+def test_reset_check_looks_for_real_approved_status():
+    """Item 6: Fix the reset check to look for the real approved status
+    ('Approved and ready for payroll'), and verify it reverts to unapproved.
+    """
+    # 1. Approve proposal PROP-SCENARIO-1 via /api/chat
+    resp = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "approve-proposal",
+        "context": {"scenario_num": 1, "proposal_id": "PROP-SCENARIO-1", "version": 1}
+    })
+    assert resp.status_code == 200
+    prop_before = lifecycle.get_proposal("PROP-SCENARIO-1")
+    assert prop_before["status"] == "Approved and ready for payroll"
+
+    # 2. Call reset
+    reset_resp = client.post("/api/demo/reset")
+    assert reset_resp.status_code == 200
+
+    # 3. Verify real approved status is cleared
+    prop_after = lifecycle.get_proposal("PROP-SCENARIO-1")
+    assert prop_after["status"] != "Approved and ready for payroll"
+    assert prop_after["status"] == "Calculated; needs HR approval"
+
+    # 4. Verify no proposal has "Approved and ready for payroll"
+    events = lifecycle.get_events()
+    assert len(events) == 0
