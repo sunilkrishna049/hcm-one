@@ -22,8 +22,8 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
         r = sc["result"]
         t = r["totals"]
         disp = sc.get("display_inputs", {})
-        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value", 120000)
-        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 132000)
+        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value")
+        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value")
 
         facts = {
             "employee_name": "Priya Sharma",
@@ -61,8 +61,8 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
         sc = bridge.get_scenario(3)
         r = sc["result"]
         disp = sc.get("display_inputs", {})
-        aug_val = disp.get("august_diff", {}).get("value", 4800)
-        sep_val = disp.get("september_diff", {}).get("value", 4800)
+        aug_val = disp.get("august_diff", {}).get("value")
+        sep_val = disp.get("september_diff", {}).get("value")
         facts = {
             "employee_name": "Kavya Iyer",
             "employee_first_name": "Kavya",
@@ -85,7 +85,7 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
 
         bonus_title = meta.get("bonus_type_name", "Annual performance bonus")
         period_str = meta.get("period", "FY 2025-26")
-        eligible_gross = summary.get("known_eligible_gross", {}).get("value", 213929)
+        eligible_gross = summary.get("known_eligible_gross", {}).get("value")
         eligible_cnt = str(summary.get("eligible_count", 4))
         ineligible_cnt = str(summary.get("ineligible_count", 1))
         needs_input_cnt = str(summary.get("needs_input_count", 1))
@@ -114,9 +114,9 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
     elif scenario_num == 6:
         sc = bridge.get_scenario(6)
         r = sc["result"]
-        final_net = r.get("net_payable", {}).get("value", 242000)
-        tot_pay = r.get("total_payables", {}).get("value", 245000)
-        tot_ded = r.get("total_deductions", {}).get("value", 3000)
+        final_net = r.get("net_payable", {}).get("value")
+        tot_pay = r.get("total_payables", {}).get("value")
+        tot_ded = r.get("total_deductions", {}).get("value")
         facts = {
             "employee_name": "Rahul Verma",
             "employee_first_name": "Rahul",
@@ -182,13 +182,13 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
     elif scenario_num == 10:
         sc = bridge.get_scenario(10)
         r = sc["result"]
-        net_change = r.get("net_change", {}).get("value", -13014)
+        net_change = r.get("net_change", {}).get("value")
         abs_net_change = abs(net_change)
-        tds_change = r.get("tds_change", {}).get("value", 12454)
+        tds_change = r.get("tds_change", {}).get("value")
         reasons_list = r.get("reasons", [])
         prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -12454
         pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -560
-        after_tds = r.get("after", {}).get("tds", {}).get("amount", {}).get("value", 12454)
+        after_tds = r.get("after", {}).get("tds", {}).get("amount", {}).get("value")
 
         facts = {
             "employee_name": "Siddharth Jain",
@@ -211,10 +211,10 @@ def build_facts_list(scenario_num: Optional[int], user: dict, bonus_type_key: Op
     elif scenario_num == 11:
         sc = bridge.get_scenario(11)
         r = sc["result"]
-        net_change = r.get("net_change", {}).get("value", -420)
+        net_change = r.get("net_change", {}).get("value")
         abs_net_change = abs(net_change)
         reasons_list = r.get("reasons", [])
-        pf_amt = reasons_list[0].get("effect_amount", {}).get("value", -420) if reasons_list else -420
+        pf_amt = reasons_list[0].get("effect_amount", {}).get("value") if reasons_list else None
 
         facts = {
             "employee_name": "Pooja Das",

@@ -7,7 +7,7 @@ import json
 import logging
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,18 @@ try:
         EMPLOYEE_NAMES = {}
 except Exception:
     EMPLOYEE_NAMES = {}
+
+
+def _get_engine_val(d: Optional[dict], field_name: str, key: str = "value") -> Any:
+    """Read value from engine data without default. Logs masked warning if missing."""
+    if not isinstance(d, dict):
+        logger.warning(f"Masked warning: Engine dictionary for '{field_name}' is missing; value cannot be read.")
+        return None
+    val = d.get(key)
+    if val is None:
+        logger.warning(f"Masked warning: Engine field '{field_name}.{key}' is missing; omitted from display.")
+        return None
+    return val
 
 
 def _get_engine_certainty(obj: Optional[dict], field_name: str = "certainty") -> Optional[str]:
@@ -190,28 +202,32 @@ def get_employee_payroll_data(emp_id: str, month: str = "2026-09") -> Optional[d
     att = next((a for a in store.records("attendance") if a.get("employee_id") == emp_id and a.get("month") == month), None)
     emp = store.employees.get(emp_id) if hasattr(store, "employees") else None
 
-    earnings_lines = ps.get("earnings", {}).get("lines", {})
-    basic = earnings_lines.get("basic", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
-    hra = earnings_lines.get("hra", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
-    spl = earnings_lines.get("special_allowance", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
-    da = earnings_lines.get("da", {}).get("value", 0) if isinstance(earnings_lines, dict) else 0
-    gross = ps.get("earnings", {}).get("gross", {}).get("value", 0)
+    earnings_lines = ps.get("earnings", {}).get("lines", {}) if isinstance(ps.get("earnings"), dict) else {}
+    basic = earnings_lines.get("basic", {}).get("value") if isinstance(earnings_lines, dict) else None
+    hra = earnings_lines.get("hra", {}).get("value") if isinstance(earnings_lines, dict) else None
+    spl = earnings_lines.get("special_allowance", {}).get("value") if isinstance(earnings_lines, dict) else None
+    da = earnings_lines.get("da", {}).get("value") if isinstance(earnings_lines, dict) else None
+    gross = ps.get("earnings", {}).get("gross", {}).get("value") if isinstance(ps.get("earnings"), dict) else None
 
     pf_rec = ps.get("pf", {})
-    pf_val = pf_rec.get("employee", {}).get("value", 0) if isinstance(pf_rec, dict) and isinstance(pf_rec.get("employee"), dict) else (pf_rec.get("value", 0) if isinstance(pf_rec, dict) else 0)
+    pf_val = pf_rec.get("employee", {}).get("value") if isinstance(pf_rec, dict) and isinstance(pf_rec.get("employee"), dict) else (pf_rec.get("value") if isinstance(pf_rec, dict) else None)
     pf_certainty = _get_engine_certainty(pf_rec) or (_get_engine_certainty(pf_rec.get("employee")) if isinstance(pf_rec, dict) else None)
 
     tds_rec = ps.get("tds", {})
-    tds_val = tds_rec.get("amount", {}).get("value", 0) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else (tds_rec.get("value", 0) if isinstance(tds_rec, dict) else 0)
+    tds_val = tds_rec.get("amount", {}).get("value") if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else (tds_rec.get("value") if isinstance(tds_rec, dict) else None)
     tds_certainty = (_get_engine_certainty(tds_rec.get("amount")) if isinstance(tds_rec, dict) else None) or _get_engine_certainty(tds_rec)
     tds_formula = tds_rec.get("amount", {}).get("formula") if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else "Remaining yearly tax divided by remaining tax-year months including the current month"
     tds_rules = tds_rec.get("amount", {}).get("rule_ids", []) if isinstance(tds_rec, dict) and isinstance(tds_rec.get("amount"), dict) else []
 
     tot_ded = ps.get("total_deductions", {})
-    tot_ded_val = tot_ded.get("value", 0) if isinstance(tot_ded, dict) else tot_ded
+    tot_ded_val = tot_ded.get("value") if isinstance(tot_ded, dict) else tot_ded
 
     net_rec = ps.get("net_pay", {})
-    net_val = net_rec.get("value", 0) if isinstance(net_rec, dict) else net_rec
+    net_val = net_rec.get("value") if isinstance(net_rec, dict) else net_rec
+
+    for _fn, _fv in [("basic", basic), ("hra", hra), ("special_allowance", spl), ("da", da), ("gross", gross), ("pf", pf_val), ("tds", tds_val), ("total_deductions", tot_ded_val), ("net_pay", net_val)]:
+        if _fv is None:
+            logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
     net_pay_certainty = _get_engine_certainty(net_rec) if isinstance(net_rec, dict) else None
 
     lop_days = att.get("lop_days", 0) if att else 0
@@ -295,6 +311,47 @@ def _get_user_fallback_chips(user: Optional[dict] = None) -> list[dict]:
         {"label": "What is TDS?", "action": "faq-tds", "payload": {}},
         {"label": "Draft a query for HR", "action": "draft-query", "payload": {}}
     ]
+
+
+def _build_clearance_blocked_reason(emp_id: Optional[str], emp_name: Optional[str], comp_data: dict) -> Tuple[Optional[str], bool]:
+    """Build blocking reason dynamically ONLY from clearance/recovery/engine data.
+    Never invents unverified text.
+    """
+    if not emp_id:
+        logger.warning("Masked warning: Employee ID is missing for settlement proposal.")
+        return ("Needs input before approval", True)
+
+    clearances = _load_mock_json("clearances.json")
+    emp_clearances = [cl for cl in clearances if cl.get("employee_id") == emp_id and cl.get("status") == "pending"]
+
+    reasons = []
+    if emp_clearances:
+        for cl in emp_clearances:
+            cl_type = cl.get("clearance_type", "asset")
+            item_name = f"{cl_type.title()} clearance"
+            asset_desc = cl.get("asset_description")
+            status = cl.get("status", "pending")
+            detail = f"{asset_desc} {status}" if asset_desc else status
+            name_str = f" for {emp_name}" if emp_name else ""
+            reasons.append(f"{item_name} pending{name_str} ({detail})")
+    else:
+        recoveries = _load_mock_json("recoveries.json")
+        emp_recovs = [rec for rec in recoveries if rec.get("employee_id") == emp_id and "pending" in str(rec.get("status", "")).lower()]
+        for rec in emp_recovs:
+            rec_type = rec.get("type", "asset")
+            item_name = f"{rec_type.title()} recovery"
+            asset_desc = rec.get("asset_description")
+            status = rec.get("status", "pending")
+            detail = f"{asset_desc} {status}" if asset_desc else status
+            name_str = f" for {emp_name}" if emp_name else ""
+            reasons.append(f"{item_name} pending{name_str} ({detail})")
+
+    if reasons:
+        count = len(reasons)
+        item_word = "item needs" if count == 1 else "items need"
+        return (f"{count} {item_word} input: {', '.join(reasons)}", True)
+
+    return (None, False)
 
 
 def _load_mock_json(filename: str) -> list:
@@ -875,16 +932,20 @@ class ChatRouter:
         r = sc["result"]
         t = r["totals"]
         disp = sc.get("display_inputs", {})
-        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value", 120000)
-        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 132000)
-        hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
-        eff_date = disp.get("effective_date", {}).get("value", "2026-04-01")
+        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value")
+        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value")
+        hike_pct = disp.get("requested_hike_percentage", {}).get("value")
+        eff_date = disp.get("effective_date", {}).get("value")
 
         pf_rules = get_rule_file("pf-rules.json")
         tax_rules = get_rule_file("tax-rules.json")
-        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value")
         old_eff_to = pf_rules.get("wage_ceiling_before_change_inr", {}).get("effective_to", "2026-09-16")
-        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value")
+
+        for _fn, _fv in [("old_sal", old_sal), ("prop_sal", prop_sal), ("hike_pct", hike_pct), ("eff_date", eff_date), ("old_ceiling", old_ceiling), ("new_ceiling", new_ceiling)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
         new_eff_from = pf_rules.get("wage_ceiling_from_change_inr", {}).get("effective_from", "2026-09-17")
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
 
@@ -953,7 +1014,7 @@ class ChatRouter:
                                 "diff": m["difference"]["value"],
                                 "tds_impact": m["tds_impact"]["value"],
                                 "paid_days": m["paid_days"]["value"],
-                                "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value", 0)
+                                "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value")
                             }
                             for m in r.get("months", [])
                         ],
@@ -1002,7 +1063,7 @@ class ChatRouter:
                             "pf_change": m["pf_change"]["employee"]["value"],
                             "tds_impact": m["tds_impact"]["value"],
                             "paid_days": m["paid_days"]["value"],
-                            "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value", 0),
+                            "lop_days": disp.get("months", {}).get(m["month"], {}).get("lop_days", {}).get("value"),
                             "formula": f"Earned = revised × {m['paid_days']['value']} ÷ {30 if m['month'] in ('2026-04', '2026-06', '2026-09') else 31}"
                         }
                         for idx, m in enumerate(r.get("months", []))
@@ -1018,7 +1079,7 @@ class ChatRouter:
                         "Hike allocation rule: Proportional allocation across basic, HRA and special allowance",
                         "Rounding rule: Round each line to nearest rupee, then add rounded lines for totals (round half up)",
                         f"Income tax regime: New tax regime Tax year {tax_rules.get('tax_year', {}).get('value', {}).get('year', '2026-27')}",
-                        f"Standard deduction: {format_inr(tax_rules.get('standard_deduction_inr', {}).get('value', 75000))}",
+                        f"Standard deduction: {format_inr(tax_rules.get('standard_deduction_inr', {}).get('value'))}",
                         f"Health and education cess: {tax_rules.get('health_and_education_cess', {}).get('value', {}).get('rate_percent', 4)}%",
                         f"Rules version: {rules_ver}"
                     ],
@@ -1032,10 +1093,14 @@ class ChatRouter:
         r = sc["result"]
         t = r["totals"]
         disp = sc.get("display_inputs", {})
-        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value", 36000)
-        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value", 39600)
-        hike_pct = disp.get("requested_hike_percentage", {}).get("value", 10)
-        eff_date = disp.get("effective_date", {}).get("value", "2026-08-01")
+        old_sal = disp.get("old_monthly_salary", {}).get("total", {}).get("value")
+        prop_sal = disp.get("proposed_monthly_salary", {}).get("total", {}).get("value")
+        hike_pct = disp.get("requested_hike_percentage", {}).get("value")
+        eff_date = disp.get("effective_date", {}).get("value")
+
+        for _fn, _fv in [("old_sal", old_sal), ("prop_sal", prop_sal), ("hike_pct", hike_pct), ("eff_date", eff_date)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
         eng_cert = _get_engine_certainty(r)
         return {
             "messages": [
@@ -1106,13 +1171,13 @@ class ChatRouter:
                     "employee_name": "Arjun Rao",
                     "employee_id": "E02",
                     "formulas": [
-                        f"Segment 1 (1–16 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value', 15000):,} (16 of 30 calendar days)",
-                        f"Segment 2 (17–30 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value', 25000):,} (14 of 30 calendar days)",
+                        f"Segment 1 (1–16 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value'):,} (16 of 30 calendar days)",
+                        f"Segment 2 (17–30 Sep): Wage ceiling ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value'):,} (14 of 30 calendar days)",
                         f"Total PF change across dual segments = {format_inr(t['pf_change']['employee']['value'])}"
                     ],
                     "rule_citations": [
-                        f"PF wage ceiling: ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value', 15000):,} until 16 Sep 2026; ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value', 25000):,} from 17 Sep 2026",
-                        f"Employee PF contribution rate: {get_rule_file('pf-rules.json').get('employee_contribution_rate_percent', {}).get('value', 12)}% of PF wage",
+                        f"PF wage ceiling: ₹{get_rule_file('pf-rules.json').get('wage_ceiling_before_change_inr', {}).get('value'):,} until 16 Sep 2026; ₹{get_rule_file('pf-rules.json').get('wage_ceiling_from_change_inr', {}).get('value'):,} from 17 Sep 2026",
+                        f"Employee PF contribution rate: {get_rule_file('pf-rules.json').get('employee_contribution_rate_percent', {}).get('value')}% of PF wage",
                         "Mid-month ceiling change: Pro-rated across dated calendar segments",
                         f"Rules version: {get_rule_file('pf-rules.json').get('rules_version', 'Northwind demo rules v1')}"
                     ]
@@ -1123,12 +1188,12 @@ class ChatRouter:
     def _build_scenario_3(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(3)
         r = sc["result"]
-        aug_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-08"), 4800)
-        sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), 4800)
+        aug_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-08"), None)
+        sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), None)
         eng_cert = _get_engine_certainty(r)
         # Build blocking reason dynamically from engine result months
         missing_months = [m.get("month") for m in r.get("months", []) if (isinstance(m.get("paid_days"), dict) and m.get("paid_days", {}).get("value") is None) or m.get("difference", {}).get("value") is None]
-        s3_emp_id = r.get("employee_id", "E03")
+        s3_emp_id = r.get("employee_id")
         s3_emp_name = get_employee_name(s3_emp_id)
         if missing_months:
             month_map = {"01": "January", "02": "February", "03": "March", "04": "April", "05": "May", "06": "June", "07": "July", "08": "August", "09": "September", "10": "October", "11": "November", "12": "December"}
@@ -1334,7 +1399,7 @@ class ChatRouter:
             e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
             e04_amt = emp_map.get("E04", {}).get("amount", {}).get("value")
             e07_amt = emp_map.get("E07", {}).get("amount", {}).get("value")
-            e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value", 0)
+            e08_amt = emp_map.get("E08", {}).get("amount", {}).get("value")
             emp_formulas = [
                 f"E01 ({get_employee_name('E01')}): Annual bonus {format_inr(e01_amt)}",
                 f"E03 ({get_employee_name('E03')}): Annual bonus {format_inr(e03_amt)} (tax incomplete)",
@@ -1574,7 +1639,7 @@ class ChatRouter:
         sc = bridge.get_scenario(7)
         r = sc["result"]
         c = r["components"]
-        grat_amt = c.get("gratuity", {}).get("amount", {}).get("value", 0)
+        grat_amt = c.get("gratuity", {}).get("amount", {}).get("value")
         eng_cert = _get_engine_certainty(r)
         return {
             "messages": [],
@@ -1648,24 +1713,22 @@ class ChatRouter:
         sc = bridge.get_scenario(8)
         r = sc["result"]
         c = r.get("components", {})
-        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
-        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
-        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value")
+        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value")
+        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value")
         eng_cert = _get_engine_certainty(r)
-        # Build blocking reason dynamically from engine data
-        s8_emp_id = r.get("employee_id", "E12")
-        s8_emp_name = get_employee_name(s8_emp_id)
+        # Build blocking reason dynamically from engine/clearance/recovery data
+        s8_emp_id = r.get("employee_id")
+        s8_emp_name = get_employee_name(s8_emp_id) if s8_emp_id else None
+
+        for _fn, _fv in [("notice_amt", notice_amt), ("advance_amt", advance_amt), ("recov_subtotal", recov_subtotal), ("employee_id", s8_emp_id)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
+
         comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
         unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
         if unresolved_recs:
-            reasons = []
-            for u in unresolved_recs:
-                comp_name = "Asset clearance"
-                reasons.append(f"{comp_name} pending for {s8_emp_name} (Company laptop not received)")
-            count = len(reasons)
-            item_word = "item needs" if count == 1 else "items need"
-            s8_blocking_reason = f"{count} {item_word} input: {', '.join(reasons)}"
-            s8_disabled = True
+            s8_blocking_reason, s8_disabled = _build_clearance_blocked_reason(s8_emp_id, s8_emp_name, c)
         elif eng_cert == "Incomplete":
             s8_blocking_reason = "Needs input before approval"
             s8_disabled = True
@@ -1743,7 +1806,7 @@ class ChatRouter:
                     "title": "Asset clearance status",
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
-                        "Asset clearance pending: Company laptop not received",
+                        "Asset clearance pending: laptop pending",
                         "Final Net: Not available in generated data"
                     ],
                     "rule_citations": [
@@ -1762,20 +1825,25 @@ class ChatRouter:
         net_change = r["net_change"]["value"]
         reasons_list = r.get("reasons", [])
         lop_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -5000
-        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -420
-        tds_chg = r.get("tds_change", {}).get("value", 0)
+        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else None
+        tds_chg = r.get("tds_change", {}).get("value")
 
-        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value", 45000)
-        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value", 2220)
-        before_gross = r.get("before", {}).get("earnings", {}).get("gross", {}).get("value", 50000)
-        before_pf = r.get("before", {}).get("pf", {}).get("value", 1800)
-        after_pf = r.get("after", {}).get("pf", {}).get("value", 2220)
-        pf_diff = r.get("employee_pf_change", {}).get("value", 420)
-        gross_diff = abs(r.get("gross_change", {}).get("value", 5000))
+        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value")
+        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value")
+        before_gross = r.get("before", {}).get("earnings", {}).get("gross", {}).get("value")
+        before_pf = r.get("before", {}).get("pf", {}).get("value")
+        after_pf = r.get("after", {}).get("pf", {}).get("value")
+        pf_diff = r.get("employee_pf_change", {}).get("value")
+        _gc = r.get("gross_change", {}).get("value")
+        gross_diff = abs(_gc) if _gc is not None else None
 
         pf_rules = get_rule_file("pf-rules.json")
-        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
-        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value")
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value")
+
+        for _fn, _fv in [("pf_amt", pf_amt), ("tds_chg", tds_chg), ("after_gross", after_gross), ("after_tot_ded", after_tot_ded), ("before_gross", before_gross), ("before_pf", before_pf), ("after_pf", after_pf), ("pf_diff", pf_diff), ("gross_diff", gross_diff), ("old_ceiling", old_ceiling), ("new_ceiling", new_ceiling)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
         pf_cause = "PF deduction went up" if role == "Employee" else "PF ceiling change"
         pf_detail = "PF wage limit raised from 17 Sep" if role == "Employee" else "Revised ceiling from 17 Sep"
@@ -1866,10 +1934,15 @@ class ChatRouter:
         r = sc["result"]
         after_tds = r["after"]["tds"]["amount"]["value"]
         tds_increase = r["tds_change"]["value"]
-        net_change = abs(r.get("net_change", {}).get("value", 13014))
+        _nc = r.get("net_change", {}).get("value")
+        net_change = abs(_nc) if _nc is not None else None
         reasons_list = r.get("reasons", [])
-        prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else -12454
-        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else -560
+        prior_tds_amt = reasons_list[0]["effect_amount"]["value"] if len(reasons_list) > 0 else None
+        pf_amt = reasons_list[1]["effect_amount"]["value"] if len(reasons_list) > 1 else None
+
+        for _fn, _fv in [("net_change", net_change), ("prior_tds_amt", prior_tds_amt), ("pf_amt", pf_amt)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
 
         disp = sc.get("display_inputs", {})
         prev_gross = disp.get("previous_employer_declared_gross", {}).get("value")
@@ -1943,21 +2016,25 @@ class ChatRouter:
     def _build_scenario_11(self, user: dict, role: str, surface: str) -> dict:
         sc = bridge.get_scenario(11)
         r = sc["result"]
-        net_change = r.get("net_change", {}).get("value", -420)
+        net_change = r.get("net_change", {}).get("value")
         reasons_list = r.get("reasons", [])
-        pf_amt = reasons_list[0].get("effect_amount", {}).get("value", -420) if reasons_list else -420
+        pf_amt = reasons_list[0].get("effect_amount", {}).get("value") if reasons_list else None
 
         after_lines = r.get("after", {}).get("earnings", {}).get("lines", {})
-        basic_val = after_lines.get("basic", {}).get("value", 22500)
-        special_val = after_lines.get("special_allowance", {}).get("value", 11250)
-        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value", 45000)
-        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value", 2220)
-        after_net = r.get("after", {}).get("net_pay", {}).get("value", 42780)
+        basic_val = after_lines.get("basic", {}).get("value")
+        special_val = after_lines.get("special_allowance", {}).get("value")
+        after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value")
+        after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value")
+        after_net = r.get("after", {}).get("net_pay", {}).get("value")
 
         pf_rules = get_rule_file("pf-rules.json")
-        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value", 15000)
-        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value", 25000)
-        pf_rate = pf_rules.get("employee_contribution_rate_percent", {}).get("value", 12)
+        old_ceiling = pf_rules.get("wage_ceiling_before_change_inr", {}).get("value")
+        new_ceiling = pf_rules.get("wage_ceiling_from_change_inr", {}).get("value")
+        pf_rate = pf_rules.get("employee_contribution_rate_percent", {}).get("value")
+
+        for _fn, _fv in [("net_change", net_change), ("pf_amt", pf_amt), ("basic_val", basic_val), ("special_val", special_val), ("after_gross", after_gross), ("after_tot_ded", after_tot_ded), ("after_net", after_net), ("old_ceiling", old_ceiling), ("new_ceiling", new_ceiling), ("pf_rate", pf_rate)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
         rules_ver = pf_rules.get("rules_version", "Northwind demo rules v1")
 
         eng_cert = _get_engine_certainty(r)
@@ -2026,25 +2103,22 @@ class ChatRouter:
         sc = bridge.get_scenario(13)
         r = sc["result"]
         c = r["components"]
-        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value", 56667)
-        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value", 46667)
-        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value", 10000)
+        recov_subtotal = r.get("known_recoveries_subtotal", {}).get("value")
+        notice_amt = c.get("notice_shortfall_recovery", {}).get("amount", {}).get("value")
+        advance_amt = c.get("loan_and_advance_recovery", {}).get("amount", {}).get("value")
         eng_cert = _get_engine_certainty(r)
-        # Build blocking reason dynamically from engine data
-        s13_emp_id = r.get("employee_id", "E12")
+        # Build blocking reason dynamically from engine/clearance/recovery data
+        s13_emp_id = r.get("employee_id")
         s13_emp_name = get_employee_name(s13_emp_id) if s13_emp_id else None
+
+        for _fn, _fv in [("recov_subtotal", recov_subtotal), ("notice_amt", notice_amt), ("advance_amt", advance_amt), ("employee_id", s13_emp_id)]:
+            if _fv is None:
+                logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
+
         comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
         unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
         if unresolved_recs:
-            reasons = []
-            for u in unresolved_recs:
-                comp_name = "Asset clearance"
-                name_part = f" for {s13_emp_name}" if s13_emp_name else ""
-                reasons.append(f"{comp_name} hold{name_part} (Company laptop status unconfirmed)")
-            count = len(reasons)
-            item_word = "item needs" if count == 1 else "items need"
-            s13_blocking_reason = f"{count} {item_word} input: {', '.join(reasons)}"
-            s13_disabled = True
+            s13_blocking_reason, s13_disabled = _build_clearance_blocked_reason(s13_emp_id, s13_emp_name, c)
         elif eng_cert == "Incomplete":
             s13_blocking_reason = "Needs input before approval"
             s13_disabled = True
@@ -2120,7 +2194,7 @@ class ChatRouter:
                     "title": "Settlement line review",
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
-                        "Asset clearance hold: Laptop status unconfirmed",
+                        "Asset clearance hold: laptop pending",
                         "Final Net: Not available in generated data"
                     ],
                     "rule_citations": [
@@ -2254,7 +2328,7 @@ class ChatRouter:
         for r in tds_rules:
             if isinstance(r, dict):
                 r_id = r.get("rule_id", "")
-                r_val = r.get("value", "")
+                r_val = r.get("value") or ""
                 if isinstance(r_val, dict):
                     r_val_str = ", ".join(f"{k}: {v}" for k, v in r_val.items())
                 elif isinstance(r_val, list):

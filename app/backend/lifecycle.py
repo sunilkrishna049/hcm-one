@@ -161,7 +161,7 @@ DEFAULT_PROPOSALS = {
         "scenario_num": 8,
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
-        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)",
+        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",
@@ -177,7 +177,7 @@ DEFAULT_PROPOSALS = {
         "scenario_num": 13,
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
-        "blocking_reason": "1 item needs input: Asset clearance hold for Imran Khan (Company laptop status unconfirmed)",
+        "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",

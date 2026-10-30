@@ -995,8 +995,8 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s8.status_code == 200
     card_s8 = next(c for c in res_s8.json()["cards"] if c["type"] == "approval_card")
-    assert card_s8["data"]["blocking_reason"] == "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
-    assert card_s8["data"]["disabled_label"] == "1 item needs input: Asset clearance pending for Imran Khan (Company laptop not received)"
+    assert card_s8["data"]["blocking_reason"] == "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+    assert card_s8["data"]["disabled_label"] == "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
 
     # 3b. Engine gives no unresolved list when incomplete: shows "Needs input before approval" with no count
     orig_sc8 = bridge.get_scenario(8)
@@ -1043,3 +1043,134 @@ def test_reset_check_looks_for_real_approved_status():
     # 4. Verify no proposal has "Approved and ready for payroll"
     events = lifecycle.get_events()
     assert len(events) == 0
+
+
+def test_static_guard_no_engine_defaults_in_app_code():
+    """Static guard test (Prompt 2c-2a Item 2):
+    Fails on any .get("value", <number>) or .get("employee_id", "<id>") pattern in app code.
+    Checks backend code (excluding tests and .venv) and frontend source code.
+    """
+    import re
+    from pathlib import Path
+
+    base_dir = Path(__file__).resolve().parent.parent.parent.parent
+
+    # Backend python files
+    backend_files = [
+        p for p in (base_dir / "app" / "backend").rglob("*.py")
+        if "tests" not in p.parts and ".venv" not in p.parts
+    ]
+    # Frontend ts/tsx/js/jsx files
+    frontend_files = [
+        p for p in (base_dir / "app" / "frontend" / "src").rglob("*")
+        if p.is_file() and p.suffix in (".ts", ".tsx", ".js", ".jsx") and "tests" not in p.parts
+    ]
+
+    val_pattern = re.compile(r'\.get\(\s*["\']value["\']\s*,\s*[-+]?[0-9]')
+    emp_pattern = re.compile(r'\.get\(\s*["\']employee_id["\']\s*,\s*["\'][A-Za-z0-9_-]+["\']\)')
+
+    violations = []
+    for fpath in backend_files + frontend_files:
+        file_content = fpath.read_text(encoding="utf-8")
+        for line_num, line in enumerate(file_content.splitlines(), start=1):
+            stripped = line.strip()
+            if stripped.startswith("#") or stripped.startswith("//") or stripped.startswith("/*"):
+                continue
+            if val_pattern.search(line):
+                violations.append(f"{fpath.name}:{line_num}: {stripped} [forbidden .get('value', <number>)]")
+            if emp_pattern.search(line):
+                violations.append(f"{fpath.name}:{line_num}: {stripped} [forbidden .get('employee_id', '<id>')]")
+
+    assert not violations, "Found forbidden engine default patterns in app code:\n" + "\n".join(violations)
+
+
+def test_imran_khan_blocked_reason_built_only_from_data():
+    """Test (Prompt 2c-2a Item 3):
+    - Imran Khan's blocked reason (scenarios 8 and 13) must be built only from engine/clearance/recovery data.
+    - Remove 'Company laptop not received' unless that exact text exists in data.
+    - Asserts both scenario 8 and 13 have data-built reasons and do NOT contain 'Company laptop not received'.
+    """
+    import json
+    from pathlib import Path
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+
+    client = TestClient(app)
+
+    for sc_num in (8, 13):
+        res = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": f"scenario-{sc_num}",
+            "context": {"scenario_num": sc_num}
+        })
+        assert res.status_code == 200
+        data = res.json()
+        approval_card = next((c for c in data["cards"] if c["type"] == "approval_card"), None)
+        assert approval_card is not None
+        blocking_reason = approval_card["data"].get("blocking_reason")
+        disabled_label = approval_card["data"].get("disabled_label")
+
+        # Must be built from clearance data
+        expected_reason = "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+        assert blocking_reason == expected_reason, f"Scenario {sc_num} blocking reason mismatch: {blocking_reason}"
+        assert disabled_label == expected_reason, f"Scenario {sc_num} disabled label mismatch: {disabled_label}"
+
+        # Assert "Company laptop not received" is completely absent across response
+        resp_str = json.dumps(data)
+        assert "Company laptop not received" not in resp_str, f"Forbidden invented text in scenario {sc_num} response"
+        assert "Company laptop status unconfirmed" not in resp_str, f"Forbidden invented text in scenario {sc_num} response"
+
+    # Also assert that 'Company laptop not received' is not hardcoded anywhere in app code
+    base_dir = Path(__file__).resolve().parent.parent.parent.parent
+    app_files = [
+        p for p in (base_dir / "app").rglob("*")
+        if p.is_file() and not any(part in p.parts for part in [".venv", "node_modules", "tests"]) and p.suffix in (".py", ".ts", ".tsx")
+    ]
+    for p in app_files:
+        txt = p.read_text(encoding="utf-8")
+        assert "Company laptop not received" not in txt, f"Found 'Company laptop not received' in {p}"
+        assert "Company laptop status unconfirmed" not in txt, f"Found 'Company laptop status unconfirmed' in {p}"
+
+
+def test_missing_engine_value_logs_masked_warning_and_fails(caplog):
+    """Test (Prompt 2c-2a Item 1):
+    If an engine value is missing:
+    - Do not show that invented number
+    - Log a masked warning
+    - Make a test fail (engine contract assertion)
+    """
+    import copy
+    import logging
+    from unittest.mock import patch
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.engine_bridge import bridge
+
+    client = TestClient(app)
+
+    # Test with Scenario 1 missing display inputs
+    orig_sc1 = bridge.get_scenario(1)
+    mock_sc1 = copy.deepcopy(orig_sc1)
+    mock_sc1["display_inputs"]["old_monthly_salary"]["total"]["value"] = None
+
+    with caplog.at_level(logging.WARNING):
+        with patch.object(bridge, "get_scenario", return_value=mock_sc1):
+            res = client.post("/api/chat", json={
+                "user_id": "HR01",
+                "action": "scenario-1",
+                "context": {"scenario_num": 1}
+            })
+            assert res.status_code == 200
+            data = res.json()
+
+            # Ensure the old invented default (120000) was NOT used when value was missing
+            prop_card = next(c for c in data["cards"] if c["type"] == "proposal_summary")
+            assert prop_card["data"]["old_monthly_salary_total"] is None
+
+            # Assert masked warning was logged
+            masked_warnings = [rec for rec in caplog.records if "Masked warning" in rec.message]
+            assert len(masked_warnings) > 0, "Expected a masked warning to be logged for missing engine value"
+
+            # Assert that expecting an engine value when missing causes test failure (contract verification)
+            with pytest.raises(AssertionError):
+                assert prop_card["data"]["old_monthly_salary_total"] == 120000
