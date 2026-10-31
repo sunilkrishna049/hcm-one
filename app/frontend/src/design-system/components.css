@@ -47,6 +47,92 @@
   line-height: var(--line-height-normal);
 }
 
+.hcm-approval-disabled-reason {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-status-warning-text);
+  font-weight: var(--font-weight-medium);
+}
+
+/* --- Component List Card Table & Rows (tokens only, zero hex) --- */
+.hcm-component-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.hcm-component-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-hover);
+  border: 1px solid var(--color-divider);
+  gap: var(--space-3);
+}
+
+.hcm-comp-name-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+.hcm-comp-note {
+  font-size: var(--font-size-xs);
+  color: var(--color-status-warning-text);
+  line-height: var(--line-height-tight);
+}
+
+.hcm-comp-status-col {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hcm-comp-status-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-divider);
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.hcm-comp-status-badge.hcm-status-verified,
+.hcm-comp-status-badge.hcm-status-eligible {
+  background-color: var(--color-status-success-surface);
+  color: var(--color-status-success-text);
+  border-color: var(--color-status-success-border);
+}
+
+.hcm-comp-status-badge.hcm-status-unresolved,
+.hcm-comp-status-badge.hcm-status-incomplete {
+  background-color: var(--color-status-warning-surface);
+  color: var(--color-status-warning-text);
+  border-color: var(--color-status-warning-border);
+}
+
+.hcm-comp-status-badge.hcm-status-ineligible {
+  background-color: var(--color-status-error-surface);
+  color: var(--color-status-error-text);
+  border-color: var(--color-status-error-border);
+}
+
+.hcm-comp-amount-col {
+  text-align: right;
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  color: var(--color-text-primary);
+}
+
+
 .hcm-button-primary {
   background-color: var(--color-brand-accent);
   color: var(--color-brand-text-on-accent);
@@ -266,7 +352,7 @@
 .hcm-source-link {
   font-family: var(--font-mono);
   font-size: var(--font-size-small);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   text-decoration: underline;
   cursor: pointer;
   background: none;
@@ -325,7 +411,7 @@
 .hcm-calc-rule-id {
   font-family: var(--font-mono);
   font-size: var(--font-size-small);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   font-weight: var(--font-weight-medium);
 }
 
@@ -335,7 +421,7 @@
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   background-color: var(--color-brand-tint);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-small);
 }
@@ -758,7 +844,7 @@
   font-size: 11px;
   font-weight: var(--font-weight-semibold);
   background-color: var(--color-brand-tint);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--color-brand-tint-border);
@@ -960,7 +1046,7 @@
 .hcm-assistant-sender-tag {
   font-size: 13px;
   font-weight: var(--font-weight-medium);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
 }
 
 .hcm-assistant-bubbles-container {
@@ -1367,7 +1453,7 @@
 .hcm-comparison-month {
   font-size: 13px;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   margin-bottom: 4px;
 }
 
@@ -2151,7 +2237,7 @@
 .hcm-cell-arrears {
   text-align: right;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
 }
 
 .hcm-payslip-table {
@@ -2219,7 +2305,7 @@
 .hcm-payslip-net-val {
   text-align: right;
   font-weight: var(--font-weight-bold);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
 }
 
 /* --- Choice Chips (Clarifying / Choice Cards) using tokens only --- */

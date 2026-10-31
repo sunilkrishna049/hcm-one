@@ -181,6 +181,15 @@ class MockLLM:
                 "is_prompt_injection": False,
                 "clarification_needed": False
             }
+        if bool(re.search(r"\b(what needs my approval|what needs approval|pending approval|proposals for approval|approval queue)\b", lower)):
+            return {
+                "intent": "approvals_list",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
         return {
             "intent": "unknown",
             "scenario_num": None,

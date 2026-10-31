@@ -58,15 +58,13 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
         </div>
       </div>
 
-      {/* Hero Final Net Settlement if applicable */}
-      {d.hero_label && (
+      {/* Hero Final Net Settlement if applicable - never render label without value */}
+      {d.hero_label && d.hero_amount !== null && d.hero_amount !== undefined && (
         <div className="hcm-hero-number-box" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="hcm-hero-label">{d.hero_label}</span>
-          {d.hero_amount !== null && d.hero_amount !== undefined && (
-            <div className="hcm-hero-amount tnum" data-testid="hero-amount">
-              {formatINR(d.hero_amount)}
-            </div>
-          )}
+          <div className="hcm-hero-amount tnum" data-testid="hero-amount">
+            {formatINR(d.hero_amount)}
+          </div>
           {(d.gross_payables !== undefined || d.total_deductions !== undefined) && (
             <div className="hcm-hero-sublabel">
               <span>Gross payables: <strong className="tnum">{formatINR(d.gross_payables)}</strong></span>
@@ -79,6 +77,15 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
               <span>Known recoveries: <strong className="tnum">{formatINR(d.known_recoveries ?? d.known_recoveries_subtotal)}</strong></span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* When hero_label has no amount, but known recoveries is present, render it cleanly without empty label */}
+      {(!d.hero_label || d.hero_amount === null || d.hero_amount === undefined) && (d.known_recoveries !== undefined || d.known_recoveries_subtotal !== undefined) && (
+        <div className="hcm-hero-number-box" style={{ marginBottom: 'var(--space-3)' }}>
+          <div className="hcm-hero-sublabel" style={{ marginTop: 0 }}>
+            <span>Known recoveries: <strong className="tnum">{formatINR(d.known_recoveries ?? d.known_recoveries_subtotal)}</strong></span>
+          </div>
         </div>
       )}
 

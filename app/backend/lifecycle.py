@@ -225,7 +225,11 @@ def evaluate_proposal_readiness(
         saved = _read_json(PROPOSALS_FILE, {})
         proposal = saved.get(proposal_id) or DEFAULT_PROPOSALS.get(proposal_id, {})
 
-    s_num = proposal.get("scenario_num")
+    s_num = (
+        proposal.get("scenario_num")
+        or proposal.get("scope", {}).get("scenario_num")
+        or (4 if "SCENARIO-4" in proposal_id else None)
+    )
     scope = proposal.get("scope") or {}
     b_type = scope.get("bonus_type")
 
@@ -382,6 +386,7 @@ class LifecycleStore:
         if proposal_id not in proposals:
             proposals[proposal_id] = {
                 "proposal_id": proposal_id,
+                "scenario_num": default_data.get("scenario_num"),
                 "current_version": 1,
                 "status": default_data.get("status", "Calculated; needs HR approval"),
                 "certainty": default_data.get("certainty"),
@@ -401,7 +406,7 @@ class LifecycleStore:
         else:
             changed = False
             prop = proposals[proposal_id]
-            for k in ("certainty", "blocking_reason", "scope_label"):
+            for k in ("certainty", "blocking_reason", "scope_label", "scenario_num"):
                 if default_data.get(k) and not prop.get(k):
                     prop[k] = default_data[k]
                     changed = True

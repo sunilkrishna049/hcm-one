@@ -1021,7 +1021,7 @@
         "formulas": [
           "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
           "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
-          "PF deduction: Increased from  to  (+₹420) due to ceiling change on 17 Sep"
+          "PF deduction: Increased from ₹1,800 to ₹2,220 (+₹420) due to ceiling change on 17 Sep"
         ],
         "rule_citations": [
           "Calendar-month divisor: Paid days equal calendar days minus LOP",

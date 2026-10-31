@@ -1,7 +1,7 @@
 # HCM One AI Layer: Live Evaluation Report (Prompt 3 Part B)
 
-**Evaluation Run Timestamp**: `20261031_080908`  
-**Evaluation Log**: `data\runtime\eval\ai_eval_20261031_080908.jsonl`  
+**Evaluation Run Timestamp**: `20261031_121130`  
+**Evaluation Log**: `data\runtime\eval\ai_eval_20261031_121130.jsonl`  
 **Total Evaluated Cases**: 60  
 
 ---
@@ -15,7 +15,7 @@
 | **Data Outside Permission** | **0** | 0 | PASS |
 | **Overall Backup Rate** | **100.0%** (60/60) | - | INFO |
 | **Backup Used (AI-Drafted Intents)** | **100.0%** (38/38) | ≤ 15% | INFO |
-| **Median Turn Latency** | **1718.3 ms** | < 2,000 ms | PASS |
+| **Median Turn Latency** | **1750.7 ms** | < 2,000 ms | PASS |
 
 ---
 
@@ -32,11 +32,11 @@
 
 | # | User | Question | Latency (ms) | Actual Outcome |
 | :---: | :---: | :--- | :---: | :---: |
-| 1 | USER-E05 | why is my salary less this month? | 4062.4 | ANSWER |
-| 2 | USER-E05 | My take-home dropped in September. Why? | 4055.9 | ANSWER |
-| 6 | USER-E05 | hw much pf ? | 2343.1 | ANSWER |
-| 4 | USER-E05 | Explain my September pay. | 2199.6 | ANSWER |
-| 34 | HR01 | Prepare the Engineering annual bonus. | 2159.1 | ANSWER |
+| 5 | USER-E05 | Explain my June pay. | 4584.9 | ANSWER |
+| 2 | USER-E05 | My take-home dropped in September. Why? | 3472.2 | ANSWER |
+| 1 | USER-E05 | why is my salary less this month? | 3219.2 | ANSWER |
+| 40 | HR01 | Which parts of Imran Khan's settlement are confirmed? | 2944.6 | ANSWER |
+| 50 | HR01 | Pay Imran Khan's settlement now. | 2465.1 | ANSWER |
 
 ---
 

@@ -979,11 +979,13 @@ class ChatRouter:
         if "bonus" in lower_msg or "incentive" in lower_msg:
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied", user=user)
-            if "annual" in lower_msg or "engineering" in lower_msg:
+            if context.get("scenario_num") == 4 or ("engineering" in lower_msg and "sales" in lower_msg):
                 return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
-            elif "sales" in lower_msg or "hyderabad" in lower_msg or "incentive" in lower_msg:
+            if "annual" in lower_msg:
+                return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
+            elif "sales" in lower_msg or "hyderabad" in lower_msg:
                 return self._build_scenario_4(user, role, surface, bonus_type_key="quarterly_sales_incentive")
-            elif "team" in lower_msg or "proposal" in lower_msg or "run" in lower_msg or "calculate" in lower_msg or "prepare" in lower_msg or lower_msg.strip() == "bonus":
+            else:
                 return self._build_bonus_clarifying_question(role, surface)
 
         # Scenario 6 (Rahul Verma settlement)
@@ -1966,8 +1968,14 @@ class ChatRouter:
         after_gross = r.get("after", {}).get("earnings", {}).get("gross", {}).get("value")
         after_tot_ded = r.get("after", {}).get("total_deductions", {}).get("value")
         before_gross = r.get("before", {}).get("earnings", {}).get("gross", {}).get("value")
-        before_pf = r.get("before", {}).get("pf", {}).get("value")
-        after_pf = r.get("after", {}).get("pf", {}).get("value")
+        before_pf = (
+            r.get("before", {}).get("pf", {}).get("value")
+            or r.get("before", {}).get("pf", {}).get("employee", {}).get("value")
+        )
+        after_pf = (
+            r.get("after", {}).get("pf", {}).get("value")
+            or r.get("after", {}).get("pf", {}).get("employee", {}).get("value")
+        )
         pf_diff = r.get("employee_pf_change", {}).get("value")
         _gc = r.get("gross_change", {}).get("value")
         gross_diff = abs(_gc) if _gc is not None else None
@@ -3865,13 +3873,6 @@ class ChatRouter:
 
         # Item 3: Show request
         hr_reply = latest.get("hr_reply")
-        if not hr_reply:
-            msg_code = "C43"
-            msg_text = get_message("C43", Name=emp_name, month=q_month_simple, status=st)
-        else:
-            msg_code = "HR_QUERY_SHOW"
-            msg_text = f"{emp_name}'s {q_month_simple} query is {st}. HR reply: {hr_reply}"
-
         card_data = {
             "query_id": q_id,
             "employee_label": f"{emp_name} · {emp_target_id}",
@@ -3881,27 +3882,51 @@ class ChatRouter:
             "description": latest.get("description"),
             "status": st
         }
-        if hr_reply:
-            card_data["reply_text"] = hr_reply
 
-        return {
-            "messages": [
-                {"code": msg_code, "text": msg_text}
-            ],
-            "cards": [
+        if not hr_reply:
+            msg_code = "C43"
+            msg_text = get_message("C43", Name=emp_name, month=q_month_simple, status=st)
+            cards = [
                 {
                     "id": f"card-status-{q_id}",
                     "type": "query_status",
                     "title": f"{emp_name}'s query",
                     "data": card_data
                 }
-            ],
-            "chips": [
-                {"label": "Reply to query", "action": "reply-query", "payload": {"query_id": q_id, "employee_id": emp_target_id}},
+            ]
+            chips = [
+                {"label": f"Reply to {emp_name}'s query", "action": "reply-query", "payload": {"query_id": q_id, "employee_id": emp_target_id}},
                 {"label": "Mark query resolved", "action": "resolve-query", "payload": {"query_id": q_id, "employee_id": emp_target_id}}
+            ]
+        else:
+            msg_code = "HR_QUERY_SHOW"
+            msg_text = f"{emp_name}'s {q_month_simple} query is {st}. HR reply: {hr_reply}"
+            card_data["reply_text"] = hr_reply
+            cards = [
+                {
+                    "id": f"card-status-{q_id}",
+                    "type": "query_status",
+                    "title": f"{emp_name}'s query",
+                    "data": card_data
+                }
+            ]
+            chips = [
+                {"label": "Mark query resolved", "action": "confirm-resolve-query", "payload": {"query_id": q_id, "confirmed": True}}
+            ]
+
+        return {
+            "messages": [
+                {"code": msg_code, "text": msg_text}
             ],
+            "cards": cards,
+            "chips": chips,
             "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
         }
+
+    def _handle_hr_query(self, user: dict, role: str, surface: str, context: Optional[dict] = None) -> dict:
+        context = context or {}
+        emp_target_id = context.get("employee_id") or "E05"
+        return self._handle_hr_employee_query_flow(user, role, surface, emp_target_id, context.get("message", "show query"), context)
 
     def _handle_approvals_list(self, user: dict, role: str, surface: str) -> dict:
         allowed = set(user.get("allowed_employee_ids") or [])
@@ -3915,7 +3940,11 @@ class ChatRouter:
             if status in ("Approved for payroll", "Approved", "Rejected"):
                 continue
 
-            s_num = p.get("scenario_num")
+            s_num = (
+                p.get("scenario_num")
+                or p.get("scope", {}).get("scenario_num")
+                or (4 if "SCENARIO-4" in pid else None)
+            )
             scope = p.get("scope") or {}
             emp_id = scope.get("employee_id")
 
@@ -4036,6 +4065,9 @@ class ChatRouter:
                 "panel": None
             }
         }
+
+    def _build_leavers_response(self, user: dict, role: str, surface: str) -> dict:
+        return self._handle_leavers_list(user, role, surface)
 
     def _handle_leavers_list(self, user: dict, role: str, surface: str) -> dict:
         allowed = set(user.get("allowed_employee_ids") or [])

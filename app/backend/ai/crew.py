@@ -572,7 +572,7 @@ class PayrollAICrew:
         elif intent == "approvals_list":
             return _router._handle_approvals_list(user, role, surface)
         elif intent in ("leavers", "leavers_list"):
-            return _router._build_leavers_response(user, role, surface)
+            return _router._handle_leavers_list(user, role, surface)
         elif intent in ("hr_query", "hr_query_review"):
             return _router._handle_hr_query(user, role, surface, None)
         elif intent == "out_of_scope_handled_by_router":
@@ -632,6 +632,12 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 7, "entities": {"employee_name": "Lakshmi Reddy"}}, user)
         if "imran" in lower_msg:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 8, "entities": {"employee_name": "Imran Khan"}}, user)
+
+        if re.search(r"\b(needs? (my )?approval|pending approval|proposals for approval|approval queue|approval list|what requires approval|what to approve)\b", lower_msg):
+            return validate_classifier_output({"intent": "approvals_list", "scenario_num": None}, user)
+
+        if re.search(r"\b(who is leaving\b|leaving this month|leavers this month|employees leaving)\b", lower_msg):
+            return validate_classifier_output({"intent": "leavers_list", "scenario_num": None}, user)
 
         # Tax advice out of scope
         if re.search(r"\b(tax\s+)?regime\b.*\b(choose|select|recommend|advise|better)\b|\b(recommend|advise|suggestion|suggest|should i choose|choose|is better to choose)\b.*(\btax\s+)?regime\b|\b(tax\s+)?investment\b|\bhow (can|to|do) (i )?save tax\b|\bshould i choose (new|old)\b|\bwhich regime to select\b", lower_msg):

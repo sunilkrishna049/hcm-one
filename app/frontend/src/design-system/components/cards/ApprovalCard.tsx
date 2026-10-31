@@ -164,7 +164,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
                 style={{
                   marginBottom: 'var(--space-2)',
                   fontSize: 'var(--font-size-small)',
-                  color: 'var(--color-status-error-text)',
+                  color: 'var(--color-status-warning-text)',
                   fontWeight: 'var(--font-weight-medium)',
                 }}
               >
