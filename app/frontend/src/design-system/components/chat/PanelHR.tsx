@@ -190,7 +190,7 @@ export const PanelHR: React.FC<PanelHRProps> = ({ isOpen, onClose, data }) => {
 
         {/* Audit / Policy Notice */}
         <div className="hcm-panel-footer-note">
-          <CheckCircle2 size={14} color="var(--brand-accent)" />
+          <CheckCircle2 size={14} color="var(--color-primary-text)" />
           <span>Calculated with simplified demo rules. Not for real payroll.</span>
         </div>
       </div>

@@ -157,7 +157,7 @@ export const SheetEMP: React.FC<SheetEMPProps> = ({ isOpen, onClose, data }) => 
 
             {/* Footer Assurance */}
             <div className="hcm-sheet-footer-note">
-              <CheckCircle2 size={14} color="var(--brand-accent)" />
+              <CheckCircle2 size={14} color="var(--color-primary-text)" />
               <span>Calculated with simplified demo rules. Not for real payroll.</span>
             </div>
           </div>

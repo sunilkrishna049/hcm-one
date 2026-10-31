@@ -114,10 +114,10 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     const tokensContent = fs.readFileSync(tokensPath, 'utf-8');
 
     // Verify dark palette values
-    expect(tokensContent).toContain('--color-background: #0B0F19');
-    expect(tokensContent).toContain('--color-surface: #111827');
-    expect(tokensContent).toContain('--color-text-primary: #F8FAFC');
-    expect(tokensContent).toContain('--color-brand-accent: #14B8A6');
+    expect(tokensContent).toContain('--color-background: #050505');
+    expect(tokensContent).toContain('--color-surface: #0D0D0D');
+    expect(tokensContent).toContain('--color-text-primary: #F2F2F2');
+    expect(tokensContent).toContain('--color-brand-accent: #1150BF');
     expect(tokensContent).toContain('--color-status-success-text: #4ADE80');
     expect(tokensContent).toContain('--color-status-warning-text: #FBBF24');
     expect(tokensContent).toContain('--color-status-error-text: #F87171');
@@ -355,7 +355,7 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     const tokensContent = fs.readFileSync(tokensPath, 'utf-8');
 
     expect(tokensContent).toContain('--scrollbar-track-color: transparent');
-    expect(tokensContent).toContain('--scrollbar-thumb-color: var(--color-status-neutral-border)');
+    expect(tokensContent).toContain('--scrollbar-thumb-color: var(--color-divider)');
     expect(tokensContent).toContain('--scrollbar-thumb-hover-color: var(--color-border-interactive)');
     expect(tokensContent).toContain('--scrollbar-width: 6px');
     expect(tokensContent).toContain('--scrollbar-width-firefox: thin');
@@ -473,5 +473,70 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     const badge = screen.getByText('Complete for this scope');
     expect(badge).toBeInTheDocument();
     expect(badge).toBeVisible();
+  });
+
+  it('13. Contrast test: token values meet WCAG AA minimum 4.5:1 contrast requirements', () => {
+    const tokensPath = path.resolve(__dirname, '../design-system/tokens.css');
+    const tokensContent = fs.readFileSync(tokensPath, 'utf-8');
+
+    function extractToken(varName: string): string {
+      const match = tokensContent.match(new RegExp(varName + ':\\s*([^;]+);'));
+      if (!match) throw new Error('Token ' + varName + ' not found in tokens.css');
+      return match[1].trim();
+    }
+
+    function hexToRgb(hex: string): [number, number, number] {
+      const clean = hex.replace('#', '').trim();
+      return [
+        parseInt(clean.substring(0, 2), 16),
+        parseInt(clean.substring(2, 4), 16),
+        parseInt(clean.substring(4, 6), 16),
+      ];
+    }
+
+    function relativeLuminance(r: number, g: number, b: number): number {
+      const a = [r, g, b].map((v) => {
+        v /= 255;
+        return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+    }
+
+    function contrastRatio(hex1: string, hex2: string): number {
+      const [r1, g1, b1] = hexToRgb(hex1);
+      const [r2, g2, b2] = hexToRgb(hex2);
+      const l1 = relativeLuminance(r1, g1, b1);
+      const l2 = relativeLuminance(r2, g2, b2);
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    const primary = extractToken('--color-brand-accent');
+    const primaryText = extractToken('--color-primary-text');
+    const pageBg = extractToken('--color-background');
+    const surface = extractToken('--color-surface');
+    const mutedText = extractToken('--color-text-muted');
+    const mainText = extractToken('--color-text-primary');
+
+    // 1. white on Primary >= 4.5:1
+    const whiteOnPrimary = contrastRatio('#FFFFFF', primary);
+    expect(whiteOnPrimary).toBeGreaterThanOrEqual(4.5);
+
+    // 2. Primary text on Page background >= 4.5:1
+    const primaryTextOnPage = contrastRatio(primaryText, pageBg);
+    expect(primaryTextOnPage).toBeGreaterThanOrEqual(4.5);
+
+    // 3. Primary text on Surface >= 4.5:1
+    const primaryTextOnSurface = contrastRatio(primaryText, surface);
+    expect(primaryTextOnSurface).toBeGreaterThanOrEqual(4.5);
+
+    // 4. Muted text on Surface >= 4.5:1
+    const mutedTextOnSurface = contrastRatio(mutedText, surface);
+    expect(mutedTextOnSurface).toBeGreaterThanOrEqual(4.5);
+
+    // 5. Main text on Surface >= 4.5:1
+    const mainTextOnSurface = contrastRatio(mainText, surface);
+    expect(mainTextOnSurface).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -166,7 +166,7 @@ export const QueryDraft: React.FC<QueryDraftProps> = ({
                   fontSize: 'var(--font-size-small)',
                 }}
               >
-                <FileText size={14} color="var(--color-brand-accent)" />
+                <FileText size={14} color="var(--color-primary-text)" />
                 <span>
                   {ev.item || ev.type || ev.description || `Evidence #${index + 1}`}
                   {ev.source && ` (${ev.source})`}

@@ -225,7 +225,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
               <span>New chat</span>
             </button>
             <div className="hcm-chat-user-badge">
-              <User size={14} color="var(--color-brand-accent)" />
+              <User size={14} color="var(--color-primary-text)" />
               <span>{getUserDisplayName(currentUser, true)}</span>
             </div>
           </div>

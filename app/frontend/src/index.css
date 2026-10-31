@@ -73,6 +73,6 @@ body {
 
 .hcm-nav-tab.active {
   background-color: var(--color-brand-tint);
-  color: var(--color-brand-accent);
+  color: var(--color-primary-text);
   font-weight: var(--font-weight-semibold);
 }

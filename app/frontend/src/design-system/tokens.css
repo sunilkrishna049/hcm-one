@@ -44,29 +44,33 @@
   --line-height-small: 16px;
 
   /* Core Colors (Dark Theme Only - DEC-039) */
-  --color-background: #0B0F19;
-  --color-surface: #111827;
-  --color-surface-hover: #1E293B;
-  --color-surface-elevated: #161F30;
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #94A3B8;
+  --color-background: #050505;
+  --color-surface: #0D0D0D;
+  --color-surface-hover: #141414;
+  --color-surface-elevated: #141414;
+  --color-surface-sunken: #090909;
+  --color-text-primary: #F2F2F2;
+  --color-text-secondary: #A3A3A3;
+  --color-text-muted: #808080;
 
   /* Brand Accent: Single Deep Teal (Adjusted for dark background contrast > 7:1) */
-  --color-brand-accent: #14B8A6;
-  --color-brand-hover: #2DD4BF;
-  --color-brand-tint: rgba(20, 184, 166, 0.12);
-  --color-brand-tint-border: rgba(45, 212, 191, 0.35);
-  --color-brand-button-bg: #0F766E;
-  --color-brand-button-hover: #115E59;
+  --color-brand-accent: #1150BF;
+  --color-brand-text: #5B8EE6;
+  --color-primary-text: #5B8EE6;
+  --color-brand-hover: #1459D1;
+  --color-brand-tint: rgba(17, 80, 191, 0.16);
+  --color-brand-tint-border: rgba(17, 80, 191, 0.55);
+  --color-brand-button-bg: #1150BF;
+  --color-brand-button-hover: #1459D1;
   --color-brand-text-on-accent: #FFFFFF;
 
   /* Borders & Dividers */
-  --color-border-interactive: #475569;
-  --color-border-subtle: #243046;
-  --color-divider: #1E293B;
-  --color-disabled-surface: #1E293B;
-  --color-disabled-text: #64748B;
+  --color-border-interactive: #2A2A2A;
+  --color-border-subtle: #1F1F1F;
+  --color-divider: #1F1F1F;
+  --color-border-card: #1F1F1F;
+  --color-disabled-surface: #141414;
+  --color-disabled-text: #808080;
 
   /* Semantic Status: Success (WCAG AA > 10:1) */
   --color-status-success-text: #4ADE80;
@@ -98,10 +102,10 @@
   --color-backdrop-overlay: rgba(11, 15, 25, 0.7);
 
   /* Message Bubble specific colors */
-  --color-bubble-user-bg: #1E293B;
-  --color-bubble-user-text: #F8FAFC;
-  --color-bubble-assistant-bg: #161F30;
-  --color-bubble-assistant-text: #F8FAFC;
+  --color-bubble-user-bg: #141414;
+  --color-bubble-user-text: #F2F2F2;
+  --color-bubble-assistant-bg: #0D0D0D;
+  --color-bubble-assistant-text: #F2F2F2;
 
   /* Spacing Scale */
   --space-1: 4px;
@@ -156,7 +160,7 @@
 
   /* Scrollbar Tokens */
   --scrollbar-track-color: transparent;
-  --scrollbar-thumb-color: var(--color-status-neutral-border);
+  --scrollbar-thumb-color: var(--color-divider);
   --scrollbar-thumb-hover-color: var(--color-border-interactive);
   --scrollbar-width: 6px;
   --scrollbar-width-firefox: thin;

@@ -80,7 +80,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
 
           {d.earnings_status && (
             <div className="hcm-info-banner" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={14} style={{ flexShrink: 0, color: 'var(--color-brand-accent)' }} />
+              <Info size={14} style={{ flexShrink: 0, color: 'var(--color-primary-text)' }} />
               <span>{d.earnings_status}</span>
             </div>
           )}
@@ -108,7 +108,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
       {/* PF Ceiling Plain Explanation */}
       {pfNote && (
         <div className="hcm-card-flag-note" style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
-          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-brand-accent)' }} />
+          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-primary-text)' }} />
           <span>{pfNote}</span>
         </div>
       )}
@@ -130,7 +130,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
       {/* Footnote flag if present */}
       {d.estimate_flag && (
         <div className="hcm-card-flag-note" style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '8px' }}>
-          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-brand-accent)' }} />
+          <Info size={14} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-primary-text)' }} />
           <span>{d.estimate_flag}</span>
         </div>
       )}

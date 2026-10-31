@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Sparkles } from 'lucide-react';
 
 export interface UserOption {
   id: string;
@@ -47,7 +47,6 @@ export const SCENARIOS: ScenarioOption[] = [
   { id: 13, title: '13. Known & unresolved settlement components (Imran Khan E12)', defaultUser: 'HR01', screenType: 'desktop', description: 'Settlement proposal with unverified asset clearance blocking net.', employeeId: 'E12' },
 ];
 
-
 interface TopDemoBarProps {
   currentUser: string;
   onUserChange: (userId: string) => void;
@@ -66,91 +65,65 @@ export const TopDemoBar: React.FC<TopDemoBarProps> = ({
   const isHR = currentUser.startsWith('HR');
 
   return (
-    <div className="hcm-top-demo-bar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <strong style={{ letterSpacing: '0.05em', color: 'var(--color-brand-accent)' }}>HCM ONE</strong>
-        <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>PROTOTYPE</span>
+    <header className="hcm-top-demo-bar">
+      {/* Left: 30x30 logo tile, radius 8px, Primary background, white icon, then HCM One in bold 16px Main text */}
+      <div className="hcm-header-brand">
+        <div className="hcm-header-logo-tile" aria-hidden="true">
+          <Sparkles size={16} color="var(--color-brand-text-on-accent)" />
+        </div>
+        <span className="hcm-header-title">HCM One</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        {/* Two-way toggle: HR view · Employee view */}
+      {/* Centre: HR view / Employee view toggle as a pill segmented control */}
+      <div className="hcm-header-toggle-container">
         <div
+          role="tablist"
+          aria-label="Role view selector"
           data-testid="view-toggle"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            backgroundColor: 'var(--color-surface-sunken)',
-            borderRadius: 'var(--radius-button)',
-            padding: '2px 4px',
-            border: '1px solid var(--color-border-card)',
-            gap: 'var(--space-1)',
-          }}
+          className="hcm-header-view-toggle"
         >
           <button
             type="button"
+            role="tab"
             id="toggle-hr-view"
             data-testid="toggle-hr-view"
+            aria-selected={isHR}
+            aria-pressed={isHR}
+            tabIndex={0}
             onClick={() => onUserChange('HR01')}
-            style={{
-              padding: 'var(--space-1) var(--space-3)',
-              fontSize: '12px',
-              fontWeight: isHR ? 600 : 400,
-              backgroundColor: isHR ? 'var(--color-surface)' : 'transparent',
-              color: isHR ? 'var(--color-brand-accent)' : 'var(--color-text-secondary)',
-              border: isHR ? '1px solid var(--color-border-interactive)' : '1px solid transparent',
-              borderRadius: 'var(--radius-button)',
-              boxShadow: isHR ? 'var(--shadow-card)' : 'none',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className={`hcm-header-toggle-btn ${isHR ? 'active' : ''}`}
           >
             HR view
           </button>
-          <span style={{ color: 'var(--color-text-muted)', fontSize: '11px', userSelect: 'none' }}>·</span>
           <button
             type="button"
+            role="tab"
             id="toggle-emp-view"
             data-testid="toggle-emp-view"
+            aria-selected={!isHR}
+            aria-pressed={!isHR}
+            tabIndex={0}
             onClick={() => onUserChange('USER-E05')}
-            style={{
-              padding: 'var(--space-1) var(--space-3)',
-              fontSize: '12px',
-              fontWeight: !isHR ? 600 : 400,
-              backgroundColor: !isHR ? 'var(--color-surface)' : 'transparent',
-              color: !isHR ? 'var(--color-brand-accent)' : 'var(--color-text-secondary)',
-              border: !isHR ? '1px solid var(--color-border-interactive)' : '1px solid transparent',
-              borderRadius: 'var(--radius-button)',
-              boxShadow: !isHR ? 'var(--shadow-card)' : 'none',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className={`hcm-header-toggle-btn ${!isHR ? 'active' : ''}`}
           >
             Employee view
           </button>
         </div>
+      </div>
 
+      {/* Right: Reset Demo button */}
+      <div className="hcm-header-actions">
         <button
+          type="button"
           onClick={onResetDemo}
           disabled={isResetting}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 'var(--space-1)',
-            padding: 'var(--space-1) var(--space-3)',
-            backgroundColor: 'var(--color-surface-hover)',
-            color: 'var(--color-text-primary)',
-            border: '1px solid var(--color-border-interactive)',
-            borderRadius: 'var(--radius-button)',
-            fontSize: '12px',
-            minHeight: '32px',
-            cursor: isResetting ? 'not-allowed' : 'pointer',
-          }}
+          className="hcm-header-reset-btn"
           title="Reset runtime events, proposals, and queries to fresh state"
         >
-          <RotateCcw size={12} />
-          {isResetting ? "Resetting..." : "Reset Demo"}
+          <RotateCcw size={13} />
+          <span>{isResetting ? 'Resetting...' : 'Reset Demo'}</span>
         </button>
       </div>
-    </div>
+    </header>
   );
 };

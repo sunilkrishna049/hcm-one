@@ -263,7 +263,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
               <span>New chat</span>
             </button>
             <div className="hcm-chat-user-badge">
-              <Shield size={14} color="var(--brand-accent)" />
+              <Shield size={14} color="var(--color-primary-text)" />
               <span>{getUserDisplayName(currentUser, true)}</span>
             </div>
           </div>

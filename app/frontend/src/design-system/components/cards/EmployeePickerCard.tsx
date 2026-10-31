@@ -50,7 +50,7 @@ export const EmployeePickerCard: React.FC<EmployeePickerCardProps> = ({
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border-subtle)', paddingBottom: 'var(--space-2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <Briefcase size={16} color="var(--color-brand-accent)" />
+          <Briefcase size={16} color="var(--color-primary-text)" />
           <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
             {card.title || 'Select employee'}
           </h3>
@@ -95,7 +95,7 @@ export const EmployeePickerCard: React.FC<EmployeePickerCardProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--color-brand-accent)',
+                  color: 'var(--color-primary-text)',
                 }}
               >
                 <User size={16} />

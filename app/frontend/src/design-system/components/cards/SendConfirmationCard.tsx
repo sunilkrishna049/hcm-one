@@ -21,7 +21,7 @@ export const SendConfirmationCard: React.FC<SendConfirmationCardProps> = ({ card
   return (
     <div className="hcm-rich-card hcm-card-send-conf" data-testid={`card-${card.id}`}>
       <div className="hcm-send-conf-header">
-        <CheckCircle2 color="var(--color-brand-accent)" size={24} />
+        <CheckCircle2 color="var(--color-primary-text)" size={24} />
         <div>
           <h4 className="hcm-card-title">{card.title}</h4>
           <span className="hcm-tech-id" style={{ marginTop: '2px', display: 'inline-block' }}>
