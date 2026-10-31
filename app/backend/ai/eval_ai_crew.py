@@ -610,9 +610,9 @@ def run_live_evaluation() -> Dict[str, Any]:
             pass_str = "PASS" if r["passed"] else "FAIL"
             f.write(f'{r["case_id"]},{r["user_id"]},"{q_clean}",{exp_str},{r["actual_outcome"]},{pass_str},{r["intent_reached"]},{r["draft_status"]},{len(r["wrong_numbers"])},{len(r["unauthorized_eids"])},{r["latency_ms"]}\n')
 
-    # Also write root eval-results.csv
-    with open(root_dir / "eval-results.csv", "w", encoding="utf-8") as f:
-        f.write(csv_path.read_text(encoding="utf-8"))
+
+
+
 
     # Write Markdown Report
     report_path = out_dir / "eval-report.md"

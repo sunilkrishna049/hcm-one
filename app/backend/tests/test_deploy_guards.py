@@ -110,7 +110,7 @@ def test_daily_ai_call_cap(caplog):
 
 
 def test_cant_approve_yet_static_guard():
-    """R3: Static guard: no unapproved reason text outside ai_messages.py."""
+    """T1: Static guard: no unapproved reason text outside ai_messages.py, and dynamic disabled-Approve checks."""
     root_path = Path(__file__).resolve().parent.parent.parent.parent
     phrase = chr(67) + chr(97) + chr(110) + chr(39) + chr(116) + ' approve yet'
     violating_files = []
@@ -130,3 +130,31 @@ def test_cant_approve_yet_static_guard():
                 pass
 
     assert not violating_files, f"Found '{phrase}' in unauthorized files: {violating_files}"
+
+    from app.backend.ai_messages import get_message, validate_message_text
+
+    disabled_proposals_to_check = [
+        ("scenario-3", {"scenario_num": 3}, "C56", get_message("C56", Name="Kavya Iyer", **{"missing item": "July attendance"})),
+        ("scenario-4", {"scenario_num": 4, "bonus_type": "annual_performance_bonus"}, "C56", get_message("C56", Name="Meera Nair", **{"missing item": "performance record"})),
+        ("scenario-8", {"scenario_num": 8}, "C59", get_message("C59", Name="Imran Khan", item="laptop clearance")),
+        ("scenario-13", {"scenario_num": 13}, "C59", get_message("C59", Name="Imran Khan", item="laptop clearance")),
+    ]
+
+    for act, ctx, exp_code, exp_reason in disabled_proposals_to_check:
+        res = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": act,
+            "context": ctx
+        })
+        assert res.status_code == 200, f"Request failed for {act}: {res.text}"
+        data = res.json()
+        appr_card = next((c for c in data.get("cards", []) if c.get("type") == "approval_card"), None)
+        assert appr_card is not None, f"No approval_card found for action {act}"
+        assert appr_card["data"]["disabled"] is True, f"Approve button must be disabled for {act}"
+
+        reason = appr_card["data"].get("disabled_reason") or appr_card["data"].get("blocking_reason")
+        assert reason is not None, f"No disabled_reason found for {act}"
+        assert reason.startswith(f"{phrase}:"), f"Reason does not start with '{phrase}:': '{reason}'"
+        assert reason == exp_reason, f"Reason '{reason}' does not equal expected template '{exp_reason}'"
+        header = reason.split("\n")[0]
+        assert validate_message_text(exp_code, header), f"Reason header '{header}' failed validation against {exp_code}"

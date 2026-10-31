@@ -116,13 +116,13 @@ DEFAULT_PROPOSALS = {
         "scenario_num": 4,
         "status": "Calculated; needs HR approval",
         "certainty": "Complete for this scope",
-        "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26",
+        "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales",
         "scope": {
             "department": "Hyderabad Sales",
-            "period": "FY 2025-26",
+            "period": "Q2 2026-27",
             "bonus_type": "quarterly_sales_incentive",
             "scenario_num": 4,
-            "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26",
+            "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales",
         },
         "current_version": 1,
     },
@@ -162,13 +162,13 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-        "scope_label": "Imran Khan · Settlement",
+        "scope_label": "Full and final settlement · Imran Khan · E12",
         "scope": {
             "employee_id": "E12",
             "employee_name": "Imran Khan",
             "period": "Settlement",
             "scenario_num": 8,
-            "scope_label": "Imran Khan · Settlement",
+            "scope_label": "Full and final settlement · Imran Khan · E12",
         },
         "current_version": 1,
     },
@@ -178,13 +178,13 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-        "scope_label": "Imran Khan · Settlement",
+        "scope_label": "Exit settlement breakdown · Imran Khan · E12",
         "scope": {
             "employee_id": "E12",
             "employee_name": "Imran Khan",
             "period": "Settlement",
             "scenario_num": 13,
-            "scope_label": "Imran Khan · Settlement",
+            "scope_label": "Exit settlement breakdown · Imran Khan · E12",
         },
         "current_version": 1,
     },
@@ -251,8 +251,8 @@ def evaluate_proposal_readiness(
                     "09": "September", "10": "October", "11": "November", "12": "December"
                 }
                 m_names = [month_map.get(m.split("-")[1], m) if "-" in m else m for m in missing_months]
-                missing_item = f"{', '.join(m_names)} attendance record"
-                reason_text = get_message("C59", Name=emp_name, item=missing_item, status="missing")
+                missing_item = f"{', '.join(m_names)} attendance"
+                reason_text = get_message("C56", Name=emp_name, **{"missing item": missing_item})
                 return False, reason_text, reason_text
             if r.get("certainty") == "Incomplete":
                 return False, "Needs input before approval", "Needs input before approval"
@@ -278,15 +278,17 @@ def evaluate_proposal_readiness(
                     ename = EMPLOYEE_NAMES_MAP.get(eid, "Meera Nair")
                     r_desc = item.get("reason", "record missing")
                     if "performance" in r_desc.lower():
-                        reasons.append(f"{ename}'s performance record is missing.")
+                        item_label = "performance record"
                     elif "attendance" in r_desc.lower():
-                        reasons.append(f"{ename}'s attendance record is missing.")
+                        item_label = "attendance record"
                     else:
-                        reasons.append(f"{ename}'s {r_desc.lower()}")
+                        item_label = r_desc.lower()
+                    reasons.append(get_message("C56", Name=ename, **{"missing item": item_label}))
                 if len(reasons) == 1:
                     reason_text = reasons[0]
                 else:
-                    reason_text = get_message("C57", count=len(reasons)) + "\n" + "\n".join(reasons)
+                    lines = [r.split(": ", 1)[-1] if ": " in r else r for r in reasons]
+                    reason_text = get_message("C57", n=len(reasons)) + "\n" + "\n".join(lines)
                 return False, reason_text, reason_text
             if req.get("certainty") == "Incomplete":
                 return False, "Needs input before approval", "Needs input before approval"
@@ -304,7 +306,7 @@ def evaluate_proposal_readiness(
             emp_name = EMPLOYEE_NAMES_MAP.get(emp_id, scope.get("employee_name", "Imran Khan"))
             if isinstance(asset_rec, dict) and asset_rec.get("status") == "Unresolved":
                 item_desc = "laptop clearance"
-                reason_text = get_message("C59", Name=emp_name, item=item_desc, status="pending")
+                reason_text = get_message("C59", Name=emp_name, item=item_desc)
                 return False, reason_text, reason_text
             if r.get("certainty") == "Incomplete":
                 return False, "Needs input before approval", "Needs input before approval"

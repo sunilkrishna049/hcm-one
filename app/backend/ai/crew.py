@@ -575,7 +575,7 @@ class PayrollAICrew:
             return _router._build_leavers_response(user, role, surface)
         elif intent in ("hr_query", "hr_query_review"):
             return _router._handle_hr_query(user, role, surface, None)
-        elif intent == "out_of_scope":
+        elif intent == "out_of_scope_handled_by_router":
             return _router._build_scenario_12(user, role, surface)
         return None
 

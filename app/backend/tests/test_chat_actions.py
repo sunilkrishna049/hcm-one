@@ -568,7 +568,7 @@ def test_approval_integrity_for_all_proposals():
     complete_proposals = [
         ("PROP-SCENARIO-1", 1, "Priya Sharma · Apr–Sep 2026"),
         ("PROP-SCENARIO-2", 2, "Arjun Rao · September 2026"),
-        ("PROP-SCENARIO-4-SALES", 4, "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26"),
+        ("PROP-SCENARIO-4-SALES", 4, "Sales incentive (Q2 2026-27) · Hyderabad Sales"),
         ("PROP-SCENARIO-6", 6, "Rahul Verma · Settlement"),
         ("PROP-SCENARIO-7", 7, "Lakshmi Reddy · Settlement"),
     ]
@@ -892,6 +892,7 @@ def test_approval_blocked_reason_built_from_engine_data():
     import copy
     from unittest.mock import patch
     from app.backend.engine_bridge import bridge
+    from app.backend.ai_messages import get_message
 
     # --- 1. Bonus Proposal (Scenario 4) ---
     # 1a. Default engine result produces dynamic blocking reason from C59
@@ -902,8 +903,9 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s4.status_code == 200
     card_s4 = next(c for c in res_s4.json()["cards"] if c["type"] == "approval_card")
-    assert card_s4["data"]["blocking_reason"] == "Meera Nair's performance record is missing."
-    assert card_s4["data"]["disabled_label"] == "Meera Nair's performance record is missing."
+    exp_c56_meera = get_message("C56", Name="Meera Nair", **{"missing item": "performance record"})
+    assert card_s4["data"]["blocking_reason"] == exp_c56_meera
+    assert card_s4["data"]["disabled_label"] == exp_c56_meera
 
     # 1b. Modify engine result via mock: add another needs_input item and verify C57 reason text
     orig_sc4 = bridge.get_scenario(4)
@@ -919,7 +921,7 @@ def test_approval_blocked_reason_built_from_engine_data():
         })
         assert res_mock.status_code == 200
         card_mock = next(c for c in res_mock.json()["cards"] if c["type"] == "approval_card")
-        expected_reason = "2 items need input before this can be approved.\nMeera Nair's performance record is missing.\nRohan Mehta's attendance record is missing."
+        expected_reason = get_message("C57", n=2) + "\nMeera Nair's performance record is missing.\nRohan Mehta's attendance record is missing."
         assert card_mock["data"]["blocking_reason"] == expected_reason
         assert card_mock["data"]["disabled_label"] == expected_reason
 
@@ -950,8 +952,9 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s3.status_code == 200
     card_s3 = next(c for c in res_s3.json()["cards"] if c["type"] == "approval_card")
-    assert card_s3["data"]["blocking_reason"] == "Kavya Iyer's July attendance record is missing."
-    assert card_s3["data"]["disabled_label"] == "Kavya Iyer's July attendance record is missing."
+    exp_c56_kavya = get_message("C56", Name="Kavya Iyer", **{"missing item": "July attendance"})
+    assert card_s3["data"]["blocking_reason"] == exp_c56_kavya
+    assert card_s3["data"]["disabled_label"] == exp_c56_kavya
 
     # 2b. Modify engine result to have multiple missing months
     orig_sc3 = bridge.get_scenario(3)
@@ -969,7 +972,7 @@ def test_approval_blocked_reason_built_from_engine_data():
         })
         assert res_s3_multi.status_code == 200
         card_s3_multi = next(c for c in res_s3_multi.json()["cards"] if c["type"] == "approval_card")
-        assert "July, June attendance record is missing" in card_s3_multi["data"]["blocking_reason"]
+        assert "July, June attendance is missing" in card_s3_multi["data"]["blocking_reason"]
 
     # 2c. Engine gives no missing months when incomplete: shows "Needs input before approval"
     mock_sc3_empty = copy.deepcopy(orig_sc3)
@@ -997,8 +1000,9 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s8.status_code == 200
     card_s8 = next(c for c in res_s8.json()["cards"] if c["type"] == "approval_card")
-    assert card_s8["data"]["blocking_reason"] == "Imran Khan's laptop clearance is pending."
-    assert card_s8["data"]["disabled_label"] == "Imran Khan's laptop clearance is pending."
+    exp_c59_imran = get_message("C59", Name="Imran Khan", item="laptop clearance")
+    assert card_s8["data"]["blocking_reason"] == exp_c59_imran
+    assert card_s8["data"]["disabled_label"] == exp_c59_imran
 
     # 3b. Engine gives no unresolved list when incomplete: shows "Needs input before approval"
     orig_sc8 = bridge.get_scenario(8)
@@ -1099,6 +1103,7 @@ def test_imran_khan_blocked_reason_built_only_from_data():
     from pathlib import Path
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
 
     client = TestClient(app)
 
@@ -1116,7 +1121,7 @@ def test_imran_khan_blocked_reason_built_only_from_data():
         disabled_label = approval_card["data"].get("disabled_label")
 
         # Must be built from clearance data
-        expected_reason = "Imran Khan's laptop clearance is pending."
+        expected_reason = get_message("C59", Name="Imran Khan", item="laptop clearance")
         assert blocking_reason == expected_reason, f"Scenario {sc_num} blocking reason mismatch: {blocking_reason}"
         assert disabled_label == expected_reason, f"Scenario {sc_num} disabled label mismatch: {disabled_label}"
 
@@ -1149,7 +1154,9 @@ def test_missing_engine_value_logs_masked_warning_and_fails(caplog):
     from unittest.mock import patch
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.engine_bridge import bridge
+    from app.backend.ai_messages import get_message
 
     client = TestClient(app)
 
@@ -1187,6 +1194,7 @@ def test_hr_voice_across_all_scenarios():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.chat_router import EMPLOYEE_NAMES
 
     client = TestClient(app)
@@ -1231,6 +1239,7 @@ def test_hr_query_word_routing_and_full_loop():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
 
     client = TestClient(app)
@@ -1342,6 +1351,7 @@ def test_hr_list_questions():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
 
     client = TestClient(app)
@@ -1396,6 +1406,7 @@ def test_no_placeholder_leaks_full_matrix():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
 
     client = TestClient(app)
@@ -1449,6 +1460,7 @@ def test_hr_voice_readability_full_name_at_most_once():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
     from app.backend.chat_router import EMPLOYEE_NAMES
 
@@ -1490,6 +1502,7 @@ def test_guard_every_message_code_and_template():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
     from app.backend.ai_messages import AI_MESSAGES, AI_MESSAGES_HR, validate_message_text
 
@@ -1535,6 +1548,7 @@ def test_did_you_mean_chips_resolve_to_real_answers():
     """
     from fastapi.testclient import TestClient
     from app.backend.main import app
+    from app.backend.ai_messages import get_message
     from app.backend.lifecycle import lifecycle
 
     client = TestClient(app)

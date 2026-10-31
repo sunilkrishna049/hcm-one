@@ -1490,7 +1490,7 @@ class ChatRouter:
             display_period = req.get("period", "Q2 2026-27")
             card_title = "Sales incentive summary"
             prop_id = "PROP-SCENARIO-4-SALES"
-            prop_scope_label = f"Sales incentive ({display_period}) · Hyderabad Sales · FY 2025-26"
+            prop_scope_label = f"Sales incentive ({display_period}) · Hyderabad Sales"
             is_ready_s4, s4_disabled_reason, _ = evaluate_proposal_readiness(prop_id)
             s4_blocking_reason = s4_disabled_reason
             s4_disabled = not is_ready_s4
@@ -3916,7 +3916,7 @@ class ChatRouter:
                 elif s_num in (6, 7, 8):
                     kind_label = "Full and final settlement"
                 elif s_num == 13:
-                    kind_label = "Exit Settlement Breakdown"
+                    kind_label = "Exit settlement breakdown"
                 else:
                     kind_label = p.get("type") or "Salary revision"
                 name_code = f"{kind_label} · {emp_name} · {emp_id}"
@@ -3925,7 +3925,7 @@ class ChatRouter:
                 if role == "HR Admin" and user.get("user_id") == "HR02" and "Engineering" in str(p.get("scope_label")):
                     continue
                 name_code = p.get("scope_label") or "Annual performance bonus · Engineering · FY 2025-26"
-                scope_label = "FY 2025-26"
+                scope_label = scope.get("period") or "FY 2025-26"
 
             dedup_key = (name_code, s_num)
             if dedup_key in seen_keys:

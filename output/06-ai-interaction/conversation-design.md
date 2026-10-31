@@ -169,10 +169,10 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C54):** "{Bonus name}: {n} eligible, {n} not eligible, {n} waiting for input." (Approved by: Project owner).
 - **Approved wording (C55):** "{Bonus name}: {n} eligible, {n} not eligible." (Approved by: Project owner).
 - **Approved wording (C56):** "Can't approve yet: {Name}'s {missing item} is missing." (Approved by: Project owner).
-- **Approved wording (C57):** "{count} items need input before this can be approved." (Approved by: Project owner).
+- **Approved wording (C57):** "Can't approve yet: {n} items need input." (Approved by: Project owner).
 - **Approved wording (C58):** "Your {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
   HR version: "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
-- **Approved wording (C59):** "{Name}'s {item} is {status}." (Approved by: Project owner).
+- **Approved wording (C59):** "Can't approve yet: {Name}'s {item} is pending." (Approved by: Project owner).
 - **Approved wording (C60):** "Your {month} take-home is the same as {previous month}." (Approved by: Project owner).
 - **Approved wording (C61):** "{Name}'s {month} take-home is the same as {previous month}." (Approved by: Project owner).
 - **Approved wording (C62):** "Your {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below." (Approved by: Project owner).

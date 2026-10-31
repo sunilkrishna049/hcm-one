@@ -392,9 +392,9 @@
           "proposal_id": "PROP-SCENARIO-3",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "Kavya Iyer's July attendance record is missing.",
-          "disabled_reason": "Kavya Iyer's July attendance record is missing.",
-          "disabled_label": "Kavya Iyer's July attendance record is missing."
+          "blocking_reason": "Can't approve yet: Kavya Iyer's July attendance is missing.",
+          "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance is missing.",
+          "disabled_label": "Can't approve yet: Kavya Iyer's July attendance is missing."
         }
       }
     ],
@@ -500,9 +500,9 @@
           "proposal_id": "PROP-SCENARIO-4-ANNUAL",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "Meera Nair's performance record is missing.",
-          "disabled_reason": "Meera Nair's performance record is missing.",
-          "disabled_label": "Meera Nair's performance record is missing."
+          "blocking_reason": "Can't approve yet: Meera Nair's performance record is missing.",
+          "disabled_reason": "Can't approve yet: Meera Nair's performance record is missing.",
+          "disabled_label": "Can't approve yet: Meera Nair's performance record is missing."
         }
       }
     ],
@@ -893,9 +893,9 @@
           "proposal_id": "PROP-SCENARIO-8",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "Imran Khan's laptop clearance is pending.",
-          "disabled_reason": "Imran Khan's laptop clearance is pending.",
-          "disabled_label": "Imran Khan's laptop clearance is pending."
+          "blocking_reason": "Can't approve yet: Imran Khan's laptop clearance is pending.",
+          "disabled_reason": "Can't approve yet: Imran Khan's laptop clearance is pending.",
+          "disabled_label": "Can't approve yet: Imran Khan's laptop clearance is pending."
         }
       }
     ],
@@ -1324,9 +1324,9 @@
           "proposal_id": "PROP-SCENARIO-13",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "Imran Khan's laptop clearance is pending.",
-          "disabled_reason": "Imran Khan's laptop clearance is pending.",
-          "disabled_label": "Imran Khan's laptop clearance is pending."
+          "blocking_reason": "Can't approve yet: Imran Khan's laptop clearance is pending.",
+          "disabled_reason": "Can't approve yet: Imran Khan's laptop clearance is pending.",
+          "disabled_label": "Can't approve yet: Imran Khan's laptop clearance is pending."
         }
       }
     ],

@@ -119,7 +119,7 @@ def test_f4_approval_card_disabled_reason_matching_c56_c57():
     reason = appr_card["data"].get("disabled_reason") or appr_card["data"].get("blocking_reason")
     assert "Meera Nair's performance record is missing." in reason
     from app.backend.ai_messages import get_message
-    assert reason == get_message("C59", Name="Meera Nair", item="performance record", status="missing")
+    assert reason == get_message("C56", Name="Meera Nair", **{"missing item": "performance record"})
 
 
 def test_f5_hr_reply_box_starts_empty():
