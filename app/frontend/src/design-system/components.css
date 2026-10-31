@@ -831,11 +831,25 @@
   margin: 0 auto;
 }
 
+/* --- Bottom Dock (Suggestion Chips + Composer) --- */
+.hcm-chat-bottom-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .hcm-chat-chips-area,
 .hcm-chat-emp-chips-area {
-  padding: var(--space-2) var(--space-6);
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-divider);
+  flex-shrink: 0;
 }
 
 /* --- Message Turns & Bubbles --- */
@@ -982,13 +996,16 @@
 .hcm-suggestion-chips-container {
   position: relative;
   overflow: visible;
-  padding: var(--space-1) 0;
+  padding: 0;
+  width: 100%;
 }
 
 .hcm-suggestion-chips-track {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+  width: 100%;
 }
 
 .hcm-suggestion-chip {
@@ -1028,9 +1045,8 @@
 .hcm-composer-container {
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-divider);
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
+  position: relative;
+  z-index: 1;
 }
 
 .hcm-composer-desktop {
@@ -1467,7 +1483,7 @@
 
   .hcm-chat-chips-area,
   .hcm-chat-emp-chips-area {
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-3);
   }
 
   /* Side panel becomes bottom sheet */
@@ -1555,6 +1571,8 @@
     -ms-overflow-style: none;
     position: relative;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding: 0;
   }
 
   .hcm-suggestion-chips-container::-webkit-scrollbar {
@@ -1597,6 +1615,7 @@
     display: inline-flex;
     flex-wrap: nowrap;
     white-space: nowrap;
+    align-items: center;
     gap: var(--space-2);
     padding-right: var(--space-6);
   }

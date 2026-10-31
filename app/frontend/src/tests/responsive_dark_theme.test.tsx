@@ -539,4 +539,107 @@ describe('Responsive Layout & Dark Theme Tests (Scenarios 1, 9, 13 at 1440px & 3
     const mainTextOnSurface = contrastRatio(mainText, surface);
     expect(mainTextOnSurface).toBeGreaterThanOrEqual(4.5);
   });
+  it('14. Suggestion chip row is vertically centred, has equal top/bottom padding, never clips or overflows (scrollHeight <= clientHeight), and maintains stable position across viewports (1440x900, 1366x768, 390x844)', async () => {
+    const viewports = [
+      { name: '1440x900 (Desktop)', width: 1440, height: 900 },
+      { name: '1366x768 (Laptop)', width: 1366, height: 768 },
+      { name: '390x844 (Mobile)', width: 390, height: 844 },
+    ];
+
+    for (const vp of viewports) {
+      setViewport(vp.width, vp.height);
+
+      // Test HR chat
+      const { unmount: unmountHR, container: containerHR } = render(
+        <ChatHR currentUser="HR01" currentScenario={1} />
+      );
+
+      const chipAreaHR = containerHR.querySelector('.hcm-chat-chips-area') as HTMLElement;
+      expect(chipAreaHR).toBeInTheDocument();
+
+      const chipsContainerHR = screen.getByTestId('suggestion-chips') as HTMLElement;
+      expect(chipsContainerHR).toBeInTheDocument();
+
+      // Top and bottom padding are equal
+      const areaStyleHR = window.getComputedStyle(chipAreaHR);
+      expect(areaStyleHR.paddingTop).toEqual(areaStyleHR.paddingBottom);
+
+      const chipsStyleHR = window.getComputedStyle(chipsContainerHR);
+      expect(chipsStyleHR.paddingTop).toEqual(chipsStyleHR.paddingBottom);
+
+      // Content is not overflowing vertically (scrollHeight <= clientHeight)
+      expect(chipAreaHR.scrollHeight).toBeLessThanOrEqual(chipAreaHR.clientHeight);
+      expect(chipsContainerHR.scrollHeight).toBeLessThanOrEqual(chipsContainerHR.clientHeight);
+
+      // Docked with composer in bottom dock so it doesn't move relative to composer
+      const bottomDockHR = containerHR.querySelector('.hcm-chat-bottom-dock');
+      expect(bottomDockHR).toBeInTheDocument();
+      expect(bottomDockHR?.contains(chipAreaHR)).toBe(true);
+
+      const composerHR = containerHR.querySelector('.hcm-composer-container');
+      expect(bottomDockHR?.contains(composerHR!)).toBe(true);
+
+      // Chat scroll does not displace or jump chip row
+      const feedHR = screen.getByTestId('chat-feed');
+      const initialChipRectHR = chipAreaHR.getBoundingClientRect();
+      fireEvent.scroll(feedHR, { target: { scrollTop: 400 } });
+      const afterScrollChipRectHR = chipAreaHR.getBoundingClientRect();
+      expect(afterScrollChipRectHR.height).toEqual(initialChipRectHR.height);
+      expect(afterScrollChipRectHR.top).toEqual(initialChipRectHR.top);
+
+      unmountHR();
+
+      // Test EMP chat
+      const { unmount: unmountEMP, container: containerEMP } = render(
+        <ChatEMP currentUser="USER-E05" currentScenario={9} />
+      );
+
+      const chipAreaEMP = containerEMP.querySelector('.hcm-chat-chips-area') as HTMLElement;
+      expect(chipAreaEMP).toBeInTheDocument();
+
+      const chipsContainerEMP = screen.getByTestId('suggestion-chips') as HTMLElement;
+      expect(chipsContainerEMP).toBeInTheDocument();
+
+      const areaStyleEMP = window.getComputedStyle(chipAreaEMP);
+      expect(areaStyleEMP.paddingTop).toEqual(areaStyleEMP.paddingBottom);
+
+      const chipsStyleEMP = window.getComputedStyle(chipsContainerEMP);
+      expect(chipsStyleEMP.paddingTop).toEqual(chipsStyleEMP.paddingBottom);
+
+      expect(chipAreaEMP.scrollHeight).toBeLessThanOrEqual(chipAreaEMP.clientHeight);
+      expect(chipsContainerEMP.scrollHeight).toBeLessThanOrEqual(chipsContainerEMP.clientHeight);
+
+      const bottomDockEMP = containerEMP.querySelector('.hcm-chat-bottom-dock');
+      expect(bottomDockEMP).toBeInTheDocument();
+      expect(bottomDockEMP?.contains(chipAreaEMP)).toBe(true);
+
+      unmountEMP();
+    }
+
+    // Static CSS checks: No fixed heights on chip row and equal top/bottom padding tokens
+    const componentsPath = path.resolve(__dirname, '../design-system/components.css');
+    const componentsContent = fs.readFileSync(componentsPath, 'utf-8');
+
+    // 1. Equal top and bottom padding tokens on .hcm-chat-chips-area
+    expect(componentsContent).toMatch(/\.hcm-chat-chips-area,\s*\.hcm-chat-emp-chips-area\s*\{[^}]*padding:\s*var\(--space-3\)\s*var\(--space-6\);/);
+    expect(componentsContent).toMatch(/\.hcm-chat-chips-area,\s*\.hcm-chat-emp-chips-area\s*\{[^}]*display:\s*flex;\s*align-items:\s*center;/);
+
+    // 2. Mobile equal top and bottom padding
+    expect(componentsContent).toMatch(/padding:\s*var\(--space-3\)\s*var\(--space-3\);/);
+
+    // 3. No fixed height on chip row
+    const chipAreaRuleMatch = componentsContent.match(/\.hcm-chat-chips-area[^{]*\{([^}]+)\}/);
+    expect(chipAreaRuleMatch).toBeTruthy();
+    expect(chipAreaRuleMatch![1]).not.toMatch(/(?<![a-zA-Z-])height:\s*\d+px/);
+
+    const chipsContainerRuleMatch = componentsContent.match(/\.hcm-suggestion-chips-container[^{]*\{([^}]+)\}/);
+    expect(chipsContainerRuleMatch).toBeTruthy();
+    expect(chipsContainerRuleMatch![1]).not.toMatch(/(?<![a-zA-Z-])height:\s*\d+px/);
+
+    // 4. Bottom dock provides unified sticky anchor
+    expect(componentsContent).toContain('.hcm-chat-bottom-dock {');
+    expect(componentsContent).toContain('position: sticky;');
+    expect(componentsContent).toContain('bottom: 0;');
+  });
 });
+

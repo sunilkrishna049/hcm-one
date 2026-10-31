@@ -325,26 +325,27 @@ export const ChatHR: React.FC<ChatHRProps> = ({
           </div>
         </div>
 
-        {/* Suggestion Chips */}
-        {activeChips.length > 0 && (
-          <div className="hcm-chat-chips-area">
-            <SuggestionChips
-              chips={activeChips}
-              onSelectChip={handleChipSelect}
-              disabled={isLoading}
-            />
-          </div>
-        )}
+        {/* Bottom Dock: Suggestion Chips + Composer */}
+        <div className="hcm-chat-bottom-dock">
+          {activeChips.length > 0 && (
+            <div className="hcm-chat-chips-area">
+              <SuggestionChips
+                chips={activeChips}
+                onSelectChip={handleChipSelect}
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
-        {/* Sticky Composer */}
-        <Composer
-          onSendMessage={handleSendMessage}
-          disabled={isLoading}
-          placeholder="Ask about payroll, arrears or settlements…"
-          isMobile={false}
-          prefilledText={prefilledText}
-          clearSignal={clearSignal}
-        />
+          <Composer
+            onSendMessage={handleSendMessage}
+            disabled={isLoading}
+            placeholder="Ask about payroll, arrears or settlements…"
+            isMobile={false}
+            prefilledText={prefilledText}
+            clearSignal={clearSignal}
+          />
+        </div>
       </main>
 
       {/* Side Review Panel (PANEL-HR) */}
