@@ -528,3 +528,102 @@ def test_part_e_neha_phrasings_intent_and_reply(phrasing, expected_topic, expect
     reply_str = str(res).lower()
     for eid in [f"e{i:02d}" for i in range(1, 17) if i != 5]:
         assert f"'{eid}'" not in reply_str and f'"{eid}"' not in reply_str
+
+
+def test_q1_neha_own_query_status_phrasings_never_c10():
+    """Q1: In Employee view (Neha Gupta, USER-E05), her own query must never be refused with C10.
+    Phrasings:
+    - 'Do I have a reply on my query?'
+    - 'Has HR replied to my query?'
+    - 'Any update on my query?'
+    - 'What is the status of my query?'
+    Each returns Neha's own query status (C40 when no reply yet), never C10.
+    """
+    from app.backend.ai.crew import PayrollAICrew
+    from app.backend.lifecycle import lifecycle
+    import app.backend.config as backend_config
+
+    backend_config.AI_MODE = False
+    lifecycle.reset_demo()
+
+    crew = PayrollAICrew()
+    phrasings = [
+        "Do I have a reply on my query?",
+        "Has HR replied to my query?",
+        "Any update on my query?",
+        "What is the status of my query?",
+    ]
+
+    for p in phrasings:
+        res = crew.handle_chat("USER-E05", message=p)
+        codes = [m["code"] for m in res.get("messages", [])]
+        first_text = res.get("messages", [{}])[0].get("text", "")
+
+        assert "C10" not in codes, f"Phrasing '{p}' unexpectedly returned C10 refusal: {res}"
+        assert "C40" in codes, f"Phrasing '{p}' expected C40 query status, got {codes}"
+        assert "Your September 2026 query is" in first_text, f"Phrasing '{p}' text unexpected: {first_text}"
+        assert "No reply has been recorded yet." in first_text, f"Phrasing '{p}' text unexpected: {first_text}"
+        assert res.get("state", {}).get("intent") == "query_status"
+        assert res.get("state", {}).get("employee_id") == "E05"
+
+        cards = [c["type"] for c in res.get("cards", [])]
+        assert "query_status" in cards, f"Phrasing '{p}' missing query_status card"
+        assert "refusal_card" not in cards, f"Phrasing '{p}' unexpectedly returned refusal_card"
+
+
+def test_q1_neha_query_with_hr_reply():
+    """Q1: When HR has replied first, Neha sees the C44 query reply message plus reply text, never C10."""
+    from app.backend.ai.crew import PayrollAICrew
+    from app.backend.lifecycle import lifecycle
+    import app.backend.config as backend_config
+
+    backend_config.AI_MODE = False
+    lifecycle.reset_demo()
+
+    reply_str = "Biometric punch logs rechecked; half-day attendance adjusted."
+    lifecycle.resolve_query(
+        "QUERY-E05-SEPTEMBER",
+        actor={"user_id": "HR01", "role": "HR Admin"},
+        reply_text=reply_str
+    )
+
+    crew = PayrollAICrew()
+    res = crew.handle_chat("USER-E05", message="Do I have a reply on my query?")
+    codes = [m["code"] for m in res.get("messages", [])]
+    first_text = res.get("messages", [{}])[0].get("text", "")
+
+    assert "C10" not in codes, f"Unexpected C10 refusal: {res}"
+    assert "C44" in codes, f"Expected C44 query reply code, got {codes}"
+    assert reply_str in first_text, f"Expected reply text '{reply_str}' in message, got '{first_text}'"
+    assert "Your September 2026 query is Resolved. Here is HR's reply:" in first_text
+
+    cards = [c["type"] for c in res.get("cards", [])]
+    assert "query_status" in cards
+    assert "refusal_card" not in cards
+
+    lifecycle.reset_demo()
+
+
+def test_q1_cross_employee_query_inquiry_strictly_returns_c10():
+    """Q1: An employee asking about ANOTHER employee's query still gets C10 refusal."""
+    from app.backend.ai.crew import PayrollAICrew
+    from app.backend.lifecycle import lifecycle
+    import app.backend.config as backend_config
+
+    backend_config.AI_MODE = False
+    lifecycle.reset_demo()
+
+    crew = PayrollAICrew()
+    cross_queries = [
+        "What is Neha's query status?",
+        "Did HR reply to Neha's query?",
+        "Show Neha's query",
+        "Has HR replied to Priya Sharma's query?",
+    ]
+
+    for cq in cross_queries:
+        res = crew.handle_chat("USER-E06", message=cq)
+        codes = [m["code"] for m in res.get("messages", [])]
+        assert "C10" in codes, f"Cross-employee query '{cq}' expected C10, got {codes}"
+        cards = [c["type"] for c in res.get("cards", [])]
+        assert "refusal_card" in cards

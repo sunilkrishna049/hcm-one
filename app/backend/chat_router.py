@@ -453,7 +453,7 @@ def get_rule_file(filename: str) -> dict:
 def format_inr(amount: Optional[float | int]) -> str:
     """Format numbers into Indian Rupee presentation format for UI copy."""
     if amount is None:
-        return "Not available in generated data"
+        return ""
     is_neg = amount < 0
     val = abs(int(round(amount)))
     s = str(val)
@@ -840,7 +840,8 @@ class ChatRouter:
             return self._handle_append_query(user, role, surface, context)
         if re.search(r"\b(take into review|take for review)\b", lower_msg):
             return self._handle_take_into_review(user, role, surface, context)
-        if re.search(r"\b(reply to query|reply.*query)\b", lower_msg):
+        # Only HR can draft/send replies to queries; an employee asking about replies is checking query status
+        if role == "HR Admin" and (re.search(r"\b(reply to \w+'s query|reply to query)\b", lower_msg) or context.get("query_id")):
             return self._handle_reply_query(user, role, surface, context)
         if re.search(r"\b(resolve query|resolve\b)", lower_msg):
             return self._handle_resolve_query(user, role, surface, context)
@@ -927,8 +928,11 @@ class ChatRouter:
             return self._build_tax_regime(user, role, surface)
 
         # Topic f: Query status
-        if re.search(r"what('s| is) happening with my query\b|\b(track.*query|status of.*query)\b", lower_msg):
-            return self._handle_query_status(user, role, surface, context)
+        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response)\b", lower_msg):
+            if role == "Employee" or not any(e in lower_msg for e in ["priya", "arjun", "kavya", "meera", "rahul", "lakshmi", "imran", "pooja", "siddharth", "neha"]):
+                return self._handle_query_status(user, role, surface, context)
+            else:
+                return self._handle_hr_query(user, role, surface, context)
 
         # Topic c: TDS amount & "why is my TDS zero" & "How much tax was cut?"
         if (re.search(r"\bwhy is my tds zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
@@ -1068,8 +1072,11 @@ class ChatRouter:
             return self._handle_draft_query(user, role, surface, {**context, "force_new": True})
         if "draft" in lower_msg and "query" in lower_msg:
             return self._handle_draft_query(user, role, surface, context)
-        if ("status" in lower_msg or "track" in lower_msg) and ("query" in lower_msg or "queries" in lower_msg):
-            return self._handle_query_status(user, role, surface, context)
+        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response)\b", lower_msg):
+            if role == "Employee" or not any(e in lower_msg for e in ["priya", "arjun", "kavya", "meera", "rahul", "lakshmi", "imran", "pooja", "siddharth", "neha"]):
+                return self._handle_query_status(user, role, surface, context)
+            else:
+                return self._handle_hr_query(user, role, surface, context)
         if "review" in lower_msg and ("query" in lower_msg or "queries" in lower_msg):
             return self._handle_hr_query_review(user, role, surface, context)
 
@@ -1422,7 +1429,7 @@ class ChatRouter:
                     "employee_name": "Kavya Iyer",
                     "employee_id": "E03",
                     "formulas": [
-                        "2026-07: Attendance missing: Not available in generated data",
+                        "2026-07: Attendance record missing",
                         f"2026-08: Monthly diff = {format_inr(aug_diff)}",
                         f"2026-09: Monthly diff = {format_inr(sep_diff)}"
                     ],
@@ -1435,6 +1442,11 @@ class ChatRouter:
         }
 
     def _build_bonus_clarifying_question(self, role: str, surface: str) -> dict:
+        sales_prop = lifecycle.get_proposal("PROP-SCENARIO-4-SALES")
+        sales_label = (sales_prop.get("scope_label") if sales_prop else None) or "Sales incentive (Q2 2026-27) · Hyderabad Sales"
+        annual_prop = lifecycle.get_proposal("PROP-SCENARIO-4-ANNUAL")
+        annual_label = (annual_prop.get("scope_label") if annual_prop else None) or "Annual performance bonus · Engineering · FY 2025-26"
+
         return {
             "messages": [],
             "cards": [
@@ -1445,16 +1457,16 @@ class ChatRouter:
                     "data": {
                         "question": "Which bonus type do you mean?",
                         "choices": [
-                            "Annual performance bonus, FY 2025-26, Engineering",
-                            "Q2 Sales incentive, Hyderabad Sales"
+                            annual_label,
+                            sales_label
                         ],
                         "selected_choice": None
                     }
                 }
             ],
             "chips": [
-                {"label": "Annual performance bonus, FY 2025-26, Engineering"},
-                {"label": "Q2 Sales incentive, Hyderabad Sales"}
+                {"label": annual_label},
+                {"label": sales_label}
             ],
             "state": {
                 "intent": "clarifying_question",
@@ -1660,7 +1672,7 @@ class ChatRouter:
                 "panel": {
                     "title": "Missing performance record",
                     "formulas": [
-                        "Performance rating for FY 2025-26: Not available in generated data",
+                        "Performance rating for FY 2025-26: Rating not recorded",
                         "Bonus calculation: Blocked until rating is supplied"
                     ],
                     "rule_citations": [
@@ -1930,7 +1942,7 @@ class ChatRouter:
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance pending: laptop pending",
-                        "Final Net: Not available in generated data"
+                        "Final Net: Incomplete until asset clearance is verified"
                     ],
                     "rule_citations": [
                         "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
@@ -2343,7 +2355,7 @@ class ChatRouter:
                     "formulas": [
                         f"Known recoveries = Notice shortfall recovery ({format_inr(notice_amt)}) + Salary advance ({format_inr(advance_amt)}) = {format_inr(recov_subtotal)}",
                         "Asset clearance hold: laptop pending",
-                        "Final Net: Not available in generated data"
+                        "Final Net: Incomplete until asset clearance is verified"
                     ],
                     "rule_citations": [
                         "Separation wages clearance hold: Unresolved asset recovery stays held without delaying final salary",
@@ -3938,8 +3950,7 @@ class ChatRouter:
                 "label": name_code,
                 "name_code": name_code,
                 "scope": scope_label,
-                "certainty": cert,
-                "action_label": "Open",
+                                "action_label": "Open",
                 "proposal_id": pid,
                 "scenario_num": s_num
             }
@@ -3983,9 +3994,6 @@ class ChatRouter:
                     "components": [
                         {
                             "name": it["label"],
-                            "note": None,
-                            "status": "Complete for this scope",
-                            "amount": None
                         }
                         for it in ready_items
                     ]
@@ -4003,8 +4011,6 @@ class ChatRouter:
                         {
                             "name": it["label"],
                             "note": it.get("reason"),
-                            "status": "Incomplete",
-                            "amount": None
                         }
                         for it in needs_input_items
                     ]

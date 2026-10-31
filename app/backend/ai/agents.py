@@ -49,7 +49,7 @@ ALLOWED INTENTS AND DEFINITIONS:
 - lop_days: Questions about loss of pay days, unpaid absence, or leave deduction counts. (e.g., 'Recorded count of unpaid absence days', 'Number of loss of pay calendar days logged').
 - payslip_breakdown: Requests to view or explain an itemized monthly payslip statement. (e.g., 'Break down earnings and deductions for my statement', 'Display the line items on my paysheet').
 - compare_months: Requests to contrast two pay periods side-by-side. (e.g., 'Difference in compensation between two billing cycles', 'Contrast earnings across recent quarters').
-- query_status: Tracking the status, updates, or resolution progress of a submitted HR grievance. (e.g., 'Status of my open payroll ticket', 'Has HR replied to my submitted grievance?').
+- query_status: Tracking the status, updates, or resolution progress of a submitted HR grievance. (e.g., 'Status of my open payroll ticket', 'Has HR replied to my submitted grievance?', 'Do I have a reply on my query?', 'Any update on my query?').
 - tax_regime: Inquiries about whether old or new tax regime applies for the current tax year. (e.g., 'Current fiscal year tax system designation', 'Am I enrolled under the revised tax framework?').
 - approvals_list: HR requests to list pending proposals awaiting review or managerial sign-off. (e.g., 'Proposals queued for managerial endorsement', 'Items currently awaiting authorization').
 - leavers_list: HR requests to list employees departing during the active payroll month. (e.g., 'Staff members exiting the company during this period', 'Upcoming employee departures this month').

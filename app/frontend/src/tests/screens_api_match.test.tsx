@@ -205,8 +205,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     expect(screen.getAllByText(/Kavya Iyer/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Incomplete').length).toBeGreaterThan(0);
 
-    const notAvailableElements = screen.getAllByText('Not available in generated data');
-    expect(notAvailableElements.length).toBeGreaterThan(0);
+    expect(screen.queryByText('Not available in generated data')).not.toBeInTheDocument();
 
     const fourThousandEightHundreds = screen.getAllByText('₹4,800');
     expect(fourThousandEightHundreds.length).toBeGreaterThanOrEqual(2);
@@ -347,8 +346,7 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
     });
 
     expect(screen.getAllByText('₹56,667').length).toBeGreaterThan(0);
-    const notAvail = screen.getAllByText('Not available in generated data');
-    expect(notAvail.length).toBeGreaterThan(0);
+    expect(screen.queryByText('Not available in generated data')).not.toBeInTheDocument();
   });
 
   it('GUARD TEST: Fails if any payroll number on rendered chat cards is not present in the API response', async () => {
@@ -467,5 +465,29 @@ describe('Automated checks that chat surfaces match real API responses (STEP 3)'
 
       renderedResult.unmount();
     }
+  });
+  it('GUARD TEST: "Not available in generated data" must not exist anywhere in frontend source files', () => {
+    const frontendSrc = path.resolve(__dirname, '..');
+    const banned = /Not available in generated data/;
+    const violations: string[] = [];
+
+    function scanDir(dir: string) {
+      const files = fs.readdirSync(dir, { withFileTypes: true });
+      for (const f of files) {
+        const full = path.join(dir, f.name);
+        if (f.name === 'node_modules' || f.name === 'dist' || f.name === 'tests') continue;
+        if (f.isDirectory()) {
+          scanDir(full);
+        } else if (/\.(tsx?|jsx?|css|json)$/.test(f.name)) {
+          const content = fs.readFileSync(full, 'utf-8');
+          if (banned.test(content)) {
+            violations.push(full);
+          }
+        }
+      }
+    }
+
+    scanDir(frontendSrc);
+    expect(violations).toEqual([]);
   });
 });

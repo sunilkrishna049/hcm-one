@@ -694,8 +694,11 @@ class PayrollAICrew:
 
             if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
                 return validate_classifier_output({"intent": "tax_regime", "scenario_num": None}, user)
-            if re.search(r"\b(what.*happening.*query|query.*progress|track.*query|status of.*query)\b", lower_msg):
-                return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
+            if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response)\b", lower_msg):
+                if role == "Employee" or not any(e in lower_msg for e in ["priya", "arjun", "kavya", "meera", "rahul", "lakshmi", "imran", "pooja", "siddharth", "neha"]):
+                    return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
+                else:
+                    return validate_classifier_output({"intent": "hr_query_review", "scenario_num": None}, user)
             if (re.search(r"\bwhy.*is.*tds.*zero\b|\btds zero\b|\bwhy.*zero.*tds\b|\bwhy.*no tds\b|\bhow much (tax|tds)\b|\bwhat is my (tax|tds)\b|\btax was cut\b|\bcut in tax\b|\btax cut\b", lower_msg) or (lower_msg.strip() in ("tds", "my tds") and user.get("employee_id") != "E06")) and not ("increase" in lower_msg or "higher" in lower_msg or "more" in lower_msg):
                 return validate_classifier_output({"intent": "tds_amount", "scenario_num": None}, user)
             if re.search(r"\b(how many|why was there|why.*is there|why.*lop)\b.*\blop\b|\blop days\b|\bloss of pay days\b|\bhow many.*unpaid\b", lower_msg):

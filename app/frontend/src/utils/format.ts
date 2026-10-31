@@ -6,7 +6,7 @@
 
 export function formatINR(val: number | null | undefined): string {
   if (val === null || val === undefined) {
-    return "Not available in generated data";
+    return "";
   }
   const isNeg = val < 0;
   const absVal = Math.abs(val);
@@ -36,7 +36,7 @@ export function formatINR(val: number | null | undefined): string {
 
 export function formatNumberPlain(val: number | null | undefined): string {
   if (val === null || val === undefined) {
-    return "Not available in generated data";
+    return "";
   }
   const isNeg = val < 0;
   const absVal = Math.abs(val);

@@ -690,7 +690,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
             question: 'Which bonus type do you mean?',
             choices: [
               'Annual performance bonus, FY 2025-26, Engineering',
-              'Q2 Sales incentive, Hyderabad Sales',
+              'Sales incentive (Q2 2026-27) · Hyderabad Sales',
             ],
             selected_choice: null,
           },
@@ -698,7 +698,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       ],
       chips: [
         { label: 'Annual performance bonus, FY 2025-26, Engineering' },
-        { label: 'Q2 Sales incentive, Hyderabad Sales' },
+        { label: 'Sales incentive (Q2 2026-27) · Hyderabad Sales' },
       ],
     });
 
@@ -711,7 +711,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       // Question shown once (no duplicate title and body text)
       expect(screen.getAllByText('Which bonus type do you mean?').length).toBe(1);
       expect(screen.getAllByText('Annual performance bonus, FY 2025-26, Engineering').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText('Q2 Sales incentive, Hyderabad Sales').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Sales incentive (Q2 2026-27) · Hyderabad Sales').length).toBeGreaterThanOrEqual(1);
       // No "Apply Selection and Recalculate" button anywhere
       expect(screen.queryByText(/Apply Selection and Recalculate/i)).not.toBeInTheDocument();
     });

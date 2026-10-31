@@ -118,8 +118,8 @@ def test_ambiguous_bonus_request_clarifying_question():
     clarify_card = cards["clarifying_question"]
     assert clarify_card["data"]["question"] == "Which bonus type do you mean?"
     expected_choices = [
-        "Annual performance bonus, FY 2025-26, Engineering",
-        "Q2 Sales incentive, Hyderabad Sales"
+        "Annual performance bonus · Engineering · FY 2025-26",
+        "Sales incentive (Q2 2026-27) · Hyderabad Sales"
     ]
     assert clarify_card["data"]["choices"] == expected_choices
     # Verify no assumption was made: waits for HR to choose, never picks a bonus type on its own

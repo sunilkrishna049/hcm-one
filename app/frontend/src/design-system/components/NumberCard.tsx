@@ -38,7 +38,7 @@ export const NumberCard: React.FC<NumberCardProps> = ({
   const actualVal = amount !== undefined ? amount : value;
   const isAvailable = actualVal !== undefined && actualVal !== null;
 
-  let displayAmount = "Not available in generated data";
+  let displayAmount = "";
   if (isAvailable) {
     if (typeof actualVal === "number") {
       displayAmount = actualVal.toLocaleString("en-IN");

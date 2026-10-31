@@ -310,3 +310,92 @@ def test_r1_mocked_drafter_sentinel_never_appears(monkeypatch):
         ai_crew._custom_llm = orig_custom_llm
         backend_config.AI_MODE = orig_ai_mode
         backend_config.AI_DRAFTING_ENABLED = False
+
+
+def test_q2_approvals_list_rows_no_extra_lines():
+    """Q2: The approvals list rows must show ONLY the proposal title and, for needs-input rows,
+    the reason line. No 'Complete for this scope'/'Incomplete' badges and no amount lines.
+    """
+    from app.backend.ai_messages import AI_MESSAGES
+    c56_prefix = AI_MESSAGES["C56"].split(":")[0] + ":"
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "What needs my approval?"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    cards = {c["id"]: c for c in data.get("cards", [])}
+    ready_card = cards["card-ready-approvals"]
+    needs_input_card = cards["card-needs-input-approvals"]
+
+    for comp in ready_card["data"]["components"]:
+        assert "name" in comp, "Missing proposal title in ready item"
+        assert comp.get("status") is None, f"Ready row unexpectedly has status badge: {comp}"
+        assert comp.get("amount") is None, f"Ready row unexpectedly has amount: {comp}"
+        assert comp.get("note") is None, f"Ready row unexpectedly has note: {comp}"
+
+    for comp in needs_input_card["data"]["components"]:
+        assert "name" in comp, "Missing proposal title in needs-input item"
+        assert comp.get("status") is None, f"Needs-input row unexpectedly has status badge: {comp}"
+        assert comp.get("amount") is None, f"Needs-input row unexpectedly has amount: {comp}"
+        assert comp.get("note"), f"Needs-input row missing reason note: {comp}"
+        assert comp["note"].startswith(c56_prefix), f"Reason note '{comp['note']}' does not start with approved prefix"
+
+
+def test_q2_static_guard_no_not_available_in_generated_data_anywhere():
+    """Q2 Static Guard: 'Not available in generated data' must not exist anywhere in frontend or backend source files."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent.parent.parent
+
+    banned = "Not available in generated data"
+    violations = []
+
+    # Check frontend src
+    frontend_src = root / "app" / "frontend" / "src"
+    for p in frontend_src.rglob("*"):
+        if p.is_file() and p.suffix in (".ts", ".tsx", ".js", ".jsx", ".css", ".json"):
+            if "tests" in p.parts:
+                continue
+            content = p.read_text(encoding="utf-8", errors="ignore")
+            if banned in content:
+                violations.append(str(p.relative_to(root)))
+
+    # Check backend src
+    backend_src = root / "app" / "backend"
+    for p in backend_src.rglob("*"):
+        if p.is_file() and p.suffix in (".py", ".json"):
+            if "tests" in p.parts or ".venv" in p.parts or "__pycache__" in p.parts:
+                continue
+            content = p.read_text(encoding="utf-8", errors="ignore")
+            if banned in content:
+                violations.append(str(p.relative_to(root)))
+
+    assert not violations, f"Static guard failed! '{banned}' found in source files: {violations}"
+
+
+def test_q3_bonus_type_picker_recorded_label_source():
+    """Q3: Bonus type picker ('Which bonus type do you mean?') builds the sales option
+    from the same recorded label source as the approvals list ('Sales incentive (Q2 2026-27) · Hyderabad Sales').
+    """
+    res = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "message": "Prepare bonus proposal"
+    })
+    assert res.status_code == 200
+    data = res.json()
+
+    clarify_card = next(c for c in data["cards"] if c["type"] == "clarifying_question")
+    choices = clarify_card["data"]["choices"]
+
+    sales_prop = lifecycle.get_proposal("PROP-SCENARIO-4-SALES")
+    expected_sales_label = sales_prop.get("scope_label")
+
+    assert expected_sales_label in choices, f"Expected '{expected_sales_label}' in choices: {choices}"
+    assert "Q2 Sales incentive, Hyderabad Sales" not in choices, "Outdated label still found in choices"
+
+    # Confirm approvals list ready items contains the exact same label
+    res_appr = client.post("/api/chat", json={"user_id": "HR01", "message": "What needs my approval?"})
+    ready_card = next(c for c in res_appr.json()["cards"] if c["id"] == "card-ready-approvals")
+    ready_names = [r["name"] for r in ready_card["data"]["components"]]
+    assert expected_sales_label in ready_names, f"Expected '{expected_sales_label}' in approvals list names: {ready_names}"

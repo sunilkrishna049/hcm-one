@@ -28,6 +28,7 @@ interface ComponentListCardProps {
       components?: SettlementComponent[];
       items?: SettlementComponent[];
       due_date?: string;
+      group?: string;
     };
   };
   onShowCalculation?: () => void;
@@ -61,9 +62,11 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
       {d.hero_label && (
         <div className="hcm-hero-number-box" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="hcm-hero-label">{d.hero_label}</span>
-          <div className="hcm-hero-amount tnum" data-testid="hero-amount">
-            {formatINR(d.hero_amount)}
-          </div>
+          {d.hero_amount !== null && d.hero_amount !== undefined && (
+            <div className="hcm-hero-amount tnum" data-testid="hero-amount">
+              {formatINR(d.hero_amount)}
+            </div>
+          )}
           {(d.gross_payables !== undefined || d.total_deductions !== undefined) && (
             <div className="hcm-hero-sublabel">
               <span>Gross payables: <strong className="tnum">{formatINR(d.gross_payables)}</strong></span>
@@ -81,26 +84,34 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
 
       {/* Component Rows */}
       <div className="hcm-component-table">
-        {displayRows.map((comp, idx) => (
-          <div key={idx} className="hcm-component-row">
-            <div className="hcm-comp-name-col">
-              <strong>{comp.name}</strong>
-              {comp.note && <div className="hcm-comp-note">{comp.note}</div>}
+        {displayRows.map((comp, idx) => {
+          const isApprovalsListCard =
+            card.id === 'card-ready-approvals' ||
+            card.id === 'card-needs-input-approvals' ||
+            d.group === 'Ready to approve' ||
+            d.group === 'Needs input first';
+
+          return (
+            <div key={idx} className="hcm-component-row">
+              <div className="hcm-comp-name-col">
+                <strong>{comp.name}</strong>
+                {comp.note && <div className="hcm-comp-note">{comp.note}</div>}
+              </div>
+              {!isApprovalsListCard && comp.status && (
+                <div className="hcm-comp-status-col">
+                  <span className={`hcm-comp-status-badge hcm-status-${comp.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                    {comp.status}
+                  </span>
+                </div>
+              )}
+              {!isApprovalsListCard && comp.amount !== null && comp.amount !== undefined && (
+                <div className="hcm-comp-amount-col tnum">
+                  {formatINR(comp.amount)}
+                </div>
+              )}
             </div>
-            {comp.status && (
-              <div className="hcm-comp-status-col">
-                <span className={`hcm-comp-status-badge hcm-status-${comp.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                  {comp.status}
-                </span>
-              </div>
-            )}
-            {comp.amount !== null && comp.amount !== undefined && (
-              <div className="hcm-comp-amount-col tnum">
-                {formatINR(comp.amount)}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

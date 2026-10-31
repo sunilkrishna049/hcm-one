@@ -70,7 +70,7 @@ export const CalculationBreakdown: React.FC<CalculationBreakdownProps> = ({
         <div className="hcm-calc-section">
           <span className="hcm-calc-section-title">Result Value</span>
           <div style={{ fontSize: "var(--font-size-card-number)", fontWeight: "var(--font-weight-medium)" }} className="tnum">
-            {effectiveValue === null ? "Not available in generated data" : `${effectiveValue} INR`}
+            {effectiveValue === null ? "" : `${effectiveValue} INR`}
           </div>
         </div>
       )}
