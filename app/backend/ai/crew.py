@@ -18,6 +18,7 @@ from ..chat_router import ChatRouter, EMPLOYEE_NAMES, _get_user_fallback_chips
 from ..faq_matcher import faq_matcher
 from ..permissions import get_mentioned_employee_ids, enforce_reply_permissions
 
+from .. import config as backend_config
 from ..config import (
     AI_MAX_OUTPUT_TOKENS,
     AI_MODE,
@@ -329,9 +330,43 @@ class PayrollAICrew:
             if not scenario_num or retrieval_data.get("state", {}).get("intent") == "faq_question":
                 return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
-            # F3: Turn off AI drafting for bonus intents - bonus summary replies use templates only (C54 / C55)
-            if classifier_res and (classifier_res.intent == "bonus_proposal" or scenario_num in (4, 5)):
-                return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
+            # R1 (DEC-044): Option A — The AI understands; approved templates speak.
+            # Turn OFF AI sentence drafting for ALL intents when AI_DRAFTING_ENABLED is False.
+            if not backend_config.AI_DRAFTING_ENABLED:
+                log_ai_run(
+                    user_id=user_id,
+                    role=role,
+                    surface=surface,
+                    intent=classifier_res.intent,
+                    scenario_num=scenario_num,
+                    guards_result={"drafting_mode": "templates_only"},
+                    fallback_triggered=False,
+                    fallback_reason=None,
+                    latency_ms=(time.time() - start_time) * 1000,
+                    tag=run_tag
+                )
+                target_m = classifier_res.entities.get("month") if classifier_res.entities else None
+                if not target_m:
+                    for m_name, m_code in [
+                        ("january", "2026-01"), ("february", "2026-02"), ("march", "2026-03"),
+                        ("april", "2026-04"), ("may", "2026-05"), ("june", "2026-06"),
+                        ("july", "2026-07"), ("august", "2026-08"), ("september", "2026-09"),
+                        ("october", "2026-10"), ("november", "2026-11"), ("december", "2026-12")
+                    ]:
+                        if re.search(r"\b" + m_name + r"\b", lower_msg):
+                            target_m = m_code
+                            break
+                template_resp = self._build_deterministic_fallback_for_intent(
+                    classifier_res.intent, scenario_num, user, role, surface, bonus_key, month=target_m
+                )
+                if template_resp:
+                    if isinstance(template_resp.get("state"), dict):
+                        template_resp["state"]["intent"] = classifier_res.intent
+                    return template_resp
+                resp = _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
+                if isinstance(resp.get("state"), dict):
+                    resp["state"]["intent"] = classifier_res.intent
+                return resp
 
             facts_list = retrieval_data.get("facts_list", {})
             active_emp_id = facts_list.get("employee_id") or user.get("employee_id")
@@ -525,6 +560,23 @@ class PayrollAICrew:
             return _router._build_unrecorded_topic(user, role, surface)
         elif intent == "unrecorded_month":
             return _router._build_unrecorded_month(user, role, surface)
+        elif intent == "bonus_proposal":
+            if scenario_num == 5:
+                return _router._build_scenario_5(user, role, surface)
+            elif scenario_num == 4:
+                b_key = bonus_key or "annual_performance_bonus"
+                return _router._build_scenario_4(user, role, surface, bonus_type_key=b_key)
+            if bonus_key:
+                return _router._build_scenario_4(user, role, surface, bonus_type_key=bonus_key)
+            return _router._build_scenario_4(user, role, surface)
+        elif intent == "approvals_list":
+            return _router._handle_approvals_list(user, role, surface)
+        elif intent in ("leavers", "leavers_list"):
+            return _router._build_leavers_response(user, role, surface)
+        elif intent in ("hr_query", "hr_query_review"):
+            return _router._handle_hr_query(user, role, surface, None)
+        elif intent == "out_of_scope":
+            return _router._build_scenario_12(user, role, surface)
         return None
 
     def _execute_classifier(self, task: Task, message: str, role: str, user: dict, context: dict) -> ClassifierOutput:

@@ -392,9 +392,9 @@
           "proposal_id": "PROP-SCENARIO-3",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
-          "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
-          "disabled_label": "1 item needs input: July attendance missing for Kavya Iyer"
+          "blocking_reason": "Kavya Iyer's July attendance record is missing.",
+          "disabled_reason": "Kavya Iyer's July attendance record is missing.",
+          "disabled_label": "Kavya Iyer's July attendance record is missing."
         }
       }
     ],
@@ -500,9 +500,9 @@
           "proposal_id": "PROP-SCENARIO-4-ANNUAL",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
-          "disabled_reason": "Can't approve yet: 2 items need input.",
-          "disabled_label": "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+          "blocking_reason": "Meera Nair's performance record is missing.",
+          "disabled_reason": "Meera Nair's performance record is missing.",
+          "disabled_label": "Meera Nair's performance record is missing."
         }
       }
     ],
@@ -614,7 +614,12 @@
     }
   },
   "6": {
-    "messages": [],
+    "messages": [
+      {
+        "code": "C64",
+        "text": "Here is the full and final settlement proposal for Rahul Verma."
+      }
+    ],
     "cards": [
       {
         "id": "card-settlement-s6",
@@ -729,7 +734,12 @@
     }
   },
   "7": {
-    "messages": [],
+    "messages": [
+      {
+        "code": "C64",
+        "text": "Here is the full and final settlement proposal for Lakshmi Reddy."
+      }
+    ],
     "cards": [
       {
         "id": "card-settlement-s7",
@@ -883,9 +893,9 @@
           "proposal_id": "PROP-SCENARIO-8",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-          "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
-          "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+          "blocking_reason": "Imran Khan's laptop clearance is pending.",
+          "disabled_reason": "Imran Khan's laptop clearance is pending.",
+          "disabled_label": "Imran Khan's laptop clearance is pending."
         }
       }
     ],
@@ -1314,9 +1324,9 @@
           "proposal_id": "PROP-SCENARIO-13",
           "version": 1,
           "disabled": true,
-          "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-          "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
-          "disabled_label": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+          "blocking_reason": "Imran Khan's laptop clearance is pending.",
+          "disabled_reason": "Imran Khan's laptop clearance is pending.",
+          "disabled_label": "Imran Khan's laptop clearance is pending."
         }
       }
     ],

@@ -29,6 +29,10 @@ AI_TIMEOUT_MS = int(os.getenv("AI_TIMEOUT_MS", "20000"))
 AI_MAX_OUTPUT_TOKENS = int(os.getenv("AI_MAX_OUTPUT_TOKENS", "120"))
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN")
 
+# DEC-044: The AI understands; approved templates speak.
+# AI sentence drafting is turned OFF for all intents.
+AI_DRAFTING_ENABLED: bool = False
+
 
 def is_ai_enabled() -> bool:
     """Returns True only if AI_MODE is enabled, a non-empty OPENAI_API_KEY exists,

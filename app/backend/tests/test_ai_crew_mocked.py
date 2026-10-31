@@ -230,30 +230,33 @@ def setup_teardown(tmp_path):
 def test_valid_slotted_draft_scenario_9():
     mock_llm = MockLLM()
     ai_crew._custom_llm = mock_llm
+    backend_config.AI_DRAFTING_ENABLED = True
+    try:
+        res = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": "Why is my take-home pay lower in September?"
+        })
+        assert res.status_code == 200
+        data = res.json()
 
-    res = client.post("/api/chat", json={
-        "user_id": "USER-E05",
-        "message": "Why is my take-home pay lower in September?"
-    })
-    assert res.status_code == 200
-    data = res.json()
+        # Verify AI message is populated with filled values
+        ai_msg = data["messages"][0]["text"]
+        assert "Your September take-home pay changed by" in ai_msg
+        assert "compared to August" in ai_msg
+        assert "Loss of Pay was" in ai_msg
+        assert "PF ceiling change was" in ai_msg
 
-    # Verify AI message is populated with filled values
-    ai_msg = data["messages"][0]["text"]
-    assert "Your September take-home pay changed by" in ai_msg
-    assert "compared to August" in ai_msg
-    assert "Loss of Pay was" in ai_msg
-    assert "PF ceiling change was" in ai_msg
+        # Verify approved follow-up C27 appended by server
+        assert len(data["messages"]) >= 2
+        assert data["messages"][1]["code"] == "C27"
 
-    # Verify approved follow-up C27 appended by server
-    assert len(data["messages"]) >= 2
-    assert data["messages"][1]["code"] == "C27"
-
-    # Verify complete cards and state contract
-    assert data["state"]["scenario_num"] == 9
-    card_types = [c["type"] for c in data["cards"]]
-    assert "number_hero" in card_types
-    assert "reason_list" in card_types
+        # Verify complete cards and state contract
+        assert data["state"]["scenario_num"] == 9
+        card_types = [c["type"] for c in data["cards"]]
+        assert "number_hero" in card_types
+        assert "reason_list" in card_types
+    finally:
+        backend_config.AI_DRAFTING_ENABLED = False
 
 
 # 2. AI typing any digit -> fallback

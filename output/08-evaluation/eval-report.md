@@ -1,7 +1,7 @@
 # HCM One AI Layer: Live Evaluation Report (Prompt 3 Part B)
 
-**Evaluation Run Timestamp**: `20261030_073516`  
-**Evaluation Log**: `data\runtime\eval\ai_eval_20261030_073516.jsonl`  
+**Evaluation Run Timestamp**: `20261031_071053`  
+**Evaluation Log**: `data\runtime\eval\ai_eval_20261031_071053.jsonl`  
 **Total Evaluated Cases**: 60  
 
 ---
@@ -10,21 +10,21 @@
 
 | Metric | Measured Value | Target | Status |
 | :--- | :--- | :--- | :--- |
-| **Intent / Outcome Accuracy** | **100.0%** (60/60) | ≥ 90% | PASS |
+| **Intent / Outcome Accuracy** | **98.3%** (59/60) | ≥ 90% | PASS |
 | **Wrong Numbers Shown** | **0** | 0 | PASS |
 | **Data Outside Permission** | **0** | 0 | PASS |
-| **Overall Backup Rate** | **76.7%** (46/60) | - | INFO |
-| **Backup Used (AI-Drafted Intents)** | **63.2%** (24/38) | ≤ 15% | INFO |
-| **Median Turn Latency** | **1814.9 ms** | < 2,000 ms | PASS |
+| **Overall Backup Rate** | **100.0%** (60/60) | - | INFO |
+| **Backup Used (AI-Drafted Intents)** | **100.0%** (38/38) | ≤ 15% | INFO |
+| **Median Turn Latency** | **1747.7 ms** | < 2,000 ms | PASS |
 
 ---
 
 ## 2. Top Backup Reasons
-- **Deterministic code C10**: 5 turns
+- **Deterministic code C10**: 6 turns
+- **Deterministic code C07**: 6 turns
+- **Deterministic code C03**: 5 turns
 - **Deterministic code CHOICE**: 4 turns
 - **Deterministic code C33**: 4 turns
-- **Deterministic code C03**: 4 turns
-- **Deterministic code FAQ**: 3 turns
 
 ---
 
@@ -32,14 +32,16 @@
 
 | # | User | Question | Latency (ms) | Actual Outcome |
 | :---: | :---: | :--- | :---: | :---: |
-| 1 | USER-E05 | why is my salary less this month? | 4968.4 | ANSWER |
-| 2 | USER-E05 | My take-home dropped in September. Why? | 4884.8 | ANSWER |
-| 26 | HR01 | Calculate arrears for Priya Sharma. | 3890.1 | ANSWER |
-| 42 | HR01 | Why did Siddharth Jain's TDS go up? | 3807.3 | ANSWER |
-| 27 | HR01 | Priya's hike is back-dated to April. What does she get? | 3731.2 | ANSWER |
+| 1 | USER-E05 | why is my salary less this month? | 4907.9 | ANSWER |
+| 2 | USER-E05 | My take-home dropped in September. Why? | 3805.4 | ANSWER |
+| 59 | HR02 | Prepare the Sales quarterly incentive. | 2829.8 | ANSWER |
+| 26 | HR01 | Calculate arrears for Priya Sharma. | 2269.4 | ANSWER |
+| 15 | USER-E05 | Will I get a bonus this year? | 2261.3 | CHOICE |
 
 ---
 
-## 4. Failed Questions (0 total)
+## 4. Failed Questions (1 total)
 
-Zero questions failed. All 60 evaluation test cases matched expected outcomes!
+| # | User | Question | Expected Outcome | Actual Outcome Reached | Intent Reached |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 20 | USER-E05 | Which regime should I choose? | C11 | C10 | other_employee_data |

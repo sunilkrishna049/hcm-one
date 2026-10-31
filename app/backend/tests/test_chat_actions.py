@@ -568,7 +568,7 @@ def test_approval_integrity_for_all_proposals():
     complete_proposals = [
         ("PROP-SCENARIO-1", 1, "Priya Sharma · Apr–Sep 2026"),
         ("PROP-SCENARIO-2", 2, "Arjun Rao · September 2026"),
-        ("PROP-SCENARIO-4-SALES", 4, "Q2 Sales incentive · Hyderabad Sales · FY 2025-26"),
+        ("PROP-SCENARIO-4-SALES", 4, "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26"),
         ("PROP-SCENARIO-6", 6, "Rahul Verma · Settlement"),
         ("PROP-SCENARIO-7", 7, "Lakshmi Reddy · Settlement"),
     ]
@@ -883,16 +883,18 @@ def test_name_guard_permanent_check():
 
 
 def test_approval_blocked_reason_built_from_engine_data():
-    """Item 5: The approval blocked reason must be built from engine data for every non-complete
+    """Item 5 & R3: The approval blocked reason must be built from engine data for every non-complete
     proposal (Kavya Iyer's arrears, Imran Khan's settlement, the bonus), each with a test.
-    If the engine gives no item list, show 'Needs input before approval' with no count.
+    If 1 reason: C59 ('{Name}\'s {item} is {status}.').
+    If >1 reasons: C57 ('{count} items need input before this can be approved.') + \n + reasons.
+    If the engine gives no item list, show 'Needs input before approval'.
     """
     import copy
     from unittest.mock import patch
     from app.backend.engine_bridge import bridge
 
     # --- 1. Bonus Proposal (Scenario 4) ---
-    # 1a. Default engine result produces dynamic blocking reason
+    # 1a. Default engine result produces dynamic blocking reason from C59
     res_s4 = client.post("/api/chat", json={
         "user_id": "HR01",
         "action": "scenario-4",
@@ -900,14 +902,14 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s4.status_code == 200
     card_s4 = next(c for c in res_s4.json()["cards"] if c["type"] == "approval_card")
-    assert card_s4["data"]["blocking_reason"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
-    assert card_s4["data"]["disabled_label"] == "2 items need input: Meera Nair's rating, Kavya Iyer's tax"
+    assert card_s4["data"]["blocking_reason"] == "Meera Nair's performance record is missing."
+    assert card_s4["data"]["disabled_label"] == "Meera Nair's performance record is missing."
 
-    # 1b. Modify engine result via mock: add another needs_input item and verify reason text changes with it
+    # 1b. Modify engine result via mock: add another needs_input item and verify C57 reason text
     orig_sc4 = bridge.get_scenario(4)
     mock_sc4 = copy.deepcopy(orig_sc4)
     req4 = next(item for item in mock_sc4["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
-    req4["needs_input"].append({"employee_id": "E04", "reason": "Bank KYC pending"})
+    req4["needs_input"].append({"employee_id": "E04", "reason": "attendance record missing"})
 
     with patch.object(bridge, "get_scenario", return_value=mock_sc4):
         res_mock = client.post("/api/chat", json={
@@ -917,11 +919,11 @@ def test_approval_blocked_reason_built_from_engine_data():
         })
         assert res_mock.status_code == 200
         card_mock = next(c for c in res_mock.json()["cards"] if c["type"] == "approval_card")
-        expected_reason = "3 items need input: Meera Nair's rating, Rohan Mehta's Bank KYC pending, Kavya Iyer's tax"
+        expected_reason = "2 items need input before this can be approved.\nMeera Nair's performance record is missing.\nRohan Mehta's attendance record is missing."
         assert card_mock["data"]["blocking_reason"] == expected_reason
         assert card_mock["data"]["disabled_label"] == expected_reason
 
-    # 1c. Engine gives no item list when incomplete: shows "Needs input before approval" with no count
+    # 1c. Engine gives no item list when incomplete: shows "Needs input before approval"
     mock_sc4_empty = copy.deepcopy(orig_sc4)
     req4_empty = next(item for item in mock_sc4_empty["result"]["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus")
     req4_empty["needs_input"] = []
@@ -940,7 +942,7 @@ def test_approval_blocked_reason_built_from_engine_data():
         assert card_empty["data"]["disabled_label"] == "Needs input before approval"
 
     # --- 2. Kavya Iyer's Arrears (Scenario 3) ---
-    # 2a. Default engine result produces dynamic blocking reason from missing attendance
+    # 2a. Default engine result produces dynamic blocking reason from missing attendance (C59)
     res_s3 = client.post("/api/chat", json={
         "user_id": "HR01",
         "action": "scenario-3",
@@ -948,8 +950,8 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s3.status_code == 200
     card_s3 = next(c for c in res_s3.json()["cards"] if c["type"] == "approval_card")
-    assert card_s3["data"]["blocking_reason"] == "1 item needs input: July attendance missing for Kavya Iyer"
-    assert card_s3["data"]["disabled_label"] == "1 item needs input: July attendance missing for Kavya Iyer"
+    assert card_s3["data"]["blocking_reason"] == "Kavya Iyer's July attendance record is missing."
+    assert card_s3["data"]["disabled_label"] == "Kavya Iyer's July attendance record is missing."
 
     # 2b. Modify engine result to have multiple missing months
     orig_sc3 = bridge.get_scenario(3)
@@ -967,9 +969,9 @@ def test_approval_blocked_reason_built_from_engine_data():
         })
         assert res_s3_multi.status_code == 200
         card_s3_multi = next(c for c in res_s3_multi.json()["cards"] if c["type"] == "approval_card")
-        assert card_s3_multi["data"]["blocking_reason"] == "2 items need input: July, June attendance missing for Kavya Iyer"
+        assert "July, June attendance record is missing" in card_s3_multi["data"]["blocking_reason"]
 
-    # 2c. Engine gives no missing months when incomplete: shows "Needs input before approval" with no count
+    # 2c. Engine gives no missing months when incomplete: shows "Needs input before approval"
     mock_sc3_empty = copy.deepcopy(orig_sc3)
     for m in mock_sc3_empty["result"]["months"]:
         m["paid_days"] = {"value": 30}
@@ -987,7 +989,7 @@ def test_approval_blocked_reason_built_from_engine_data():
         assert card_s3_empty["data"]["disabled_label"] == "Needs input before approval"
 
     # --- 3. Imran Khan's Settlement (Scenario 8) ---
-    # 3a. Default engine result produces dynamic blocking reason from unresolved asset clearance
+    # 3a. Default engine result produces dynamic blocking reason from unresolved asset clearance (C59)
     res_s8 = client.post("/api/chat", json={
         "user_id": "HR01",
         "action": "scenario-8",
@@ -995,10 +997,10 @@ def test_approval_blocked_reason_built_from_engine_data():
     })
     assert res_s8.status_code == 200
     card_s8 = next(c for c in res_s8.json()["cards"] if c["type"] == "approval_card")
-    assert card_s8["data"]["blocking_reason"] == "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
-    assert card_s8["data"]["disabled_label"] == "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+    assert card_s8["data"]["blocking_reason"] == "Imran Khan's laptop clearance is pending."
+    assert card_s8["data"]["disabled_label"] == "Imran Khan's laptop clearance is pending."
 
-    # 3b. Engine gives no unresolved list when incomplete: shows "Needs input before approval" with no count
+    # 3b. Engine gives no unresolved list when incomplete: shows "Needs input before approval"
     orig_sc8 = bridge.get_scenario(8)
     mock_sc8_empty = copy.deepcopy(orig_sc8)
     for k, v in mock_sc8_empty["result"]["components"].items():
@@ -1114,7 +1116,7 @@ def test_imran_khan_blocked_reason_built_only_from_data():
         disabled_label = approval_card["data"].get("disabled_label")
 
         # Must be built from clearance data
-        expected_reason = "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)"
+        expected_reason = "Imran Khan's laptop clearance is pending."
         assert blocking_reason == expected_reason, f"Scenario {sc_num} blocking reason mismatch: {blocking_reason}"
         assert disabled_label == expected_reason, f"Scenario {sc_num} disabled label mismatch: {disabled_label}"
 

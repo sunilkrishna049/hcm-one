@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 
 from .ai_messages import get_message
@@ -69,7 +69,6 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: July attendance missing for Kavya Iyer",
-        "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
         "scope_label": "Kavya Iyer · Apr–Sep 2026",
         "scope": {
             "employee_id": "E03",
@@ -86,7 +85,6 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
-        "disabled_reason": "Can't approve yet: 2 items need input.",
         "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
         "scope": {
             "department": "Engineering",
@@ -103,7 +101,6 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "2 items need input: Meera Nair's rating, Kavya Iyer's tax",
-        "disabled_reason": "Can't approve yet: 2 items need input.",
         "scope_label": "Annual performance bonus · Engineering · FY 2025-26",
         "scope": {
             "department": "Engineering",
@@ -119,13 +116,13 @@ DEFAULT_PROPOSALS = {
         "scenario_num": 4,
         "status": "Calculated; needs HR approval",
         "certainty": "Complete for this scope",
-        "scope_label": "Q2 Sales incentive · Hyderabad Sales · FY 2025-26",
+        "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26",
         "scope": {
             "department": "Hyderabad Sales",
             "period": "FY 2025-26",
             "bonus_type": "quarterly_sales_incentive",
             "scenario_num": 4,
-            "scope_label": "Q2 Sales incentive · Hyderabad Sales · FY 2025-26",
+            "scope_label": "Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26",
         },
         "current_version": 1,
     },
@@ -165,7 +162,6 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",
@@ -182,7 +178,6 @@ DEFAULT_PROPOSALS = {
         "status": "Calculated; needs HR approval",
         "certainty": "Incomplete",
         "blocking_reason": "1 item needs input: Asset clearance pending for Imran Khan (laptop pending)",
-        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
         "scope_label": "Imran Khan · Settlement",
         "scope": {
             "employee_id": "E12",
@@ -194,6 +189,130 @@ DEFAULT_PROPOSALS = {
         "current_version": 1,
     },
 }
+
+
+
+def _load_employee_names() -> dict:
+    emp_file = Path("data/mock/employees.json")
+    if emp_file.exists():
+        try:
+            emps = json.loads(emp_file.read_text(encoding="utf-8"))
+            return {e["employee_id"]: e["name"] for e in emps if "employee_id" in e and "name" in e}
+        except Exception:
+            pass
+    return {
+        "E01": "Priya Sharma", "E02": "Arjun Rao", "E03": "Kavya Iyer", "E04": "Rohan Mehta",
+        "E05": "Neha Gupta", "E06": "Siddharth Jain", "E07": "Sneha Kulkarni", "E08": "Vikram Singh",
+        "E09": "Meera Nair", "E10": "Rahul Verma", "E11": "Lakshmi Reddy", "E12": "Imran Khan",
+        "E13": "Ankit Jain", "E14": "Fatima Sheikh", "E15": "Deepak Pillai", "E16": "Pooja Das"
+    }
+
+EMPLOYEE_NAMES_MAP = _load_employee_names()
+
+
+def evaluate_proposal_readiness(
+    proposal_id: str,
+    proposal: Optional[dict] = None
+) -> Tuple[bool, Optional[str], Optional[str]]:
+    """Evaluates whether a proposal is ready for HR approval from data.
+    Single source of truth for both the Approve button state (disabled & disabled_reason)
+    and the Approvals List categorization (Ready to approve vs Needs input first).
+
+    Returns:
+        (is_ready, disabled_reason, row_reason)
+    """
+    if proposal is None:
+        saved = _read_json(PROPOSALS_FILE, {})
+        proposal = saved.get(proposal_id) or DEFAULT_PROPOSALS.get(proposal_id, {})
+
+    s_num = proposal.get("scenario_num")
+    scope = proposal.get("scope") or {}
+    b_type = scope.get("bonus_type")
+
+    if s_num in (1, 2, 6, 7):
+        return True, None, None
+
+    if s_num == 3:
+        try:
+            sc3 = bridge.get_scenario(3)
+            r = sc3.get("result", {})
+            missing_months = [
+                m.get("month") for m in r.get("months", [])
+                if (isinstance(m.get("paid_days"), dict) and m.get("paid_days", {}).get("value") is None)
+                or (isinstance(m.get("difference"), dict) and m.get("difference", {}).get("value") is None)
+                or m.get("difference") is None
+            ]
+            emp_id = r.get("employee_id") or scope.get("employee_id") or "E03"
+            emp_name = EMPLOYEE_NAMES_MAP.get(emp_id, scope.get("employee_name", "Kavya Iyer"))
+            if missing_months:
+                month_map = {
+                    "01": "January", "02": "February", "03": "March", "04": "April",
+                    "05": "May", "06": "June", "07": "July", "08": "August",
+                    "09": "September", "10": "October", "11": "November", "12": "December"
+                }
+                m_names = [month_map.get(m.split("-")[1], m) if "-" in m else m for m in missing_months]
+                missing_item = f"{', '.join(m_names)} attendance record"
+                reason_text = get_message("C59", Name=emp_name, item=missing_item, status="missing")
+                return False, reason_text, reason_text
+            if r.get("certainty") == "Incomplete":
+                return False, "Needs input before approval", "Needs input before approval"
+            return True, None, None
+        except Exception:
+            return True, None, None
+
+    if s_num == 4:
+        is_sales = (proposal_id == "PROP-SCENARIO-4-SALES" or b_type == "quarterly_sales_incentive")
+        try:
+            sc4 = bridge.get_scenario(4)
+            reqs = sc4.get("result", {}).get("bonus_requests", [])
+            target_type = "quarterly_sales_incentive" if is_sales else "annual_performance_bonus"
+            req = next((it for it in reqs if it.get("bonus_type") == target_type), None)
+            if not req:
+                req = reqs[1] if (is_sales and len(reqs) > 1) else reqs[0]
+
+            needs_input = req.get("needs_input", [])
+            if needs_input:
+                reasons = []
+                for item in needs_input:
+                    eid = item.get("employee_id")
+                    ename = EMPLOYEE_NAMES_MAP.get(eid, "Meera Nair")
+                    r_desc = item.get("reason", "record missing")
+                    if "performance" in r_desc.lower():
+                        reasons.append(f"{ename}'s performance record is missing.")
+                    elif "attendance" in r_desc.lower():
+                        reasons.append(f"{ename}'s attendance record is missing.")
+                    else:
+                        reasons.append(f"{ename}'s {r_desc.lower()}")
+                if len(reasons) == 1:
+                    reason_text = reasons[0]
+                else:
+                    reason_text = get_message("C57", count=len(reasons)) + "\n" + "\n".join(reasons)
+                return False, reason_text, reason_text
+            if req.get("certainty") == "Incomplete":
+                return False, "Needs input before approval", "Needs input before approval"
+            return True, None, None
+        except Exception:
+            return True, None, None
+
+    if s_num in (8, 13):
+        try:
+            sc8 = bridge.get_scenario(s_num)
+            r = sc8.get("result", {})
+            components = r.get("components", {})
+            asset_rec = components.get("asset_recovery", {})
+            emp_id = r.get("employee_id") or scope.get("employee_id") or "E12"
+            emp_name = EMPLOYEE_NAMES_MAP.get(emp_id, scope.get("employee_name", "Imran Khan"))
+            if isinstance(asset_rec, dict) and asset_rec.get("status") == "Unresolved":
+                item_desc = "laptop clearance"
+                reason_text = get_message("C59", Name=emp_name, item=item_desc, status="pending")
+                return False, reason_text, reason_text
+            if r.get("certainty") == "Incomplete":
+                return False, "Needs input before approval", "Needs input before approval"
+            return True, None, None
+        except Exception:
+            return True, None, None
+
+    return True, None, None
 
 
 class LifecycleStore:

@@ -16,7 +16,7 @@ from .ai_messages import get_message
 from .auth import USERS, check_employee_access
 from .engine_bridge import bridge
 from .faq_matcher import faq_matcher
-from .lifecycle import lifecycle
+from .lifecycle import lifecycle, evaluate_proposal_readiness
 from .permissions import get_mentioned_employee_ids, enforce_reply_permissions
 
 RULES_DIR = Path(__file__).resolve().parents[2] / "data" / "rules"
@@ -1349,22 +1349,9 @@ class ChatRouter:
         sep_diff = next((m.get("difference", {}).get("value") for m in r.get("months", []) if m.get("month") == "2026-09"), None)
         eng_cert = _get_engine_certainty(r)
         # Build blocking reason dynamically from engine result months
-        missing_months = [m.get("month") for m in r.get("months", []) if (isinstance(m.get("paid_days"), dict) and m.get("paid_days", {}).get("value") is None) or m.get("difference", {}).get("value") is None]
-        s3_emp_id = r.get("employee_id")
-        s3_emp_name = get_employee_name(s3_emp_id)
-        if missing_months:
-            month_map = {"01": "January", "02": "February", "03": "March", "04": "April", "05": "May", "06": "June", "07": "July", "08": "August", "09": "September", "10": "October", "11": "November", "12": "December"}
-            m_names = [month_map.get(m.split("-")[1], m) if "-" in m else m for m in missing_months]
-            count = len(missing_months)
-            item_word = "item needs" if count == 1 else "items need"
-            s3_blocking_reason = f"{count} {item_word} input: {', '.join(m_names)} attendance missing for {s3_emp_name}"
-            s3_disabled = True
-        elif eng_cert == "Incomplete":
-            s3_blocking_reason = "Needs input before approval"
-            s3_disabled = True
-        else:
-            s3_blocking_reason = None
-            s3_disabled = False
+        is_ready_s3, disabled_reason_s3, row_reason_s3 = evaluate_proposal_readiness("PROP-SCENARIO-3")
+        s3_disabled = not is_ready_s3
+        s3_blocking_reason = disabled_reason_s3
 
         return {
             "messages": [
@@ -1415,7 +1402,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s3_disabled,
                         "blocking_reason": s3_blocking_reason,
-                        "disabled_reason": "Can't approve yet: Kavya Iyer's July attendance record is missing.",
+                        "disabled_reason": s3_blocking_reason,
                         "disabled_label": s3_blocking_reason
                     }
                 }
@@ -1499,14 +1486,14 @@ class ChatRouter:
         needs_input_list = req.get("needs_input", [])
 
         if bonus_type_key == "quarterly_sales_incentive":
-            display_bonus_type = "Q2 Sales incentive"
+            display_bonus_type = "Sales incentive"
             display_period = req.get("period", "Q2 2026-27")
-            card_title = "Q2 sales incentive summary"
+            card_title = "Sales incentive summary"
             prop_id = "PROP-SCENARIO-4-SALES"
-            prop_scope_label = f"Q2 Sales incentive · Hyderabad Sales · {display_period}"
-            s4_blocking_reason = None
-            s4_disabled_reason = None
-            s4_disabled = False
+            prop_scope_label = f"Sales incentive ({display_period}) · Hyderabad Sales · FY 2025-26"
+            is_ready_s4, s4_disabled_reason, _ = evaluate_proposal_readiness(prop_id)
+            s4_blocking_reason = s4_disabled_reason
+            s4_disabled = not is_ready_s4
             emp_formulas = [
                 f"{e['employee_id']} ({get_employee_name(e['employee_id'])}): Sales incentive {format_inr(e.get('amount', {}).get('value'))}"
                 for e in req.get("employees", [])
@@ -1518,47 +1505,9 @@ class ChatRouter:
             prop_id = "PROP-SCENARIO-4-ANNUAL"
             prop_scope_label = f"Annual performance bonus · Engineering · {display_period}"
 
-            # Approval blocked reason built dynamically from engine data (needs_input & incomplete employees)
-            blocked_items = []
-            for item in req.get("needs_input", []):
-                eid = item.get("employee_id")
-                emp_name = get_employee_name(eid) if eid else None
-                reason = item.get("reason", "input needed")
-                if "performance" in reason.lower() or "rating" in reason.lower():
-                    desc = f"{emp_name}'s rating" if emp_name else "Rating"
-                else:
-                    desc = f"{emp_name}'s {reason}" if emp_name else reason
-                blocked_items.append(desc)
-
-            for e in req.get("employees", []):
-                eid = e.get("employee_id")
-                emp_name = get_employee_name(eid) if eid else None
-                if e.get("certainty") == "Incomplete" and eid not in [item.get("employee_id") for item in req.get("needs_input", [])]:
-                    tds_val = e.get("tds_impact", {}).get("value") if isinstance(e.get("tds_impact"), dict) else e.get("tds_impact")
-                    tds_cert = e.get("tds_estimate", {}).get("certainty") if isinstance(e.get("tds_estimate"), dict) else None
-                    if tds_val is None or tds_cert == "Incomplete":
-                        desc = f"{emp_name}'s tax" if emp_name else "Tax"
-                    else:
-                        desc = f"{emp_name}'s data incomplete" if emp_name else "Data incomplete"
-                    blocked_items.append(desc)
-
-            if blocked_items:
-                count = len(blocked_items)
-                item_word = "item needs" if count == 1 else "items need"
-                s4_blocking_reason = f"{count} {item_word} input: {', '.join(blocked_items)}"
-                if count == 1:
-                    s4_disabled_reason = f"Can't approve yet: {blocked_items[0]} is missing."
-                else:
-                    s4_disabled_reason = f"Can't approve yet: {count} items need input."
-                s4_disabled = True
-            elif eng_cert == "Incomplete":
-                s4_blocking_reason = "Needs input before approval"
-                s4_disabled_reason = "Can't approve yet: 2 items need input."
-                s4_disabled = True
-            else:
-                s4_blocking_reason = None
-                s4_disabled_reason = None
-                s4_disabled = False
+            is_ready_s4, s4_disabled_reason, s4_row_reason = evaluate_proposal_readiness(prop_id)
+            s4_blocking_reason = s4_disabled_reason
+            s4_disabled = not is_ready_s4
             emp_map = {e["employee_id"]: e for e in req.get("employees", [])}
             e01_amt = emp_map.get("E01", {}).get("amount", {}).get("value")
             e03_amt = emp_map.get("E03", {}).get("amount", {}).get("value")
@@ -1576,7 +1525,7 @@ class ChatRouter:
 
         # F3: Bonus summary replies use templates only (C54 / C55)
         if bonus_type_key == "quarterly_sales_incentive":
-            display_bonus_name = f"Q2 Sales incentive ({display_period})"
+            display_bonus_name = f"Sales incentive ({display_period})"
         else:
             display_bonus_name = f"Engineering annual performance bonus ({display_period})"
 
@@ -1728,7 +1677,9 @@ class ChatRouter:
         c = r["components"]
         eng_cert = _get_engine_certainty(r)
         return {
-            "messages": [],
+            "messages": [
+                {"code": "C64", "text": get_message("C64", Name="Rahul Verma")}
+            ],
             "cards": [
                 {
                     "id": "card-settlement-s6",
@@ -1818,7 +1769,9 @@ class ChatRouter:
         grat_amt = c.get("gratuity", {}).get("amount", {}).get("value")
         eng_cert = _get_engine_certainty(r)
         return {
-            "messages": [],
+            "messages": [
+                {"code": "C64", "text": get_message("C64", Name="Lakshmi Reddy")}
+            ],
             "cards": [
                 {
                     "id": "card-settlement-s7",
@@ -1901,16 +1854,9 @@ class ChatRouter:
             if _fv is None:
                 logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
 
-        comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
-        unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
-        if unresolved_recs:
-            s8_blocking_reason, s8_disabled = _build_clearance_blocked_reason(s8_emp_id, s8_emp_name, c)
-        elif eng_cert == "Incomplete":
-            s8_blocking_reason = "Needs input before approval"
-            s8_disabled = True
-        else:
-            s8_blocking_reason = None
-            s8_disabled = False
+        is_ready_s8, disabled_reason_s8, row_reason_s8 = evaluate_proposal_readiness("PROP-SCENARIO-8")
+        s8_disabled = not is_ready_s8
+        s8_blocking_reason = disabled_reason_s8
 
         return {
             "messages": [
@@ -1964,7 +1910,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s8_disabled,
                         "blocking_reason": s8_blocking_reason,
-                        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
+                        "disabled_reason": s8_blocking_reason,
                         "disabled_label": s8_blocking_reason
                     }
                 }
@@ -2323,16 +2269,9 @@ class ChatRouter:
             if _fv is None:
                 logger.warning(f"Masked warning: Engine field '{_fn}' is missing; omitted from display.")
 
-        comp_list = list(c.values()) if isinstance(c, dict) else (c if isinstance(c, list) else [])
-        unresolved_recs = [comp for comp in comp_list if isinstance(comp, dict) and comp.get("status") == "Unresolved"]
-        if unresolved_recs:
-            s13_blocking_reason, s13_disabled = _build_clearance_blocked_reason(s13_emp_id, s13_emp_name, c)
-        elif eng_cert == "Incomplete":
-            s13_blocking_reason = "Needs input before approval"
-            s13_disabled = True
-        else:
-            s13_blocking_reason = None
-            s13_disabled = False
+        is_ready_s13, disabled_reason_s13, row_reason_s13 = evaluate_proposal_readiness("PROP-SCENARIO-13")
+        s13_disabled = not is_ready_s13
+        s13_blocking_reason = disabled_reason_s13
         return {
             "messages": [
                 {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
@@ -2384,7 +2323,7 @@ class ChatRouter:
                         "version": 1,
                         "disabled": s13_disabled,
                         "blocking_reason": s13_blocking_reason,
-                        "disabled_reason": "Can't approve yet: Imran Khan's asset clearance is missing.",
+                        "disabled_reason": s13_blocking_reason,
                         "disabled_label": s13_blocking_reason
                     }
                 }
@@ -3019,9 +2958,10 @@ class ChatRouter:
 
         version = int(req_version)
 
+        is_ready, disabled_reason, _ = evaluate_proposal_readiness(prop_id, existing_prop)
         prop_cert = existing_prop.get("certainty")
-        if prop_cert != "Complete for this scope":
-            blocking_reason = existing_prop.get("blocking_reason") or "Needs input before approval"
+        if not is_ready or prop_cert != "Complete for this scope":
+            blocking_reason = disabled_reason or existing_prop.get("blocking_reason") or "Needs input before approval"
             s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
             return {
                 "messages": [{"code": "C07", "text": f"Cannot approve proposal: {blocking_reason}"}],
@@ -3973,8 +3913,10 @@ class ChatRouter:
                 emp_name = scope.get("employee_name") or EMPLOYEE_NAMES.get(emp_id, emp_id)
                 if s_num in (1, 2, 3):
                     kind_label = "Salary revision"
-                elif s_num in (6, 7, 8, 13):
+                elif s_num in (6, 7, 8):
                     kind_label = "Full and final settlement"
+                elif s_num == 13:
+                    kind_label = "Exit Settlement Breakdown"
                 else:
                     kind_label = p.get("type") or "Salary revision"
                 name_code = f"{kind_label} · {emp_name} · {emp_id}"
@@ -3990,8 +3932,8 @@ class ChatRouter:
                 continue
             seen_keys.add(dedup_key)
 
-            cert = p.get("certainty")
-            blocked_reason = p.get("blocking_reason") or p.get("blocked_reason")
+            is_ready, disabled_reason, row_reason = evaluate_proposal_readiness(pid, p)
+            cert = "Complete for this scope" if is_ready else "Incomplete"
             item_data = {
                 "label": name_code,
                 "name_code": name_code,
@@ -4001,19 +3943,11 @@ class ChatRouter:
                 "proposal_id": pid,
                 "scenario_num": s_num
             }
-            if cert == "Complete for this scope":
+            if is_ready:
                 ready_items.append(item_data)
             else:
-                # Recorded reason display (F1)
-                display_reason = blocked_reason
-                if s_num == 4:
-                    display_reason = "Meera Nair · E09: performance record missing"
-                elif s_num == 3:
-                    display_reason = "Kavya Iyer · E03: July attendance record missing"
-                elif s_num in (8, 13):
-                    display_reason = "Imran Khan · E12: asset clearance pending (laptop pending)"
-                item_data["blocked_reason"] = display_reason
-                item_data["reason"] = display_reason
+                item_data["blocked_reason"] = row_reason
+                item_data["reason"] = row_reason
                 needs_input_items.append(item_data)
 
         if not ready_items and not needs_input_items:

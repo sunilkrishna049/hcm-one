@@ -61,8 +61,14 @@ AI_MESSAGES = {
     "C54": "{bonus_name}: {eligible} eligible, {not_eligible} not eligible, {waiting} waiting for input.",
     "C55": "{bonus_name}: {eligible} eligible, {not_eligible} not eligible.",
     "C56": "Can't approve yet: {Name}'s {missing_item} is missing.",
-    "C57": "Can't approve yet: {n} items need input.",
+    "C57": "{count} items need input before this can be approved.",
     "C58": "Your {month} take-home is {amount} lower than {previous_month}. The main recorded reasons are below.",
+    "C59": "{Name}'s {item} is {status}.",
+    "C60": "Your {month} take-home is the same as {previous month}.",
+    "C61": "{Name}'s {month} take-home is the same as {previous month}.",
+    "C62": "Your {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below.",
+    "C63": "{Name}'s {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below.",
+    "C64": "Here is the full and final settlement proposal for {Name}.",
     "FAQ": "Here is the recorded meaning from the payroll glossary:",
     "REJECTED": "The proposal has been rejected.",
     "NO_QUERY": "You do not have any open payroll queries recorded.",
@@ -87,14 +93,25 @@ AI_MESSAGES_HR = {
     "C51": "Mark {Name}'s query as resolved?",
     "C53": "{Name}'s PAN and bank details are masked and can't be shown in chat.",
     "C56": "Can't approve yet: {Name}'s {missing_item} is missing.",
-    "C57": "Can't approve yet: {n} items need input.",
+    "C57": "{count} items need input before this can be approved.",
     "C58": "{Name}'s {month} take-home is {amount} lower than {previous_month}. The main recorded reasons are below.",
+    "C59": "{Name}'s {item} is {status}.",
+    "C60": "{Name}'s {month} take-home is the same as {previous month}.",
+    "C61": "{Name}'s {month} take-home is the same as {previous month}.",
+    "C62": "{Name}'s {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below.",
+    "C63": "{Name}'s {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below.",
+    "C64": "Here is the full and final settlement proposal for {Name}.",
     "HR_NO_QUERY": "No open payroll query was found for {Name}.",
     "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
 }
 
 
 def get_message(code: str, role: str = "Employee", **kwargs) -> str:
+    if code == "C57":
+        if "count" not in kwargs and "n" in kwargs:
+            kwargs["count"] = kwargs["n"]
+        elif "n" not in kwargs and "count" in kwargs:
+            kwargs["n"] = kwargs["count"]
     template = AI_MESSAGES.get(code, "")
     is_hr = role == "HR Admin" or "Name" in kwargs or "name" in kwargs or kwargs.get("role") == "HR Admin"
     if is_hr and code in AI_MESSAGES_HR:

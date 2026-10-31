@@ -5,6 +5,7 @@ import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
 import { App } from '../App';
 import { CardRenderer } from '../design-system/components/cards/CardRenderer';
+import { AssistantTurn } from '../design-system/components/chat/AssistantTurn';
 import { api } from '../services/api';
 import fixtures from './chat_scenario_fixtures.json';
 
@@ -1310,7 +1311,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
   });
 
   describe('Live-test fixes F1-F10 verification', () => {
-    it('F1: ComponentListCard renders non-empty rows with title and recorded reasons', () => {
+    it('F1 & R2: ComponentListCard renders non-empty proposal rows with title and recorded reasons from data', () => {
       const mockCard = {
         id: 'card-ready',
         type: 'component_list',
@@ -1321,14 +1322,14 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
           count: 2,
           items: [
             { label: 'Salary revision · Priya Sharma · E01', status: 'Ready' },
-            { label: 'Annual performance bonus · Engineering · FY 2025-26', status: 'Ready' },
+            { label: 'Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26', status: 'Ready' },
           ],
         },
       };
       const { unmount } = render(<CardRenderer card={mockCard} />);
       expect(screen.getByText('Ready to approve')).toBeInTheDocument();
       expect(screen.getByText('Salary revision · Priya Sharma · E01')).toBeInTheDocument();
-      expect(screen.getByText('Annual performance bonus · Engineering · FY 2025-26')).toBeInTheDocument();
+      expect(screen.getByText('Sales incentive (Q2 2026-27) · Hyderabad Sales · FY 2025-26')).toBeInTheDocument();
       unmount();
 
       const mockNeedsInputCard = {
@@ -1340,13 +1341,33 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
           title: 'Needs input first',
           count: 1,
           items: [
-            { label: 'Meera Nair · E09', reason: 'Meera Nair · E09: performance record missing', status: 'Pending input' },
+            { label: 'Annual performance bonus · Engineering · FY 2025-26', reason: "Meera Nair's performance record is missing.", status: 'Pending input' },
           ],
         },
       };
       render(<CardRenderer card={mockNeedsInputCard} />);
       expect(screen.getByText('Needs input first')).toBeInTheDocument();
-      expect(screen.getByText('Meera Nair · E09: performance record missing')).toBeInTheDocument();
+      expect(screen.getByText('Annual performance bonus · Engineering · FY 2025-26')).toBeInTheDocument();
+      expect(screen.getByText("Meera Nair's performance record is missing.")).toBeInTheDocument();
+    });
+
+    it('R4: AssistantTurn renders refusal sentence exactly once when refusal card is present', () => {
+      const refusalSentence = 'I cannot provide that information. I can help with payroll records you are authorized to access.';
+      const messages = [{ code: 'C10', text: refusalSentence }];
+      const cards = [
+        {
+          id: 'card-refusal',
+          type: 'refusal_card',
+          title: 'Access Restricted',
+          certainty: 'Complete for this scope',
+          data: {
+            reason: refusalSentence,
+          },
+        },
+      ];
+      render(<AssistantTurn messages={messages} cards={cards} />);
+      const elements = screen.getAllByText(refusalSentence);
+      expect(elements).toHaveLength(1);
     });
 
     it('F2 Guard: Cards never render a certainty badge (.hcm-certainty-badge)', () => {
@@ -1394,13 +1415,13 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
           proposal_id: 'PROP-BONUS-ENG',
           version: 1,
           disabled: true,
-          blocking_reason: "Can't approve yet: 1 item needs input.",
+          blocking_reason: "Approval blocked: 1 item needs input.",
         },
       };
       const { container } = render(<CardRenderer card={disabledCard} />);
       const reasonEl = container.querySelector('.hcm-approval-disabled-reason');
       expect(reasonEl).not.toBeNull();
-      expect(reasonEl).toHaveTextContent("Can't approve yet: 1 item needs input.");
+      expect(reasonEl).toHaveTextContent("Approval blocked: 1 item needs input.");
       const approveBtn = screen.getByRole('button', { name: /Approve proposal for payroll/i });
       expect(approveBtn).toBeDisabled();
       expect(approveBtn.getAttribute('aria-describedby')).toBe('approval-reason-card-approval-disabled');

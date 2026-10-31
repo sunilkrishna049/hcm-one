@@ -4,6 +4,15 @@ An intelligent, dual-role (Employee & HR) payroll assistant built with a determi
 
 ---
 
+## AI Architecture: DEC-044 (Option A)
+
+HCM One operates under **Option A ("The AI understands; approved templates speak")**:
+- **Intent Understanding & Entity Extraction**: The AI (CrewAI + OpenAI) classifies user questions and extracts entities (employee names, months, bonus types).
+- **Sentence Drafting**: AI free-form sentence generation is disabled (`AI_DRAFTING_ENABLED = False`). All user-facing messages are rendered strictly using approved statutory message templates (`ai_messages.py` codes C01–C64).
+- **Calculation & Data Integrity**: All numbers, deductions, arrears, and eligibility counts come deterministically from the payroll engine and pass mechanical runtime guards.
+
+---
+
 ## Deploy
 
 Step-by-step instructions for the project owner to deploy the application to production using a private GitHub repository, Render for the backend, and Vercel for the frontend.

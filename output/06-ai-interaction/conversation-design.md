@@ -169,9 +169,21 @@ Suggested status wording: "Your query is Sent. HR can access it for review." "Yo
 - **Approved wording (C54):** "{Bonus name}: {n} eligible, {n} not eligible, {n} waiting for input." (Approved by: Project owner).
 - **Approved wording (C55):** "{Bonus name}: {n} eligible, {n} not eligible." (Approved by: Project owner).
 - **Approved wording (C56):** "Can't approve yet: {Name}'s {missing item} is missing." (Approved by: Project owner).
-- **Approved wording (C57):** "Can't approve yet: {n} items need input." (Approved by: Project owner).
+- **Approved wording (C57):** "{count} items need input before this can be approved." (Approved by: Project owner).
 - **Approved wording (C58):** "Your {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
   HR version: "{Name}'s {month} take-home is {amount} lower than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
+- **Approved wording (C59):** "{Name}'s {item} is {status}." (Approved by: Project owner).
+- **Approved wording (C60):** "Your {month} take-home is the same as {previous month}." (Approved by: Project owner).
+- **Approved wording (C61):** "{Name}'s {month} take-home is the same as {previous month}." (Approved by: Project owner).
+- **Approved wording (C62):** "Your {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
+- **Approved wording (C63):** "{Name}'s {month} TDS is {amount} higher than {previous month}. The main recorded reasons are below." (Approved by: Project owner).
+- **Approved wording (C64):** "Here is the full and final settlement proposal for {Name}." (Approved by: Project owner).
+
+### DEC-044: AI understands, templates speak
+- **Date**: 2026-10-31
+- **Status**: Approved by Project owner
+- **Decision**: Turn OFF AI sentence drafting for all intents. The AI is used exclusively for intent understanding and entity extraction; approved templates speak every user-facing message.
+- **Reason**: In the live test on 30 Oct 2026, two AI-drafted sentences passed every safety check but were unclear: the vague bonus summary and "Your salary decreased by −₹5,420". Safety checks catch wrong numbers and leaks, not unclear wording.
 
 ## 8. Example conversations (5)
 

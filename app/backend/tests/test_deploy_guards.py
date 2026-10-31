@@ -1,3 +1,4 @@
+from pathlib import Path
 """Tests for Deployment Preparation (Prompt 5).
 Verifies:
 1. GET /api/health returns {"status": "ok"}.
@@ -106,3 +107,26 @@ def test_daily_ai_call_cap(caplog):
         backend_config.AI_MODE = orig_mode
         backend_config.OPENAI_API_KEY = orig_key
         cap_manager.reset(count=0)
+
+
+def test_cant_approve_yet_static_guard():
+    """R3: Static guard: no unapproved reason text outside ai_messages.py."""
+    root_path = Path(__file__).resolve().parent.parent.parent.parent
+    phrase = chr(67) + chr(97) + chr(110) + chr(39) + chr(116) + ' approve yet'
+    violating_files = []
+
+    for ext in ("*.py", "*.ts", "*.tsx"):
+        for p in root_path.rglob(ext):
+            p_str = str(p)
+            if any(ignore in p_str for ignore in (".git", "node_modules", ".venv", "__pycache__", "scratch")):
+                continue
+            if p.name == "ai_messages.py":
+                continue
+            try:
+                text = p.read_text(encoding="utf-8", errors="ignore")
+                if phrase in text:
+                    violating_files.append(str(p.relative_to(root_path)))
+            except Exception:
+                pass
+
+    assert not violating_files, f"Found '{phrase}' in unauthorized files: {violating_files}"

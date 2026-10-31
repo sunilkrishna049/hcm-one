@@ -150,7 +150,7 @@ def test_bonus_selection_dispatches_proposal():
     assert res_sales.status_code == 200
     sales_data = res_sales.json()
     assert sales_data["messages"][0]["code"] == "C55"
-    assert sales_data["messages"][0]["text"] == "Q2 Sales incentive (Q2 2026-27): 3 eligible, 0 not eligible."
+    assert sales_data["messages"][0]["text"] == "Sales incentive (Q2 2026-27): 3 eligible, 0 not eligible."
 
 
 def test_no_c03_in_bonus_or_settlement_replies():
