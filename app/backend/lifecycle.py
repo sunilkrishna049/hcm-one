@@ -722,13 +722,18 @@ class LifecycleStore:
         query = next((q for q in queries if q["query_id"] == query_id), None)
         if not query:
             raise HTTPException(status_code=404, detail="Query not found")
-        if query["status"] != "Resolved":
-            raise HTTPException(status_code=400, detail="Only a resolved query can be closed.")
         query["status"] = "Closed"
         query["closed_at"] = _now_iso()
-        query.setdefault("history", []).append({"status": "Closed", "time": _now_iso(), "actor": actor["user_id"]})
+        actor_name = actor.get("name") or actor.get("user_id") or "HR Admin"
+        query["closed_by"] = actor_name
+        query.setdefault("history", []).append({
+            "status": "Closed",
+            "time": _now_iso(),
+            "actor": actor["user_id"],
+            "actor_name": actor_name
+        })
         _write_json(QUERIES_FILE, queries)
-        event = self.record_event("close", actor, {"query_id": query_id, "status": "Closed"})
+        event = self.record_event("close", actor, {"query_id": query_id, "status": "Closed", "closed_by": actor_name})
         return {"query": query, "status": "Closed", "event": event, "message": get_message("C24")}
 
 

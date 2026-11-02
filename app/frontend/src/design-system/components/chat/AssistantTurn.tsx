@@ -95,6 +95,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
           {cards.map((c) => (
             <CardRenderer
               key={c.id || Math.random().toString()}
+              role={state?.role}
               card={c}
               onShowCalculation={onShowCalculation}
               onApprove={onApprove}

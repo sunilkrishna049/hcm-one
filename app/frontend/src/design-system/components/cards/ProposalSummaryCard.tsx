@@ -30,6 +30,12 @@ interface ProposalSummaryCardProps {
       bonus_amount?: number | null;
       due_date?: string;
       employee_names?: Record<string, string>;
+      version?: number;
+      edit_reason?: string;
+      reason?: string;
+      changes?: string;
+      edited_line?: string;
+      proposed_value?: any;
     };
   };
 }
@@ -47,10 +53,25 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
               {d.employee_name} {d.employee_id ? <>· <span style={{ color: 'var(--color-text-muted)' }}>{d.employee_id}</span></> : ''}
             </span>
           )}
+          {d.version !== undefined && (
+            <div className="hcm-card-subtitle tnum" style={{ color: 'var(--color-text-secondary)', fontSize: '12px', marginTop: '2px' }}>
+              Version {d.version} {d.status ? `• ${d.status}` : ''}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="hcm-card-body">
+        {(d.edit_reason || d.reason || d.changes || d.edited_line) && (
+          <div className="hcm-card-flag-note" style={{ marginBottom: 'var(--space-3)', padding: 'var(--space-2) var(--space-3)', backgroundColor: 'var(--color-surface-hover)', borderRadius: '6px', fontSize: '13px', border: '1px solid var(--color-divider)' }}>
+            {(d.edit_reason || d.reason) && (
+              <div><strong>Recorded edit reason:</strong> {d.edit_reason || d.reason}</div>
+            )}
+            {(d.changes || d.edited_line) && (
+              <div style={{ marginTop: '2px' }}><strong>What changed:</strong> {d.changes || `${d.edited_line}: ${d.proposed_value}`}</div>
+            )}
+          </div>
+        )}
         {d.requested_hike && (
           <div className="hcm-key-value-grid">
             <div className="hcm-kv-item">

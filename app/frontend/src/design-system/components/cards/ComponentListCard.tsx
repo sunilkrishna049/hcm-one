@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatINR, formatHumanDate } from '../../../utils/format';
+import { formatINR, formatNumberPlain, isCountLabel, formatHumanDate } from '../../../utils/format';
 
 interface SettlementComponent {
   name?: string;
@@ -63,7 +63,7 @@ export const ComponentListCard: React.FC<ComponentListCardProps> = ({ card }) =>
         <div className="hcm-hero-number-box" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="hcm-hero-label">{d.hero_label}</span>
           <div className="hcm-hero-amount tnum" data-testid="hero-amount">
-            {formatINR(d.hero_amount)}
+            {isCountLabel(d.hero_label) ? formatNumberPlain(d.hero_amount) : formatINR(d.hero_amount)}
           </div>
           {(d.gross_payables !== undefined || d.total_deductions !== undefined) && (
             <div className="hcm-hero-sublabel">

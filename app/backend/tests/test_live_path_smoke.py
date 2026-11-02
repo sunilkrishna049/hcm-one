@@ -95,6 +95,33 @@ class MockSmokeLLM:
                 "is_prompt_injection": False,
                 "clarification_needed": False
             }
+        if "prepare a bonus proposal" in lower or lower.strip() == "bonus":
+            return {
+                "intent": "clarifying_question",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": True
+            }
+        if "why was there lop" in lower or "lop days" in lower or "loss of pay" in lower:
+            return {
+                "intent": "lop_days",
+                "scenario_num": None,
+                "entities": {"month": "2026-09"},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
+        if any(phr in lower for phr in ["who took this action", "who closed", "who resolved", "who replied", "who actioned", "who handled"]):
+            return {
+                "intent": "query_status",
+                "scenario_num": None,
+                "entities": {},
+                "confidence": 0.98,
+                "is_prompt_injection": False,
+                "clarification_needed": False
+            }
         return {
             "intent": "unknown",
             "scenario_num": None,
@@ -331,3 +358,240 @@ def test_live_path_smoke_sequence_in_order():
     reason_s8 = s8_approval["data"].get("blocking_reason") or s8_approval["data"].get("disabled_label") or ""
     assert CANT_APPROVE_PREFIX in reason_s8
     assert "laptop clearance is pending" in reason_s8
+
+
+
+def test_guard_all_suggestion_chips_click_without_failure():
+    """GUARD: Every suggestion chip the app shows (HR default chips, Employee default chips,
+    chips returned in replies for main scenarios) is clicked/sent once with AI mocked ON.
+    Asserts none returns generic 'did not produce a usable result' or C33.
+    """
+    # Autouse fixture sets MockSmokeLLM and AI_MODE=True
+
+    from app.backend.chat_router import _get_user_fallback_chips
+    from app.backend.auth import USERS
+
+    hr_user = USERS["HR01"]
+    emp_user = USERS["USER-E05"]
+
+    chips_to_test = []
+
+    # HR default chips
+    for chip in _get_user_fallback_chips(hr_user):
+        chips_to_test.append(("HR01", chip))
+
+    # Employee default chips
+    for chip in _get_user_fallback_chips(emp_user):
+        chips_to_test.append(("USER-E05", chip))
+
+    # Fetch chips from main scenarios
+    scenario_requests = [
+        ("HR01", "Show pending proposals for approval"),
+        ("HR01", "Show Imran Khan's settlement"),
+        ("USER-E05", "Why is my salary less this month?"),
+    ]
+    for uid, msg in scenario_requests:
+        resp = client.post(
+            "/api/chat",
+            json={"user_id": uid, "message": msg},
+            headers={"X-User-Id": uid}
+        )
+        if resp.status_code == 200:
+            for ch in resp.json().get("chips", []):
+                chips_to_test.append((uid, ch))
+
+    assert len(chips_to_test) >= 8, f"Expected at least 8 chips, found {len(chips_to_test)}"
+
+    for uid, chip in chips_to_test:
+        label = chip.get("label", "")
+        action = chip.get("action")
+        payload = chip.get("payload", {})
+
+        req_body = {
+            "user_id": uid,
+            "message": label,
+        }
+        if action:
+            req_body["action"] = action
+            req_body["context"] = payload
+
+        res = client.post(
+            "/api/chat",
+            json=req_body,
+            headers={"X-User-Id": uid}
+        )
+        assert res.status_code == 200, f"Chip '{label}' returned status {res.status_code}"
+        data = res.json()
+        dump = json.dumps(data)
+
+        assert GENERIC_ERROR not in dump, f"Chip '{label}' triggered GENERIC_ERROR: {dump}"
+        codes = [m.get("code") for m in data.get("messages", [])]
+        assert "C33" not in codes, f"Chip '{label}' triggered C33 fallback: {codes}"
+
+
+def test_guard_tester_sequences_u1_to_u5():
+    """GUARD: Exact verification of user tester bug scenarios U1 through U5."""
+    # Autouse fixture sets MockSmokeLLM and AI_MODE=True
+
+    # -------------------------------------------------------------
+    # U1: Employee "Why was there LOP in my last month salary?"
+    # Must show Recorded LOP days: 3 without "₹"
+    # -------------------------------------------------------------
+    r_u1 = client.post(
+        "/api/chat",
+        json={"user_id": "USER-E05", "message": "Why was there LOP in my last month salary?"},
+        headers={"X-User-Id": "USER-E05"}
+    )
+    assert r_u1.status_code == 200
+    d_u1 = r_u1.json()
+    assert GENERIC_ERROR not in json.dumps(d_u1)
+    
+    lop_card = next((c for c in d_u1.get("cards", []) if c.get("type") == "number_hero"), None)
+    assert lop_card is not None
+    assert lop_card["data"].get("hero_label") == "Recorded LOP days"
+    assert lop_card["data"].get("hero_amount") == 3
+    # Check that day count is never a string with rupee
+    assert "₹3" not in json.dumps(lop_card["data"])
+
+    # -------------------------------------------------------------
+    # U2: HR "prepare a bonus proposal" (and clicking "Prepare a bonus proposal")
+    # Must return bonus type picker ("Which bonus type do you mean?")
+    # -------------------------------------------------------------
+    r_u2 = client.post(
+        "/api/chat",
+        json={"user_id": "HR01", "message": "prepare a bonus proposal"},
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_u2.status_code == 200
+    d_u2 = r_u2.json()
+    assert GENERIC_ERROR not in json.dumps(d_u2)
+    clarify_card = next((c for c in d_u2.get("cards", []) if c.get("type") == "clarifying_question"), None)
+    assert clarify_card is not None
+    assert "Which bonus type do you mean?" in clarify_card["data"].get("question")
+    assert len(clarify_card["data"].get("choices", [])) >= 2
+
+    # Click chip "Prepare a bonus proposal"
+    r_u2_chip = client.post(
+        "/api/chat",
+        json={"user_id": "HR01", "message": "Prepare a bonus proposal", "action": "bonus-picker", "context": {}},
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_u2_chip.status_code == 200
+    d_u2_chip = r_u2_chip.json()
+    assert GENERIC_ERROR not in json.dumps(d_u2_chip)
+    assert any(c.get("type") == "clarifying_question" for c in d_u2_chip.get("cards", []))
+
+    # -------------------------------------------------------------
+    # U3: HR clicks "Edit with reason" on Sales incentive proposal
+    # Must show revised version, edit reason, what changed, recalculated summary, and approval card for new version
+    # -------------------------------------------------------------
+    r_u3 = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "message": "Edit with reason",
+            "action": "edit-proposal",
+            "context": {
+                "proposal_id": "PROP-SCENARIO-4-SALES",
+                "version": 1,
+                "reason": "Target adjusted by HR for Q2",
+                "line": "target_achievement",
+                "proposed_value": 120000
+            }
+        },
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_u3.status_code == 200
+    d_u3 = r_u3.json()
+    assert GENERIC_ERROR not in json.dumps(d_u3)
+    codes_u3 = [m.get("code") for m in d_u3.get("messages", [])]
+    assert "C05" in codes_u3
+
+    cards_u3 = d_u3.get("cards", [])
+    assert len(cards_u3) >= 2, f"Expected at least 2 cards (revised summary + approval card), got {len(cards_u3)}"
+
+    revised_card = cards_u3[0]
+    assert revised_card.get("type") == "proposal_summary"
+    assert revised_card["data"].get("version") == 2
+    assert revised_card["data"].get("edit_reason") == "Target adjusted by HR for Q2"
+    assert revised_card["data"].get("eligible_count") == 3
+    assert revised_card["data"].get("gross_eligible_total") == 120000
+
+    new_approval_card = cards_u3[1]
+    assert new_approval_card.get("type") == "approval_card"
+    assert new_approval_card["data"].get("version") == 2
+    assert new_approval_card["data"].get("proposal_id") == "PROP-SCENARIO-4-SALES"
+    assert new_approval_card["data"].get("disabled") is False
+
+    # -------------------------------------------------------------
+    # U4: Query closed without HR reply shows C67 and 'Closed by {Name} on {date}'
+    # Never shows "Auto-resolved prior to closure."
+    # -------------------------------------------------------------
+    # First submit a query as USER-E05
+    client.post(
+        "/api/chat",
+        json={
+            "user_id": "USER-E05",
+            "message": "Send query",
+            "action": "send-query",
+            "context": {"description": "Testing closure without reply"}
+        },
+        headers={"X-User-Id": "USER-E05"}
+    )
+    # Now close it without resolving or replying
+    emp_queries = lifecycle.get_queries(employee_id="E05")
+    latest_q = emp_queries[-1]
+    q_id = latest_q["query_id"]
+
+    r_u4_close = client.post(
+        "/api/chat",
+        json={
+            "user_id": "USER-E05",
+            "message": "Close query",
+            "action": "close-query",
+            "context": {"query_id": q_id}
+        },
+        headers={"X-User-Id": "USER-E05"}
+    )
+    assert r_u4_close.status_code == 200
+    d_u4_close = r_u4_close.json()
+    dump_u4 = json.dumps(d_u4_close)
+    assert "Auto-resolved" not in dump_u4
+
+    # Query status check
+    r_u4_status = client.post(
+        "/api/chat",
+        json={"user_id": "USER-E05", "message": "Do I have a reply on my query?"},
+        headers={"X-User-Id": "USER-E05"}
+    )
+    assert r_u4_status.status_code == 200
+    d_u4_status = r_u4_status.json()
+    dump_status = json.dumps(d_u4_status)
+    assert "Auto-resolved" not in dump_status
+    codes_u4 = [m.get("code") for m in d_u4_status.get("messages", [])]
+    assert "C67" in codes_u4
+    status_card = next((c for c in d_u4_status.get("cards", []) if c.get("type") == "query_status"), None)
+    assert status_card is not None
+    assert status_card["data"].get("closed_by") is not None
+
+    # -------------------------------------------------------------
+    # U5: Employee asks "who took this action and closed?"
+    # Must route to query status, not C33
+    # -------------------------------------------------------------
+    for phrasing in [
+        "who took this action and closed?",
+        "who closed my query?",
+        "who resolved this?",
+        "who replied to my ticket?"
+    ]:
+        r_u5 = client.post(
+            "/api/chat",
+            json={"user_id": "USER-E05", "message": phrasing},
+            headers={"X-User-Id": "USER-E05"}
+        )
+        assert r_u5.status_code == 200
+        d_u5 = r_u5.json()
+        assert GENERIC_ERROR not in json.dumps(d_u5)
+        codes_u5 = [m.get("code") for m in d_u5.get("messages", [])]
+        assert "C33" not in codes_u5, f"Phrasing '{phrasing}' returned C33: {codes_u5}"
+        assert any(c.get("type") == "query_status" for c in d_u5.get("cards", [])), f"Phrasing '{phrasing}' did not return query_status card"

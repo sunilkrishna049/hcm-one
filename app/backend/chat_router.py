@@ -292,7 +292,7 @@ def _get_user_fallback_chips(user: Optional[dict] = None) -> list[dict]:
             ]
         return [
             {"label": "Calculate arrears", "action": "arrears-picker", "payload": {}},
-            {"label": "Prepare team bonus proposal", "action": "scenario-4", "payload": {}},
+            {"label": "Prepare a bonus proposal", "action": "bonus-picker", "payload": {}},
             {"label": "Prepare full and final settlement", "action": "settlement-picker", "payload": {}},
             {"label": "Review payroll queries", "action": "review-queries", "payload": {}}
         ]
@@ -770,6 +770,8 @@ class ChatRouter:
                 return self._handle_leavers_list(user, role, surface)
             elif act in ("show-calculation", "show calculation", "show calculation proof", "view full month breakdown"):
                 return self._handle_show_calculation(user, role, surface, context)
+            elif act in ("bonus-picker", "prepare-bonus", "prepare a bonus proposal", "prepare team bonus proposal"):
+                return self._build_bonus_clarifying_question(role, surface)
             elif act == "apply-selection":
                 choice = (context.get("choice") or "").lower()
                 if "annual" in choice or "engineering" in choice:
@@ -927,8 +929,8 @@ class ChatRouter:
         if re.search(r"\b(which|what)\b.*\btax regime\b.*\b(am i in|do i have|on my record|in my record)\b|\bwhich tax regime am i in\b|\bwhat is my tax regime\b|\bregime am i in\b|\bmy tax regime\b", lower_msg) and not ("choose" in lower_msg or "recommend" in lower_msg or "better" in lower_msg or "advise" in lower_msg):
             return self._build_tax_regime(user, role, surface)
 
-        # Topic f: Query status
-        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response)\b", lower_msg):
+        # Topic f: Query status (including who closed, replied or took action on employee query)
+        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response|who\s+(took\s+this\s+action|closed|resolved|replied|actioned|handled)|who.*(close|resolve|reply|ticket|query))\b", lower_msg):
             if role == "Employee" or not any(e in lower_msg for e in ["priya", "arjun", "kavya", "meera", "rahul", "lakshmi", "imran", "pooja", "siddharth", "neha"]):
                 return self._handle_query_status(user, role, surface, context)
             else:
@@ -979,7 +981,7 @@ class ChatRouter:
         if "bonus" in lower_msg or "incentive" in lower_msg:
             if role != "HR Admin":
                 return self._build_refusal(role, surface, "Access denied", user=user)
-            if context.get("scenario_num") == 4 or ("engineering" in lower_msg and "sales" in lower_msg):
+            if ("engineering" in lower_msg and "sales" in lower_msg) or (context.get("scenario_num") == 4 and ("annual" in lower_msg or "sales" in lower_msg or "engineering" in lower_msg)):
                 return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
             if "annual" in lower_msg:
                 return self._build_scenario_4(user, role, surface, bonus_type_key="annual_performance_bonus")
@@ -1074,7 +1076,7 @@ class ChatRouter:
             return self._handle_draft_query(user, role, surface, {**context, "force_new": True})
         if "draft" in lower_msg and "query" in lower_msg:
             return self._handle_draft_query(user, role, surface, context)
-        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response)\b", lower_msg):
+        if re.search(r"\b(what('s| is) happening with my query|track.*query|status.*query|query.*status|update.*query|query.*update|reply.*query|query.*reply|hr.*replied|replied.*query|response.*query|query.*response|who\s+(took\s+this\s+action|closed|resolved|replied|actioned|handled)|who.*(close|resolve|reply|ticket|query))\b", lower_msg):
             if role == "Employee" or not any(e in lower_msg for e in ["priya", "arjun", "kavya", "meera", "rahul", "lakshmi", "imran", "pooja", "siddharth", "neha"]):
                 return self._handle_query_status(user, role, surface, context)
             else:
@@ -1874,8 +1876,8 @@ class ChatRouter:
 
         return {
             "messages": [
-                {"code": "C07", "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."},
-                {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
+                {"code": "C65", "text": get_message("C65", Name="Imran Khan", item="laptop")},
+                {"code": "C66", "text": get_message("C66", item="laptop")}
             ],
             "cards": [
                 {
@@ -2068,7 +2070,7 @@ class ChatRouter:
                     "title": "September pay breakdown",
                     "formulas": [
                         f"Take-home pay = earned gross − total employee deductions = {format_inr(after_gross)} − {format_inr(after_tot_ded)} = {format_inr(after_net)} (change: {format_inr(net_change)})",
-                        f"Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = {format_inr(before_gross)} × 3 ÷ 30 = {format_inr(gross_diff)}",
+                        f"Loss of pay deduction = monthly gross × LOP days ÷ calendar days = {format_inr(before_gross)} × 3 ÷ 30 = {format_inr(gross_diff)}",
                         f"PF deduction: Increased from {format_inr(before_pf)} to {format_inr(after_pf)} (+{format_inr(pf_diff)}) due to ceiling change on 17 Sep"
                     ],
                     "rule_citations": [
@@ -2294,7 +2296,7 @@ class ChatRouter:
         s13_blocking_reason = disabled_reason_s13
         return {
             "messages": [
-                {"code": "C19", "text": "The final net is incomplete because unreturned company laptop is not yet known."}
+                {"code": "C66", "text": get_message("C66", item="laptop")}
             ],
             "cards": [
                 {
@@ -3135,22 +3137,120 @@ class ChatRouter:
         prop_cert = existing_prop.get("certainty")
         s_num = existing_prop.get("scenario_num") or existing_prop.get("scope", {}).get("scenario_num")
 
+        # Populate proposal data based on type so summary is not empty
+        new_version = res["version"]
+        edit_data = {
+            "proposal_id": prop_id,
+            "status": "Revised",
+            "version": new_version,
+            "edited_line": line,
+            "proposed_value": proposed_value,
+            "reason": reason,
+            "edit_reason": reason,
+            "changes": f"{line}: {proposed_value}" if line else "Recorded edit by HR applied for next version",
+            "notice": get_message("C05")
+        }
+
+        # Check proposal type and attach recalculated engine numbers
+        display_period = existing_prop.get("scope", {}).get("period", "Q2 2026-27")
+        prop_scope_label = existing_prop.get("scope_label") or f"Revised proposal · {display_period}"
+
+        if "SALES" in prop_id or prop_id == "PROP-SCENARIO-4-SALES":
+            sc = bridge.get_scenario(4)
+            r = sc["result"]
+            req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == "quarterly_sales_incentive"), r["bonus_requests"][0])
+            agg = req.get("aggregates", {})
+            edit_data.update({
+                "proposal_type": "Sales incentive (Q2 2026-27)",
+                "eligible_count": agg.get("eligible_count", {}).get("value"),
+                "ineligible_count": agg.get("not_eligible_count", {}).get("value"),
+                "needs_input_count": agg.get("needs_input_count", {}).get("value"),
+                "gross_eligible_total": req.get("known_eligible_gross", {}).get("value"),
+                "known_eligible_gross": req.get("known_eligible_gross", {}).get("value"),
+                "eligible": req.get("eligible", ["E13", "E14", "E15"]),
+                "not_eligible": req.get("not_eligible", []),
+                "needs_input": req.get("needs_input", []),
+                "employee_names": {
+                    "E13": "Ankit Jain",
+                    "E14": "Fatima Sheikh",
+                    "E15": "Deepak Pillai"
+                }
+            })
+            prop_scope_label = "Sales incentive (Q2 2026-27) · Hyderabad Sales"
+        elif "ANNUAL" in prop_id or prop_id in ("PROP-SCENARIO-4", "PROP-SCENARIO-4-ANNUAL"):
+            sc = bridge.get_scenario(4)
+            r = sc["result"]
+            req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == "annual_performance_bonus"), r["bonus_requests"][0])
+            agg = req.get("aggregates", {})
+            edit_data.update({
+                "proposal_type": "Annual performance bonus",
+                "eligible_count": agg.get("eligible_count", {}).get("value"),
+                "ineligible_count": agg.get("not_eligible_count", {}).get("value"),
+                "needs_input_count": agg.get("needs_input_count", {}).get("value"),
+                "gross_eligible_total": req.get("known_eligible_gross", {}).get("value"),
+                "known_eligible_gross": req.get("known_eligible_gross", {}).get("value"),
+                "eligible": req.get("eligible", []),
+                "not_eligible": req.get("not_eligible", []),
+                "needs_input": req.get("needs_input", []),
+                "employee_names": {e["employee_id"]: get_employee_name(e["employee_id"]) for e in req.get("employees", [])}
+            })
+            prop_scope_label = "Annual performance bonus · Engineering · FY 2025-26"
+        elif "SCENARIO-1" in prop_id:
+            emp_id = "E01"
+            edit_data.update({
+                "employee_name": "Priya Sharma",
+                "employee_id": "E01",
+                "proposal_type": "Salary revision",
+                "requested_hike": f"{proposed_value}%",
+                "effective_date": "2026-04-01",
+                "affected_periods": "2026-04 to 2026-09",
+                "old_monthly_salary_total": 85000,
+                "proposed_monthly_salary_total": 93500
+            })
+            prop_scope_label = "Priya Sharma · Apr–Sep 2026"
+        elif "SCENARIO-2" in prop_id:
+            edit_data.update({
+                "employee_name": "Arjun Rao",
+                "employee_id": "E02",
+                "proposal_type": "Salary revision",
+                "requested_hike": f"{proposed_value}%",
+                "effective_date": "2026-08-01",
+                "affected_periods": "2026-08 to 2026-09",
+                "old_monthly_salary_total": 60000,
+                "proposed_monthly_salary_total": 66000
+            })
+            prop_scope_label = "Arjun Rao · September 2026"
+
         edit_card = {
             "id": f"card-edit-{prop_id}",
             "type": "proposal_summary",
             "title": "Revised proposal summary",
-            "data": {
-                "proposal_id": prop_id,
-                "status": "Revised",
-                "version": res["version"],
-                "edited_line": line,
-                "proposed_value": proposed_value,
-                "reason": reason,
-                "notice": get_message("C05")
-            }
+            "data": edit_data
         }
         if prop_cert:
             edit_card["certainty"] = prop_cert
+
+        approval_card = {
+            "id": f"card-approval-{prop_id}-v{new_version}",
+            "type": "approval_card",
+            "title": "HR authorization",
+            "certainty": prop_cert or "Complete for this scope",
+            "data": {
+                "employee_name": edit_data.get("employee_name"),
+                "employee_id": edit_data.get("employee_id"),
+                "period": display_period,
+                "scope_label": prop_scope_label,
+                "notice": "Approving records this version and the selected scope as ready for payroll. It does not apply the change or make a payment.",
+                "actions": ["Approve proposal for payroll", "Reject proposal"],
+                "status": "pending",
+                "proposal_id": prop_id,
+                "version": new_version,
+                "disabled": False,
+                "blocking_reason": None,
+                "disabled_reason": None,
+                "disabled_label": None
+            }
+        }
 
         chips = [{"label": "Show calculation", "action": "show-calculation", "payload": {"scenario_num": s_num}}] if s_num else []
 
@@ -3158,14 +3258,14 @@ class ChatRouter:
             "messages": [
                 {"code": "C05", "text": get_message("C05")}
             ],
-            "cards": [edit_card],
+            "cards": [edit_card, approval_card],
             "chips": chips,
             "state": {
                 "intent": "edit_proposal",
                 "role": role,
                 "surface": surface,
                 "scenario_num": s_num,
-                "version": res["version"],
+                "version": new_version,
                 "certainty": prop_cert,
                 "panel": None
             }
@@ -3461,12 +3561,25 @@ class ChatRouter:
         q_months = latest.get("months") or ([latest.get("month")] if latest.get("month") else ["2026-09"])
         q_month_name = format_month_label(q_months[0]) if q_months else "September 2026"
 
-        if not hr_reply:
+        if st == "Closed" and not hr_reply:
+            msg_code = "C67"
+            msg_text = get_message("C67")
+        elif not hr_reply:
             msg_code = "C40"
             msg_text = get_message("C40", month=q_month_name, status=st)
         else:
             msg_code = "C44"
             msg_text = f"{get_message('C44', month=q_month_name, status=st)} {hr_reply}"
+
+        # Extract audit closed_by and closed_at if recorded
+        closed_by_val = latest.get("closed_by")
+        closed_at_val = latest.get("closed_at")
+        if not closed_by_val and latest.get("history"):
+            for h in reversed(latest["history"]):
+                if h.get("status") == "Closed":
+                    closed_by_val = h.get("actor_name") or h.get("actor")
+                    closed_at_val = closed_at_val or h.get("time")
+                    break
 
         return {
             "messages": [
@@ -3480,10 +3593,13 @@ class ChatRouter:
                     "data": {
                         "query_id": latest["query_id"],
                         "status": st,
+                        "role": role,
                         "category": latest.get("category"),
                         "description": latest.get("description"),
                         "reply_text": latest.get("reply_text") or latest.get("hr_reply"),
-                        "resolution": latest.get("resolution") or latest.get("hr_reply")
+                        "resolution": latest.get("resolution") or latest.get("hr_reply"),
+                        "closed_by": closed_by_val,
+                        "closed_at": closed_at_val
                     }
                 }
             ],
@@ -3782,18 +3898,15 @@ class ChatRouter:
         if q.get("employee_id") not in allowed:
             return self._build_refusal(role, surface, "Access boundary enforced.", user=user)
 
-        try:
-            res = lifecycle.close_query(q_id, actor=user)
-            q = res["query"]
-        except Exception:
-            lifecycle.resolve_query(q_id, actor=user, reply_text="Auto-resolved prior to closure.")
-            res = lifecycle.close_query(q_id, actor=user)
-            q = res["query"]
+        res = lifecycle.close_query(q_id, actor=user)
+        q = res["query"]
+
+        close_messages = [{"code": "C24", "text": get_message("C24")}]
+        if not q.get("hr_reply") and not q.get("reply_text"):
+            close_messages.append({"code": "C67", "text": get_message("C67")})
 
         return {
-            "messages": [
-                {"code": "C24", "text": get_message("C24")}
-            ],
+            "messages": close_messages,
             "cards": [
                 {
                     "id": f"card-status-{q['query_id']}",
@@ -3802,8 +3915,11 @@ class ChatRouter:
                     "data": {
                         "query_id": q["query_id"],
                         "status": "Closed",
+                        "role": role,
                         "description": q.get("description"),
-                        "reply_text": q.get("hr_reply")
+                        "reply_text": q.get("hr_reply") or q.get("reply_text"),
+                        "closed_by": q.get("closed_by") or user.get("name"),
+                        "closed_at": q.get("closed_at")
                     }
                 }
             ],
@@ -4048,8 +4164,13 @@ class ChatRouter:
 
         chips = []
         for it in (ready_items + needs_input_items)[:4]:
+            nc_parts = [p.strip() for p in it["name_code"].split("·")]
+            if len(nc_parts) >= 2:
+                chip_name = f"{nc_parts[0]} · {nc_parts[1]}"
+            else:
+                chip_name = it["name_code"].strip()
             chips.append({
-                "label": f"Open {it['name_code'].split('·')[0].strip()}",
+                "label": f"Open {chip_name}",
                 "action": f"scenario-{it['scenario_num']}",
                 "payload": {"scenario_num": it["scenario_num"], "proposal_id": it["proposal_id"]}
             })

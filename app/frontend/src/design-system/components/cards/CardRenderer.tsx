@@ -15,6 +15,7 @@ import { ShowCalculationControl } from './ShowCalculationControl';
 import { EmployeePickerCard } from './EmployeePickerCard';
 
 interface CardRendererProps {
+  role?: string;
   card: any;
   onShowCalculation?: () => void;
   onApprove?: (payload?: any) => void;
@@ -32,6 +33,7 @@ interface CardRendererProps {
 }
 
 export const CardRenderer: React.FC<CardRendererProps> = ({
+  role,
   card,
   onShowCalculation,
   onApprove,
@@ -92,6 +94,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     case 'query_status':
       return (
         <QueryStatusCard
+          role={role}
           card={card}
           onTakeIntoReview={onTakeIntoReview}
           onResolveQuery={onResolveQuery}

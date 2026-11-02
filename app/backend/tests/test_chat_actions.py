@@ -320,7 +320,7 @@ def test_suggestion_chips_role_scoping():
     hr_labels = [c["label"] for c in hr_data.get("chips", [])]
     assert "Why is my take-home pay lower in September?" not in hr_labels
     assert "Calculate arrears" in hr_labels
-    assert "Prepare team bonus proposal" in hr_labels
+    assert "Prepare a bonus proposal" in hr_labels
     assert "Prepare full and final settlement" in hr_labels
     assert "Review payroll queries" in hr_labels
 
@@ -346,7 +346,7 @@ def test_suggestion_chips_role_scoping():
     emp_labels = [c["label"] for c in emp_data.get("chips", [])]
     assert "Why is my take-home pay lower in September?" in emp_labels
     assert "Calculate arrears" not in emp_labels
-    assert "Prepare team bonus proposal" not in emp_labels
+    assert "Prepare a bonus proposal" not in emp_labels
     assert "Prepare full and final settlement" not in emp_labels
 
     # Verify each Employee chip leads to a real answer

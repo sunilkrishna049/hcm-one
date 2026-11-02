@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatHumanDate } from '../../../utils/format';
 
 interface QueryItem {
   query_id: string;
@@ -10,13 +11,18 @@ interface QueryItem {
 }
 
 interface QueryStatusCardProps {
+  role?: string;
   card: {
     id: string;
     type: string;
     title: string;
     certainty: string;
+    role?: string;
     data: {
       query_id?: string;
+      role?: string;
+      closed_by?: string;
+      closed_at?: string;
       status?: string;
       category?: string;
       description?: string;
@@ -32,6 +38,7 @@ interface QueryStatusCardProps {
 }
 
 export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
+  role: propRole,
   card,
   onTakeIntoReview,
   onResolveQuery,
@@ -84,12 +91,14 @@ export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
 
   // Single query status
   const status = d.status || 'Sent';
+  const viewerRole = propRole || (card as any).role || d.role;
+  const isEmployee = viewerRole === 'Employee';
 
   return (
     <div className="hcm-rich-card hcm-card-query-status" data-testid={`card-${card.id}`}>
       <div className="hcm-card-header">
         <div>
-          <span className="hcm-tech-id">{d.query_id}</span>
+          {!isEmployee && d.query_id && <span className="hcm-tech-id">{d.query_id}</span>}
           <h4 className="hcm-card-title" style={{ marginTop: '2px' }}>{card.title}</h4>
         </div>
         <span className={`hcm-status-tag hcm-status-${status.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -105,10 +114,25 @@ export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
           </div>
         )}
 
-        {(d.reply_text || d.resolution) && (
+        {(d.reply_text || d.resolution) ? (
           <div className="hcm-query-reply-box">
             <span className="hcm-kv-label">{status === 'Resolved' ? 'HR resolution reply:' : 'HR reply:'}</span>
             <p>{d.reply_text || d.resolution}</p>
+          </div>
+        ) : status === 'Closed' ? (
+          <div className="hcm-query-reply-box">
+            <span className="hcm-kv-label">HR reply:</span>
+            <p>No reply was recorded before this query was closed.</p>
+          </div>
+        ) : null}
+
+        {status === 'Closed' && (d.closed_by || d.closed_at) && (
+          <div className="hcm-card-flag-note" style={{ marginTop: 'var(--space-2)', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+            {d.closed_by && d.closed_at
+              ? `Closed by ${d.closed_by} on ${formatHumanDate(d.closed_at)}`
+              : d.closed_by
+              ? `Closed by ${d.closed_by}`
+              : `Closed on ${formatHumanDate(d.closed_at)}`}
           </div>
         )}
 

@@ -823,12 +823,12 @@
   "8": {
     "messages": [
       {
-        "code": "C07",
-        "text": "The required asset clearance record for exit clearance is missing. I cannot explain a complete result for this scope."
+        "code": "C65",
+        "text": "Imran Khan's laptop clearance is pending. I can't give a complete settlement until it's resolved."
       },
       {
-        "code": "C19",
-        "text": "The final net is incomplete because unreturned company laptop is not yet known."
+        "code": "C66",
+        "text": "The final net will be known once the laptop recovery is resolved."
       }
     ],
     "cards": [
@@ -1020,7 +1020,7 @@
         "title": "September pay breakdown",
         "formulas": [
           "Take-home pay = earned gross − total employee deductions = ₹45,000 − ₹2,220 = ₹42,780 (change: −₹5,420)",
-          "Loss of pay deduction = monthly gross × unpaid days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
+          "Loss of pay deduction = monthly gross × LOP days ÷ calendar days = ₹50,000 × 3 ÷ 30 = ₹5,000",
           "PF deduction: Increased from ₹1,800 to ₹2,220 (+₹420) due to ceiling change on 17 Sep"
         ],
         "rule_citations": [
@@ -1258,8 +1258,8 @@
   "13": {
     "messages": [
       {
-        "code": "C19",
-        "text": "The final net is incomplete because unreturned company laptop is not yet known."
+        "code": "C66",
+        "text": "The final net will be known once the laptop recovery is resolved."
       }
     ],
     "cards": [
@@ -1675,10 +1675,13 @@
         "data": {
           "query_id": "QUERY-E05-SEPTEMBER",
           "status": "In review",
+          "role": "Employee",
           "category": "salary",
           "description": "Please check my September attendance.",
           "reply_text": null,
-          "resolution": null
+          "resolution": null,
+          "closed_by": null,
+          "closed_at": null
         }
       }
     ],

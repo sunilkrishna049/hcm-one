@@ -92,3 +92,30 @@ def test_scenario_fixture_files_have_no_empty_interpolations():
                 else:
                     raise
 
+
+def test_scenario_fixtures_day_count_never_contains_rupee():
+    """Guard: any value whose label mentions days or count never contains '₹'."""
+    fixture_path = Path("app/frontend/src/tests/chat_scenario_fixtures.json")
+    if not fixture_path.exists():
+        pytest.skip("Fixtures file not found")
+    with open(fixture_path, "r", encoding="utf-8") as f:
+        fixtures = json.load(f)
+
+    violations = []
+    for scen_name, scen_data in fixtures.items():
+        cards = scen_data.get("cards", [])
+        for card in cards:
+            data = card.get("data", {})
+            hero_label = str(data.get("hero_label", "")).lower()
+            if any(w in hero_label for w in ["day", "days", "count"]):
+                hero_amount = data.get("hero_amount")
+                if isinstance(hero_amount, str) and "₹" in hero_amount:
+                    violations.append(f"{scen_name} card {card.get('type')}: {hero_label} -> {hero_amount}")
+            for k, v in data.items():
+                k_lower = str(k).lower()
+                if any(w in k_lower for w in ["day", "days", "count", "item", "employee"]):
+                    if isinstance(v, str) and "₹" in v:
+                        violations.append(f"{scen_name} card {card.get('type')}: {k} -> {v}")
+    assert not violations, f"Found count/day fields containing '₹': {violations}"
+
+

@@ -268,8 +268,8 @@ def test_scenario_08_chat():
     data = res.json()
     assert data["state"]["scenario_num"] == 8
     msg_codes = [m["code"] for m in data["messages"]]
-    assert "C07" in msg_codes
-    assert "C19" in msg_codes
+    assert "C65" in msg_codes
+    assert "C66" in msg_codes
 
 
 def test_scenario_09_chat():
@@ -342,7 +342,7 @@ def test_scenario_13_chat():
     assert res.status_code == 200
     data = res.json()
     assert data["state"]["scenario_num"] == 13
-    assert data["messages"][0]["code"] == "C19"
+    assert data["messages"][0]["code"] == "C66"
     cards = {c["type"]: c for c in data["cards"]}
     assert cards["component_list"]["data"]["known_recoveries_subtotal"] == 56667
     assert cards["component_list"]["data"]["hero_amount"] is None
@@ -445,7 +445,7 @@ def test_unknown_text_fallback():
     assert "demo" not in data_hr["messages"][0]["text"].lower()
     hr_labels = [c["label"] for c in data_hr["chips"]]
     assert "Calculate arrears" in hr_labels
-    assert "Prepare team bonus proposal" in hr_labels
+    assert "Prepare a bonus proposal" in hr_labels
     assert "Prepare full and final settlement" in hr_labels
     assert "Review payroll queries" in hr_labels
     assert "Why is my take-home pay lower in September?" not in hr_labels

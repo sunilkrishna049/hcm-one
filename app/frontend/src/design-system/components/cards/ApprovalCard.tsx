@@ -160,7 +160,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               <div
                 id={`approval-reason-${card.id}`}
                 className="hcm-approval-disabled-reason"
-                data-testid="approval-disabled-reason"
+                data-testid="approval-disabled-note"
                 style={{
                   marginBottom: 'var(--space-2)',
                   fontSize: 'var(--font-size-small)',
@@ -202,16 +202,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
           </div>
         )}
 
-        {/* Option A Note: Reason from engine data why approval is disabled */}
-        {isApprovalDisabled && !isApproved && !isRejected && !isEdited && (!d.actions || d.actions.length > 0) && blockingReason && (
-          <div
-            id={`approval-reason-${card.id}`}
-            className="hcm-approval-blocked-note"
-            data-testid="approval-disabled-note"
-          >
-            <span>{blockingReason}</span>
-          </div>
-        )}
+
 
         {/* When actions have been removed after an action is taken */}
         {d.actions && d.actions.length === 0 && d.disabled_label && !isApproved && !isRejected && !isEdited && (

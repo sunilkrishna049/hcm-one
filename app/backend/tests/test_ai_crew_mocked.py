@@ -828,7 +828,7 @@ def test_ai_on_unknown_text_returns_c33_with_role_scoped_chips():
     assert "demo" not in data_hr["messages"][0]["text"].lower()
     hr_labels = [c["label"] for c in data_hr["chips"]]
     assert "Calculate arrears" in hr_labels
-    assert "Prepare team bonus proposal" in hr_labels
+    assert "Prepare a bonus proposal" in hr_labels
     assert "Prepare full and final settlement" in hr_labels
     assert "Review payroll queries" in hr_labels
     assert "Why is my take-home pay lower in September?" not in hr_labels

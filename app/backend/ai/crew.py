@@ -270,7 +270,7 @@ class PayrollAICrew:
 
             # Ambiguous bonus check -> show clarifying question card (only for team bonus without specific employee)
             if (
-                classifier_res.intent == "bonus_proposal"
+                classifier_res.intent in ("bonus_proposal", "clarifying_question")
                 and (
                     classifier_res.clarification_needed
                     or (
@@ -280,7 +280,7 @@ class PayrollAICrew:
                     )
                 )
             ):
-                if "annual" not in lower_msg and "sales" not in lower_msg:
+                if "annual" not in lower_msg and "sales" not in lower_msg and "meera" not in lower_msg:
                     return _router._build_bonus_clarifying_question(role, surface)
 
             # Agent 2: Retrieval Agent (Deterministic Tools Only — No LLM)
@@ -560,6 +560,8 @@ class PayrollAICrew:
             return _router._build_unrecorded_topic(user, role, surface)
         elif intent == "unrecorded_month":
             return _router._build_unrecorded_month(user, role, surface)
+        elif intent == "clarifying_question":
+            return _router._build_bonus_clarifying_question(role, surface)
         elif intent == "bonus_proposal":
             if scenario_num == 5:
                 return _router._build_scenario_5(user, role, surface)
@@ -624,8 +626,16 @@ class PayrollAICrew:
             return validate_classifier_output({"intent": "prepare_hike", "scenario_num": 3, "entities": {"employee_name": "Kavya Iyer"}}, user)
         if "meera" in lower_msg:
             return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 5, "entities": {"employee_name": "Meera Nair"}}, user)
-        if "bonus" in lower_msg:
-            return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 4}, user)
+        if "bonus" in lower_msg or "incentive" in lower_msg:
+            if role == "HR Admin":
+                if "annual" in lower_msg or "engineering" in lower_msg:
+                    return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 4, "entities": {"bonus_type": "annual_performance_bonus"}}, user)
+                elif "sales" in lower_msg or "hyderabad" in lower_msg:
+                    return validate_classifier_output({"intent": "bonus_proposal", "scenario_num": 4, "entities": {"bonus_type": "quarterly_sales_incentive"}}, user)
+                else:
+                    return validate_classifier_output({"intent": "clarifying_question", "scenario_num": None, "clarification_needed": True}, user)
+            else:
+                return validate_classifier_output({"intent": "unrecorded_topic", "scenario_num": None}, user)
         if "rahul" in lower_msg:
             return validate_classifier_output({"intent": "settlement_proposal", "scenario_num": 6, "entities": {"employee_name": "Rahul Verma"}}, user)
         if "lakshmi" in lower_msg:
@@ -648,6 +658,8 @@ class PayrollAICrew:
 
         # Part C intents for signed-in employee
         if role == "Employee":
+            if re.search(r"\b(who\s+(took\s+this\s+action|closed|resolved|replied|actioned|handled)|who.*(close|resolve|reply|ticket|query))\b", lower_msg):
+                return validate_classifier_output({"intent": "query_status", "scenario_num": None}, user)
             if bool(re.search(r"\b(bonus|incentive)\b", lower_msg)) or bool(re.search(r"\b(ctc|leave balance|remaining leave|reimbursement|claim|salary credit date|when.*salary.*credit|when.*pay.*credit|form 16|pf balance)\b", lower_msg)) or (re.search(r"\b(hike|arrears)\b", lower_msg) and not any(k in lower_msg for k in ("priya", "arjun", "kavya"))):
                 return validate_classifier_output({"intent": "unrecorded_topic", "scenario_num": None}, user)
 

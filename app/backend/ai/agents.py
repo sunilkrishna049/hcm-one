@@ -11,6 +11,7 @@ from ..chat_router import EMPLOYEE_NAMES
 from .tools import get_payroll_scenario_data, search_payroll_faq
 
 ALLOWED_INTENTS = {
+    "clarifying_question",
     "prepare_hike",
     "review_hike",
     "bonus_proposal",
@@ -49,13 +50,14 @@ ALLOWED INTENTS AND DEFINITIONS:
 - lop_days: Questions about loss of pay days, unpaid absence, or leave deduction counts. (e.g., 'Recorded count of unpaid absence days', 'Number of loss of pay calendar days logged').
 - payslip_breakdown: Requests to view or explain an itemized monthly payslip statement. (e.g., 'Break down earnings and deductions for my statement', 'Display the line items on my paysheet').
 - compare_months: Requests to contrast two pay periods side-by-side. (e.g., 'Difference in compensation between two billing cycles', 'Contrast earnings across recent quarters').
-- query_status: Tracking the status, updates, or resolution progress of a submitted HR grievance. (e.g., 'Status of my open payroll ticket', 'Has HR replied to my submitted grievance?', 'Do I have a reply on my query?', 'Any update on my query?').
+- query_status: Tracking the status, updates, who closed or actioned, or resolution progress of a submitted HR grievance. (e.g., 'Status of my open payroll ticket', 'Has HR replied to my submitted grievance?', 'Do I have a reply on my query?', 'Any update on my query?', 'Who took this action and closed?').
 - tax_regime: Inquiries about whether old or new tax regime applies for the current tax year. (e.g., 'Current fiscal year tax system designation', 'Am I enrolled under the revised tax framework?').
 - approvals_list: HR requests to list pending proposals awaiting review or managerial sign-off. (e.g., 'Proposals queued for managerial endorsement', 'Items currently awaiting authorization').
 - leavers_list: HR requests to list employees departing during the active payroll month. (e.g., 'Staff members exiting the company during this period', 'Upcoming employee departures this month').
 - hr_query_review: HR managing, viewing, answering, or resolving employee grievance tickets. (e.g., 'Examine employee grievance submissions', 'Update resolution status on worker ticket').
 - prepare_hike: HR initiating or calculating retroactive salary increases or arrears for an employee. (e.g., 'Process retroactive wage adjustment', 'Calculate arrears payout for staff member').
 - review_hike: HR reviewing back-dated hike proposals with statutory limit impacts. (e.g., 'Examine retroactive hike revision under revised statutory ceiling').
+- clarifying_question: Requests where the choice of bonus, proposal or option is ambiguous and requires clarifying options.
 - bonus_proposal: HR creating, calculating, or reviewing team incentive or annual bonus distributions. (e.g., 'Formulate team incentive allotment', 'Compute quarterly performance incentive').
 - settlement_proposal: HR calculating full and final separation payouts, dues, or exit clearance. (e.g., 'Assemble final separation payout statement', 'Calculate exit clearance dues and recoveries').
 - settlement_review: HR reviewing confirmed vs pending items in an exit settlement. (e.g., 'Audit cleared components versus outstanding items for exiting employee').

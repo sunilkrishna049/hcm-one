@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatINR } from '../../../utils/format';
+import { formatINR, formatNumberPlain, isCountLabel } from '../../../utils/format';
 import { Info } from 'lucide-react';
 
 interface NumberCardsClusterProps {
@@ -52,7 +52,7 @@ export const NumberCardsCluster: React.FC<NumberCardsClusterProps> = ({ card }) 
           </div>
           <div className="hcm-hero-amount-row">
             <span className="hcm-hero-amount tnum" data-testid="hero-amount">
-              {formatINR(d.hero_amount)}
+              {isCountLabel(d.hero_label) ? formatNumberPlain(d.hero_amount) : formatINR(d.hero_amount)}
             </span>
           </div>
 
