@@ -39,13 +39,16 @@ NEHA_PHRASINGS = [
 
 @pytest.fixture(autouse=True)
 def setup_test_mode(tmp_path):
+    from app.backend.lifecycle import lifecycle
     orig_mode = backend_config.AI_MODE
     orig_llm = ai_crew._custom_llm
     backend_config.AI_MODE = False
     ai_crew._custom_llm = None
+    lifecycle.reset_demo()
     yield
     backend_config.AI_MODE = orig_mode
     ai_crew._custom_llm = orig_llm
+    lifecycle.reset_demo()
 
 
 def test_part_b_chips_per_user_no_c33_no_c10():

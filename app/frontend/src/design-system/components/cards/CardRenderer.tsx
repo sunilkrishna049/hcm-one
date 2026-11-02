@@ -118,6 +118,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
       );
 
     case 'employee_picker':
+    case 'employee-picker':
       return (
         <EmployeePickerCard
           card={card}

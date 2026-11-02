@@ -24,6 +24,7 @@ def reset_store_and_deterministic_mode():
     lifecycle.reset_demo()
     yield
     backend_config.AI_MODE = orig_ai_mode
+    lifecycle.reset_demo()
 
 
 
@@ -134,7 +135,7 @@ def test_edit_proposal_with_reason():
     data = edit_resp.json()
     assert data["state"]["intent"] == "edit_proposal"
     assert data["state"]["version"] == 2
-    assert any(m["code"] == "C05" for m in data["messages"])
+    assert any(m["code"] == "C68" for m in data["messages"])
 
 
 def test_reject_proposal():
@@ -805,6 +806,8 @@ def test_name_guard_permanent_check():
         # Approvals
         ("HR01", None, "approve-proposal", {"scenario_num": 1, "proposal_id": "PROP-SCENARIO-1", "version": 1}),
         ("HR01", None, "approve-proposal", {"scenario_num": 4, "proposal_id": "PROP-SCENARIO-4-SALES", "version": 1}),
+        # Revised proposal edit flow
+        ("HR01", "Edit with reason", "edit-proposal", {"proposal_id": "PROP-SCENARIO-4-SALES", "version": 1, "reason": "Target adjusted by HR for Q2", "line": "target_achievement", "proposed_value": 120000}),
     ]
 
     import re
@@ -834,6 +837,12 @@ def test_name_guard_permanent_check():
                 val = str(obj["name"]).strip()
                 if val.lower() not in NON_PERSON_NAMES:
                     assert val in valid_names, f"Unknown name '{val}' in name field"
+
+            if "employee_names" in obj and isinstance(obj["employee_names"], dict):
+                for eid, ename in obj["employee_names"].items():
+                    if ename:
+                        val = str(ename).strip()
+                        assert val in valid_names, f"Unknown name '{val}' in employee_names dict"
 
             for k, v in obj.items():
                 if isinstance(v, str):
@@ -880,6 +889,27 @@ def test_name_guard_permanent_check():
     with pytest.raises(AssertionError) as exc_aarav:
         check_reply_names({"cards": [{"type": "approval_card", "data": {"approver": "Aarav Patel"}}]}, valid_full_names)
     assert "Aarav Patel" in str(exc_aarav.value)
+
+    # Scan every card in every fixture in chat_scenario_fixtures.json
+    fixtures_path = Path("app/frontend/src/tests/chat_scenario_fixtures.json")
+    if fixtures_path.exists():
+        with open(fixtures_path, "r", encoding="utf-8") as ff:
+            fixtures_data = json.load(ff)
+        for f_key, f_val in fixtures_data.items():
+            if isinstance(f_val, dict) and "cards" in f_val:
+                check_reply_names(f_val["cards"], valid_full_names, parent_key=f_key)
+
+    # Proof: Inject "Aakash Verma" into revised-proposal card -> fails, then passes
+    with pytest.raises(AssertionError) as exc_aakash:
+        check_reply_names({
+            "cards": [{
+                "type": "proposal_summary",
+                "data": {
+                    "employee_names": {"E99": "Aakash Verma"}
+                }
+            }]
+        }, valid_full_names)
+    assert "Aakash Verma" in str(exc_aakash.value)
 
 
 def test_approval_blocked_reason_built_from_engine_data():

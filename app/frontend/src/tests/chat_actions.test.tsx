@@ -8,6 +8,7 @@ import { CardRenderer } from '../design-system/components/cards/CardRenderer';
 import { AssistantTurn } from '../design-system/components/chat/AssistantTurn';
 import { api } from '../services/api';
 import fixtures from './chat_scenario_fixtures.json';
+import { createWelcomeTurn } from '../utils/welcomeTurn';
 
 vi.mock('../services/api', () => ({
   api: {
@@ -866,10 +867,11 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
     // Wait for employee picker card to render
     await waitFor(() => {
-      expect(screen.getByTestId('employee-picker-card')).toBeInTheDocument();
+      expect(screen.getAllByTestId('employee-picker-card').length).toBeGreaterThanOrEqual(2);
     });
 
-    const pickerCard = screen.getByTestId('employee-picker-card');
+    const pickerCards = screen.getAllByTestId('employee-picker-card');
+    const pickerCard = pickerCards[pickerCards.length - 1];
 
     // Assert card shows employee names and muted codes from the API
     expect(pickerCard).toHaveTextContent('Priya Sharma · E01');
@@ -897,7 +899,8 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
 
     // Tap Priya Sharma's button
-    const priyaButton = screen.getByTestId('employee-item-E01');
+    const priyaButtons = screen.getAllByTestId('employee-item-E01');
+    const priyaButton = priyaButtons[priyaButtons.length - 1];
     fireEvent.click(priyaButton);
 
     // Verify tapping sends that selection (action='select-employee')
@@ -1483,6 +1486,142 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       render(<CardRenderer card={resolvedCard} />);
       expect(screen.getByText('HR resolution reply:')).toBeInTheDocument();
       expect(screen.queryByText('HR reply:')).toBeNull();
+    });
+  });
+
+
+  describe('Part B: HR Home Employee Picker Tests (B1 & B2)', () => {
+    it('B1. HR01 home employee picker renders on welcome turn with 16 employees, search, departments, status tags, and scrollable container', async () => {
+      const { unmount } = render(<ChatHR currentUser="HR01" />);
+
+      // Must not call api.chat on initial mount
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Card title & prompt
+      const pickerCard = screen.getByTestId('employee-picker-card');
+      expect(pickerCard).toHaveTextContent('Select employee');
+      expect(pickerCard).toHaveTextContent('Pick an employee to see what you can do for them:');
+
+      // Search box exists
+      const searchInput = screen.getByTestId('employee-picker-search');
+      expect(searchInput).toBeInTheDocument();
+
+      // List container has mobile scroll constraints (max-height <= 340px, overflow-y: auto)
+      const listContainer = screen.getByTestId('employee-picker-list');
+      expect(listContainer).toHaveStyle({ maxHeight: '340px', overflowY: 'auto' });
+
+      // Exactly 16 employees listed
+      const employeeItems = screen.getAllByTestId(/^employee-item-E\d+/);
+      expect(employeeItems).toHaveLength(16);
+
+      // Verify specific recorded status tags
+      expect(screen.getByTestId('status-tag-E01-hike-pending')).toHaveTextContent('Hike pending');
+      expect(screen.getByTestId('status-tag-E02-hike-pending')).toHaveTextContent('Hike pending');
+      expect(screen.getByTestId('status-tag-E03-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E05-open-query')).toHaveTextContent('Open query');
+      expect(screen.getByTestId('status-tag-E08-leaving-november')).toHaveTextContent('Leaving November');
+      expect(screen.getByTestId('status-tag-E09-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E10-leaving-october')).toHaveTextContent('Leaving October');
+      expect(screen.getByTestId('status-tag-E11-leaving-october')).toHaveTextContent('Leaving October');
+      expect(screen.getByTestId('status-tag-E12-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E12-leaving-october')).toHaveTextContent('Leaving October');
+
+      // Untagged employees have no status tags
+      expect(screen.queryByTestId('status-tag-E04-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E06-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E07-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E13-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E14-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E15-hike-pending')).toBeNull();
+      expect(screen.queryByTestId('status-tag-E16-hike-pending')).toBeNull();
+
+      unmount();
+    });
+
+    it('B1b. Employee picker search filters employees by name, ID, or department', async () => {
+      const { unmount } = render(<ChatHR currentUser="HR01" />);
+      const searchInput = screen.getByTestId('employee-picker-search');
+
+      // Filter by department: Sales
+      fireEvent.change(searchInput, { target: { value: 'Sales' } });
+      expect(screen.getByTestId('employee-item-E13')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-item-E14')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-item-E15')).toBeInTheDocument();
+      expect(screen.queryByTestId('employee-item-E01')).toBeNull();
+
+      // Filter by ID: E05
+      fireEvent.change(searchInput, { target: { value: 'E05' } });
+      expect(screen.getByTestId('employee-item-E05')).toBeInTheDocument();
+      expect(screen.queryByTestId('employee-item-E13')).toBeNull();
+
+      // Filter non-matching
+      fireEvent.change(searchInput, { target: { value: 'NonExistent' } });
+      expect(screen.getByText('No matching employees found')).toBeInTheDocument();
+
+      unmount();
+    });
+
+    it('B1c. HR02 home employee picker renders only Sales employees (E13, E14, E15)', async () => {
+      const { unmount } = render(<ChatHR currentUser="HR02" />);
+
+      const employeeItems = screen.getAllByTestId(/^employee-item-E\d+/);
+      expect(employeeItems).toHaveLength(3);
+      expect(screen.getByTestId('employee-item-E13')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-item-E14')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-item-E15')).toBeInTheDocument();
+
+      expect(screen.queryByTestId('employee-item-E01')).toBeNull();
+      expect(screen.queryByTestId('employee-item-E05')).toBeNull();
+
+      unmount();
+    });
+
+    it('B1d. Employee view (USER-E05) has empty cards on welcome turn', () => {
+      const turn = createWelcomeTurn('USER-E05');
+      expect(turn.cards).toEqual([]);
+      expect(turn.messages?.[0].code).toBe('C31');
+    });
+
+    it('B2. Tapping employee on home picker sends "Show options for {Name}" as visible user turn and returns C70 with employee-tailored chips', async () => {
+      (api.chat as any).mockResolvedValueOnce({
+        messages: [{ code: 'C70', text: "Here's what you can do for Neha Gupta:" }],
+        cards: [],
+        chips: [
+          { label: "Show Neha Gupta's September payslip" },
+          { label: "Compare Neha Gupta's August and September pay" },
+          { label: "Show Neha Gupta's query" },
+        ],
+        state: { employee_id: 'E05', intent: 'employee_options' },
+      });
+
+      const { unmount } = render(<ChatHR currentUser="HR01" />);
+
+      // Tap Neha Gupta on home picker
+      const nehaButton = screen.getByTestId('employee-item-E05');
+      fireEvent.click(nehaButton);
+
+      // Visible user turn bubble must be rendered
+      await waitFor(() => {
+        expect(screen.getByText('Show options for Neha Gupta')).toBeInTheDocument();
+      });
+
+      // API must be called with message
+      expect(api.chat).toHaveBeenCalledWith({
+        userId: 'HR01',
+        message: 'Show options for Neha Gupta',
+      });
+
+      // Assistant C70 message must be visible
+      await waitFor(() => {
+        expect(screen.getByText("Here's what you can do for Neha Gupta:")).toBeInTheDocument();
+      });
+
+      // Employee-scoped chips rendered
+      expect(screen.getByText("Show Neha Gupta's September payslip")).toBeInTheDocument();
+      expect(screen.getByText("Compare Neha Gupta's August and September pay")).toBeInTheDocument();
+      expect(screen.getByText("Show Neha Gupta's query")).toBeInTheDocument();
+
+      unmount();
     });
   });
 

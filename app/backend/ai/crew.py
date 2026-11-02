@@ -217,9 +217,9 @@ class PayrollAICrew:
                 }
             }
 
-        # 1c. Deterministic Action Handling (Buttons, Chips, Governance Clicks)
-        # Explicit button clicks bypass natural drafting and execute deterministic handlers
-        if action:
+        # 1c. Deterministic Action & Governance Command Handling
+        # Explicit button clicks and governance commands bypass natural drafting
+        if action or (role == "HR Admin" and re.search(r"^(approve proposal|approve for payroll|approve\b|reject proposal|reject\b|(?:show\s+)?options\s+for\b)", lower_msg)):
             return _router.handle_chat(user_id=user_id, message=message, action=action, context=context)
 
         # 1d. AI Mode Switch Check & Daily Cap (300 calls/day)

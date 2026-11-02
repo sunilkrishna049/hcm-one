@@ -62,13 +62,13 @@ export const ProposalSummaryCard: React.FC<ProposalSummaryCardProps> = ({ card }
       </div>
 
       <div className="hcm-card-body">
-        {(d.edit_reason || d.reason || d.changes || d.edited_line) && (
+        {(d.edit_reason || d.reason || d.changes) && (
           <div className="hcm-card-flag-note" style={{ marginBottom: 'var(--space-3)', padding: 'var(--space-2) var(--space-3)', backgroundColor: 'var(--color-surface-hover)', borderRadius: '6px', fontSize: '13px', border: '1px solid var(--color-divider)' }}>
             {(d.edit_reason || d.reason) && (
               <div><strong>Recorded edit reason:</strong> {d.edit_reason || d.reason}</div>
             )}
-            {(d.changes || d.edited_line) && (
-              <div style={{ marginTop: '2px' }}><strong>What changed:</strong> {d.changes || `${d.edited_line}: ${d.proposed_value}`}</div>
+            {d.changes && (
+              <div style={{ marginTop: '2px' }}><strong>What changed:</strong> {d.changes}</div>
             )}
           </div>
         )}

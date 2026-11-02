@@ -505,7 +505,7 @@ def test_guard_tester_sequences_u1_to_u5():
     d_u3 = r_u3.json()
     assert GENERIC_ERROR not in json.dumps(d_u3)
     codes_u3 = [m.get("code") for m in d_u3.get("messages", [])]
-    assert "C05" in codes_u3
+    assert "C68" in codes_u3
 
     cards_u3 = d_u3.get("cards", [])
     assert len(cards_u3) >= 2, f"Expected at least 2 cards (revised summary + approval card), got {len(cards_u3)}"

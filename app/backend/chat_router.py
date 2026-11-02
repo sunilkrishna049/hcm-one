@@ -828,6 +828,12 @@ class ChatRouter:
             if has_query_kw and emp_target_id:
                 return self._handle_hr_employee_query_flow(user, role, surface, emp_target_id, raw_msg, context)
 
+        # Show options for {Name} (Part B HR Home Employee Picker)
+        m_options = re.search(r"^(?:show\s+)?options\s+for\s+(.+)$", lower_msg)
+        if m_options and role == "HR Admin":
+            target_str = m_options.group(1).strip()
+            return self._handle_show_employee_options(user, role, surface, target_str=target_str)
+
         if re.search(r"^(approve proposal|approve for payroll|approve\b)", lower_msg):
             return self._handle_approve_proposal(user, role, surface, context)
         if re.search(r"^(edit with reason|edit proposal)", lower_msg):
@@ -3143,11 +3149,8 @@ class ChatRouter:
             "proposal_id": prop_id,
             "status": "Revised",
             "version": new_version,
-            "edited_line": line,
-            "proposed_value": proposed_value,
             "reason": reason,
             "edit_reason": reason,
-            "changes": f"{line}: {proposed_value}" if line else "Recorded edit by HR applied for next version",
             "notice": get_message("C05")
         }
 
@@ -3256,7 +3259,7 @@ class ChatRouter:
 
         return {
             "messages": [
-                {"code": "C05", "text": get_message("C05")}
+                {"code": "C68", "text": get_message("C68")}
             ],
             "cards": [edit_card, approval_card],
             "chips": chips,
@@ -4447,6 +4450,9 @@ class ChatRouter:
         emp_id = context.get("employee_id") or ""
         task = context.get("task") or ""
 
+        if task in ("options", "home"):
+            return self._handle_show_employee_options(user, role, surface, emp_id=emp_id)
+
         if task in ("arrears", "hike"):
             if emp_id == "E01":
                 return self._build_scenario_1(user, role, surface)
@@ -4478,6 +4484,93 @@ class ChatRouter:
                 return self._build_unknown_fallback(role, surface, user)
 
         return self._build_unknown_fallback(role, surface, user)
+
+
+    def _handle_show_employee_options(
+        self,
+        user: dict,
+        role: str,
+        surface: str,
+        emp_id: Optional[str] = None,
+        target_str: Optional[str] = None,
+        context: Optional[dict] = None
+    ) -> dict:
+        if role != "HR Admin":
+            return self._build_refusal(role, surface, "Only HR Admin can view employee options.", user=user)
+
+        # Resolve employee ID
+        resolved_eid = emp_id
+        if not resolved_eid and target_str:
+            clean_target = target_str.lower().strip()
+            # Check ID match
+            for eid in EMPLOYEE_NAMES.keys():
+                if clean_target == eid.lower():
+                    resolved_eid = eid
+                    break
+            # Check name match
+            if not resolved_eid:
+                for eid, full_name in EMPLOYEE_NAMES.items():
+                    if clean_target in full_name.lower() or full_name.lower() in clean_target:
+                        resolved_eid = eid
+                        break
+
+        if not resolved_eid or resolved_eid not in EMPLOYEE_NAMES:
+            return self._build_unknown_fallback(role, surface, user)
+
+        # RBAC Check
+        allowed_eids = set(user.get("allowed_employee_ids") or [])
+        if resolved_eid not in allowed_eids:
+            return self._build_scenario_12(user, role, surface)
+
+        emp_name = EMPLOYEE_NAMES[resolved_eid]
+
+        # Determine department
+        from .permissions import ALL_EMPLOYEES
+        emp_dept = "Engineering"
+        for emp_rec in ALL_EMPLOYEES:
+            if emp_rec.get("employee_id") == resolved_eid:
+                emp_dept = emp_rec.get("department", "Engineering")
+                break
+
+        # Build chips according to Part B rules:
+        # Always: September payslip and compare August & September pay
+        chips = [
+            {"label": f"Show {emp_name}'s September payslip"},
+            {"label": f"Compare {emp_name}'s August and September pay"}
+        ]
+
+        # If Hike pending or Needs input on salary revision:
+        if resolved_eid in ("E01", "E02", "E03"):
+            chips.append({"label": f"Open salary revision · {emp_name}"})
+
+        # If Open query:
+        if resolved_eid == "E05":
+            chips.append({"label": f"Show {emp_name}'s query"})
+
+        # If Leaving (and employee has a recorded settlement in this cycle: E10, E11, E12):
+        if resolved_eid in ("E10", "E11", "E12"):
+            chips.append({"label": f"Show {emp_name}'s settlement"})
+
+        # If the employee is in a bonus run that needs input (Engineering annual bonus needs input):
+        if emp_dept == "Engineering" and resolved_eid in ("E01", "E03", "E04", "E08", "E09", "E10", "E11", "E12"):
+            chips.append({"label": f"Show the {emp_dept} bonus"})
+
+        return {
+            "messages": [
+                {"code": "C70", "text": get_message("C70", Name=emp_name)}
+            ],
+            "cards": [],
+            "chips": chips,
+            "state": {
+                "intent": "employee_options",
+                "role": role,
+                "surface": surface,
+                "scenario_num": None,
+                "employee_id": resolved_eid,
+                "panel": None,
+                "certainty": None
+            }
+        }
 
 
 chat_router = ChatRouter()

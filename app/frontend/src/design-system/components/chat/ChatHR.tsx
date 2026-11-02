@@ -309,7 +309,13 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
                   onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
                   onActionClick={(act) => handleAction(act)}
-                  onSelectEmployee={(empId, task, name) => handleAction('select-employee', { employee_id: empId, task, name })}
+                  onSelectEmployee={(empId, task, name) => {
+                    if (task === 'options' || !task) {
+                      handleSendMessage(`Show options for ${name || empId}`);
+                    } else {
+                      handleAction('select-employee', { employee_id: empId, task, name });
+                    }
+                  }}
                 />
               );
             })}
