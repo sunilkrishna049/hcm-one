@@ -595,3 +595,57 @@ def test_guard_tester_sequences_u1_to_u5():
         codes_u5 = [m.get("code") for m in d_u5.get("messages", [])]
         assert "C33" not in codes_u5, f"Phrasing '{phrasing}' returned C33: {codes_u5}"
         assert any(c.get("type") == "query_status" for c in d_u5.get("cards", [])), f"Phrasing '{phrasing}' did not return query_status card"
+
+
+def test_smoke_show_query_mark_resolved_confirm_no_note():
+    """Smoke test: show query -> mark resolved -> confirm (no note) -> C73, stored reply null."""
+    lifecycle.reset_demo()
+
+    # 1. Show query
+    r_show = client.post(
+        "/api/chat",
+        json={"user_id": "HR01", "message": "Show Neha's query"},
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_show.status_code == 200
+    d_show = r_show.json()
+    assert any(m.get("code") == "C43" for m in d_show.get("messages", []))
+    resolve_chip = next((ch for ch in d_show.get("chips", []) if ch.get("label") == "Mark query resolved"), None)
+    assert resolve_chip is not None
+
+    # 2. Mark resolved
+    r_mark = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "action": resolve_chip.get("action", "resolve-query"),
+            "context": resolve_chip.get("payload", {"query_id": "QUERY-E05-SEPTEMBER", "employee_id": "E05"})
+        },
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_mark.status_code == 200
+    d_mark = r_mark.json()
+    assert any(m.get("code") == "C51" for m in d_mark.get("messages", []))
+    confirm_card = next((c for c in d_mark.get("cards", []) if c.get("title") == "Resolve query confirmation"), None)
+    assert confirm_card is not None
+    assert confirm_card["data"].get("is_resolve_confirmation") is True
+
+    # 3. Confirm (no note)
+    r_confirm = client.post(
+        "/api/chat",
+        json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
+        },
+        headers={"X-User-Id": "HR01"}
+    )
+    assert r_confirm.status_code == 200
+    d_confirm = r_confirm.json()
+    assert any(m.get("code") == "C73" for m in d_confirm.get("messages", []))
+    assert d_confirm["cards"][0]["data"].get("status") == "Resolved"
+
+    # Stored reply must be null (no invented reply)
+    q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+    assert q.get("status") == "Resolved"
+    assert q.get("hr_reply") is None

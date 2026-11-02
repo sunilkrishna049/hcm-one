@@ -107,9 +107,13 @@ export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
   const isEmployee = viewerRole === 'Employee';
 
   const isResolveConfirmation = Boolean(
-    card.title === 'Resolve query confirmation' ||
     d.is_resolve_confirmation ||
-    card.id?.includes('card-confirm-resolve')
+    (card as any).is_resolve_confirmation ||
+    card.title?.toLowerCase().includes('resolve query confirmation') ||
+    card.title === 'Resolve query confirmation' ||
+    card.id?.includes('card-confirm-resolve') ||
+    card.id?.includes('confirm-resolve') ||
+    (!isEmployee && (card.title?.toLowerCase().includes('resolve') || card.id?.includes('resolve')) && (status === 'In review' || d.notice?.toLowerCase().includes('confirmation')))
   );
   const [resolutionNote, setResolutionNote] = useState('');
   const [isCancelled, setIsCancelled] = useState(false);
@@ -281,6 +285,87 @@ export const QueryStatusCard: React.FC<QueryStatusCardProps> = ({
               : d.closed_by
               ? `Closed by ${d.closed_by}`
               : `Closed on ${formatHumanDate(d.closed_at)}`}
+          </div>
+        )}
+
+        {!isEmployee && isResolveConfirmation && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            {d.notice && (
+              <div className="hcm-approval-notice" style={{ marginBottom: 'var(--space-2)' }}>
+                <p>{d.notice}</p>
+              </div>
+            )}
+            {isCancelled ? (
+              <div
+                className="hcm-approval-blocked-note"
+                style={{
+                  marginTop: 'var(--space-2)',
+                  padding: '8px 12px',
+                  backgroundColor: 'var(--color-surface)',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-divider)'
+                }}
+              >
+                <span>Resolution cancelled.</span>
+              </div>
+            ) : isConfirmed ? (
+              <div
+                className="hcm-approval-success-banner"
+                style={{ marginTop: 'var(--space-2)' }}
+              >
+                <span>✓ Query resolved</span>
+              </div>
+            ) : (
+              <>
+                <div className="hcm-form-group">
+                  <label className="hcm-form-label" htmlFor={`resolution-note-main-${card.id}`}>
+                    Resolution note (optional):
+                  </label>
+                  <textarea
+                    id={`resolution-note-main-${card.id}`}
+                    className="hcm-textarea"
+                    rows={3}
+                    placeholder="Type optional resolution note"
+                    value={resolutionNote}
+                    onChange={(e) => setResolutionNote(e.target.value)}
+                  />
+                </div>
+
+                <div className="hcm-approval-actions" style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)' }}>
+                  <button
+                    type="button"
+                    className="hcm-button hcm-button-primary"
+                    onClick={() => {
+                      setIsConfirmed(true);
+                      const note = resolutionNote.trim() || undefined;
+                      if (onConfirmResolve) {
+                        onConfirmResolve(d.query_id || '', note);
+                      } else if (onActionClick) {
+                        onActionClick('confirm-resolve-query', { query_id: d.query_id || '', confirmed: true, reply_text: note || null });
+                      }
+                    }}
+                  >
+                    Confirm resolve
+                  </button>
+                  <button
+                    type="button"
+                    className="hcm-button hcm-button-secondary"
+                    onClick={() => {
+                      setIsCancelled(true);
+                      if (onCancel) {
+                        onCancel();
+                      } else if (onActionClick) {
+                        onActionClick('cancel');
+                      }
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

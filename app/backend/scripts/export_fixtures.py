@@ -65,6 +65,17 @@ def generate_fixtures():
     assert resp_picker.status_code == 200
     fixtures["picker_arrears"] = resp_picker.json()
 
+    # Real exported fixture for HR01: "Show Neha's query" -> "Mark query resolved" (resolve confirmation card)
+    lifecycle.reset_demo()
+    client.post("/api/chat", json={"user_id": "HR01", "message": "Show Neha's query"})
+    resp_resolve = client.post("/api/chat", json={
+        "user_id": "HR01",
+        "action": "resolve-query",
+        "context": {"query_id": "QUERY-E05-SEPTEMBER", "employee_id": "E05"}
+    })
+    assert resp_resolve.status_code == 200
+    fixtures["hr_resolve_confirm"] = resp_resolve.json()
+
     out_path = root_dir / "app" / "frontend" / "src" / "tests" / "chat_scenario_fixtures.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(fixtures, f, indent=2, ensure_ascii=False)

@@ -1925,5 +1925,37 @@
       "panel": null,
       "certainty": null
     }
+  },
+  "hr_resolve_confirm": {
+    "messages": [
+      {
+        "code": "C51",
+        "text": "Mark Neha Gupta's query as resolved?"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-confirm-resolve-QUERY-E05-SEPTEMBER",
+        "type": "query_status",
+        "title": "Resolve query confirmation",
+        "data": {
+          "query_id": "QUERY-E05-SEPTEMBER",
+          "employee_label": "Neha Gupta · E05",
+          "name_code": "Neha Gupta · E05",
+          "status": "In review",
+          "description": "Please check my September attendance.",
+          "notice": "Action requires confirmation.",
+          "is_resolve_confirmation": true
+        }
+      }
+    ],
+    "chips": [],
+    "state": {
+      "intent": "hr_query_review",
+      "role": "HR Admin",
+      "surface": "CHAT-HR",
+      "panel": null,
+      "certainty": null
+    }
   }
 }

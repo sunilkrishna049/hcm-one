@@ -1653,23 +1653,18 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       const mockConfirm = vi.fn();
       const mockCancel = vi.fn();
 
-      const confirmCard = {
-        id: 'card-confirm-resolve-QUERY-E05',
-        type: 'query_status',
-        title: 'Resolve query confirmation',
-        data: {
-          query_id: 'QUERY-E05-SEPTEMBER',
-          employee_label: 'Neha Gupta · E05',
-          status: 'In review',
-          description: 'Please review September LOP deduction.',
-          notice: 'Action requires confirmation.',
-          is_resolve_confirmation: true,
-        },
-      };
+      // Step 4: render card from EXACT JSON returned in Step 1, taken from regenerated fixtures (chat_scenario_fixtures.json)
+      const confirmCardFromFixture = (fixtures as any).hr_resolve_confirm.cards[0];
+      expect(confirmCardFromFixture.id).toBe('card-confirm-resolve-QUERY-E05-SEPTEMBER');
+      expect(confirmCardFromFixture.type).toBe('query_status');
+      expect(confirmCardFromFixture.title).toBe('Resolve query confirmation');
+      expect(confirmCardFromFixture.data.is_resolve_confirmation).toBe(true);
+      expect(confirmCardFromFixture.data.notice).toBe('Action requires confirmation.');
 
-      const { rerender } = render(
+      const { unmount } = render(
         <CardRenderer
-          card={confirmCard}
+          role="HR Admin"
+          card={confirmCardFromFixture}
           onConfirmResolve={mockConfirm}
           onCancelQueryDraft={mockCancel}
         />
@@ -1691,16 +1686,18 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       fireEvent.click(confirmBtn);
 
       expect(mockConfirm).toHaveBeenCalledWith('QUERY-E05-SEPTEMBER', 'Manual swipe correction approved.');
+      unmount();
 
-      // Test Cancel button with fresh render
+      // Test Cancel button with fresh render from exact fixture
       const { unmount: unmountCancel } = render(
         <CardRenderer
-          card={{ ...confirmCard, id: 'card-confirm-resolve-QUERY-E05-cancel-test' }}
+          role="HR Admin"
+          card={confirmCardFromFixture}
           onConfirmResolve={mockConfirm}
           onCancelQueryDraft={mockCancel}
         />
       );
-      const cancelBtn2 = screen.getAllByRole('button', { name: /Cancel/i }).pop()!;
+      const cancelBtn2 = screen.getByRole('button', { name: /Cancel/i });
       fireEvent.click(cancelBtn2);
       expect(screen.getByText('Resolution cancelled.')).toBeInTheDocument();
       unmountCancel();
