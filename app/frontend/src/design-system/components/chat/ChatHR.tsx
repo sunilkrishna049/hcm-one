@@ -359,10 +359,9 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                     // Cancel sends nothing per Item 6
                   }}
                   onTakeIntoReview={(qid) => handleAction('take-into-review', { query_id: qid })}
-                  onResolveQuery={(qid) => handleAction('resolve-query', { query_id: qid, reply_text: 'Attendance reviewed and verified against punch records.' })}
-                  onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
-                  onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
-                  onActionClick={(act) => handleAction(act)}
+                  onResolveQuery={(qid) => handleAction('resolve-query', { query_id: qid })}
+                  onConfirmResolve={(qid, replyText) => handleAction('confirm-resolve-query', { query_id: qid, confirmed: true, reply_text: replyText || null })}
+                  onActionClick={(act, payload) => handleAction(act, payload)}
                   onSelectEmployee={(empId, task, name) => {
                     if (task === 'options' || !task) {
                       handleSendMessage(`Show options for ${name || empId}`);

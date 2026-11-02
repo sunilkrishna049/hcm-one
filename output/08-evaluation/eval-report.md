@@ -1,7 +1,7 @@
 # HCM One AI Layer: Live Evaluation Report (Prompt 3 Part B)
 
-**Evaluation Run Timestamp**: `20261102_103307`  
-**Evaluation Log**: `data\runtime\eval\ai_eval_20261102_103307.jsonl`  
+**Evaluation Run Timestamp**: `20261102_130135`  
+**Evaluation Log**: `data\runtime\eval\ai_eval_20261102_130135.jsonl`  
 **Total Evaluated Cases**: 60  
 
 ---
@@ -15,7 +15,7 @@
 | **Data Outside Permission** | **0** | 0 | PASS |
 | **Overall Backup Rate** | **100.0%** (60/60) | - | INFO |
 | **Replies from approved templates** | **100%** | by design (DEC-044) | PASS |
-| **Median Turn Latency** | **2040.4 ms** | < 2,000 ms | FAIL |
+| **Median Turn Latency** | **2226.5 ms** | < 2,000 ms | FAIL |
 
 ---
 
@@ -32,11 +32,11 @@
 
 | # | User | Question | Latency (ms) | Actual Outcome |
 | :---: | :---: | :--- | :---: | :---: |
-| 1 | USER-E05 | why is my salary less this month? | 6872.5 | ANSWER |
-| 2 | USER-E05 | My take-home dropped in September. Why? | 5043.4 | ANSWER |
-| 17 | USER-E05 | What is HRA? | 2725.2 | FAQ |
-| 5 | USER-E05 | Explain my June pay. | 2596.9 | ANSWER |
-| 45 | HR01 | What needs my approval? | 2541.2 | ANSWER |
+| 1 | USER-E05 | why is my salary less this month? | 7246.7 | ANSWER |
+| 2 | USER-E05 | My take-home dropped in September. Why? | 4724.9 | ANSWER |
+| 30 | HR01 | Calculate arrears for Kavya Iyer. | 3273.8 | ANSWER |
+| 12 | USER-E05 | Compare my August and September pay. | 3203.5 | ANSWER |
+| 60 | HR02 | Prepare the Engineering annual bonus. | 3122.6 | C10 |
 
 ---
 

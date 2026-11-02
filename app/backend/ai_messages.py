@@ -76,6 +76,8 @@ AI_MESSAGES = {
     "C69": "Pick an employee to see what you can do for them:",
     "C70": "Here's what you can do for {Name}:",
     "C71": "I can't approve or reject from a chat message. Open the proposal and use its buttons.",
+    "C72": "No reply was recorded before this query was resolved.",
+    "C73": "{Name}'s query is marked as resolved.",
     "FAQ": "Here is the recorded meaning from the payroll glossary:",
     "REJECTED": "The proposal has been rejected.",
     "NO_QUERY": "You do not have any open payroll queries recorded.",
@@ -115,6 +117,8 @@ AI_MESSAGES_HR = {
     "C69": "Pick an employee to see what you can do for them:",
     "C70": "Here's what you can do for {Name}:",
     "C71": "I can't approve or reject from a chat message. Open the proposal and use its buttons.",
+    "C72": "No reply was recorded before this query was resolved.",
+    "C73": "{Name}'s query is marked as resolved.",
     "HR_NO_QUERY": "No open payroll query was found for {Name}.",
     "HR_QUERY_REPLY": "Reply recorded for {Name}'s query.",
 }

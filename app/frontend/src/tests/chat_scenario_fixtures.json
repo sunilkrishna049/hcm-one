@@ -1681,7 +1681,9 @@
           "reply_text": null,
           "resolution": null,
           "closed_by": null,
-          "closed_at": null
+          "closed_at": null,
+          "resolved_by": null,
+          "resolved_at": null
         }
       }
     ],

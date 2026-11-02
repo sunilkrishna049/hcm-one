@@ -64,12 +64,12 @@ export function formatNumberPlain(val: number | null | undefined): string {
   return `${minusSign}${formatted}`;
 }
 
-export function isCountLabel(label?: string | null): boolean {
-  if (!label || typeof label !== "string") return false;
-  const l = label.toLowerCase();
-  return /\b(day|days|count|item|items|employee|employees|people)\b/.test(l);
-}
-
+export function isCountLabel(label?: string | null): boolean {
+  if (!label || typeof label !== "string") return false;
+  const l = label.toLowerCase();
+  return /\b(day|days|count|item|items|employee|employees|people)\b/.test(l);
+}
+
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -106,8 +106,8 @@ export function formatHumanDate(dateStr: string | null | undefined): string {
     });
   }
 
-  // 2. Full date: "2026-04-01" -> "1 Apr 2026"
-  const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  // 2. Full date: "2026-04-01" or ISO timestamp -> "1 Apr 2026"
+  const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/);
   if (dateMatch) {
     const [, y, m, d] = dateMatch;
     const day = parseInt(d, 10);

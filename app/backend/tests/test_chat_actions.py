@@ -250,7 +250,7 @@ def test_full_query_lifecycle():
         },
     )
     assert resolve_resp.status_code == 200
-    assert any(m["code"] == "C23" for m in resolve_resp.json()["messages"])
+    assert any(m["code"] == "C73" for m in resolve_resp.json()["messages"])
     assert resolve_resp.json()["cards"][0]["data"]["status"] == "Resolved"
 
     # 7. Employee disputes resolution
@@ -1353,7 +1353,9 @@ def test_hr_query_word_routing_and_full_loop():
     assert resolve_prompt.status_code == 200
     assert resolve_prompt.json()["messages"][0]["code"] == "C51"
     assert resolve_prompt.json()["messages"][0]["text"] == "Mark Neha Gupta's query as resolved?"
-    assert any(chip["action"] == "confirm-resolve-query" for chip in resolve_prompt.json()["chips"])
+    assert resolve_prompt.json()["cards"][0]["title"] == "Resolve query confirmation"
+    assert resolve_prompt.json()["cards"][0]["data"].get("is_resolve_confirmation") is True
+    assert not any(chip["action"] == "confirm-resolve-query" for chip in resolve_prompt.json()["chips"])
     # Not yet marked resolved in data
     neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
     assert neha_q.get("status") == "In review"
@@ -1365,7 +1367,7 @@ def test_hr_query_word_routing_and_full_loop():
         "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
     })
     assert confirm_resolve.status_code == 200
-    assert confirm_resolve.json()["messages"][0]["code"] == "C23"
+    assert confirm_resolve.json()["messages"][0]["code"] == "C73"
     neha_q = lifecycle.get_query("QUERY-E05-SEPTEMBER")
     assert neha_q.get("status") == "Resolved"
 
@@ -1787,5 +1789,220 @@ def test_r5_chat_typed_approval_returns_c71():
         codes_malformed = [m.get("code") for m in data_malformed.get("messages", [])]
         assert "C09" in codes_malformed
         assert "Proposal ID is required" in data_malformed["messages"][0]["text"]
+    finally:
+        lifecycle.reset_demo()
+
+
+
+def test_structural_guard_query_reply_resolution_integrity():
+    """V1 STRUCTURAL GUARD TEST:
+    For each way to resolve or close a query:
+    1. resolve with no text -> stored reply equals null
+    2. resolve with text -> stored reply equals EXACTLY what the request contained
+    3. close -> stored reply equals null (or previous text)
+    4. reply then resolve with no text -> stored reply equals EXACTLY what the initial reply contained
+    5. reply then resolve with new text -> stored reply equals EXACTLY what the resolution request contained
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+
+    # Pathway 1: resolve with no text -> stored reply is None
+    lifecycle.reset_demo()
+    try:
+        r1 = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
+        })
+        assert r1.status_code == 200
+        assert r1.json()["messages"][0]["code"] == "C73"
+        q1 = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+        assert q1["status"] == "Resolved"
+        assert q1.get("hr_reply") is None
+
+        # Employee check gets C72
+        e1 = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": "Do I have a reply on my query?"
+        })
+        assert e1.status_code == 200
+        assert e1.json()["messages"][0]["code"] == "C72"
+        assert e1.json()["cards"][0]["data"]["status"] == "Resolved"
+        assert e1.json()["cards"][0]["data"].get("reply_text") is None
+        assert "QUERY-E05" not in e1.json()["messages"][0]["text"]
+
+        # Pathway 2: resolve with text -> stored reply equals EXACTLY request text
+        lifecycle.reset_demo()
+        custom_note = "Explicitly verified by HR with swipe audit."
+        r2 = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True, "reply_text": custom_note}
+        })
+        assert r2.status_code == 200
+        q2 = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+        assert q2["status"] == "Resolved"
+        assert q2.get("hr_reply") == custom_note
+
+        e2 = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": "Do I have a reply on my query?"
+        })
+        assert e2.status_code == 200
+        assert e2.json()["messages"][0]["code"] == "C44"
+        assert custom_note in e2.json()["messages"][0]["text"]
+
+        # Pathway 3: close -> stored reply is None
+        lifecycle.reset_demo()
+        r3 = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "action": "close-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER"}
+        })
+        assert r3.status_code == 200
+        q3 = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+        assert q3["status"] == "Closed"
+        assert q3.get("hr_reply") is None
+
+        e3 = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": "Do I have a reply on my query?"
+        })
+        assert e3.status_code == 200
+        assert e3.json()["messages"][0]["code"] == "C67"
+
+        # Pathway 4: reply then resolve with no text -> stored reply equals initial reply text
+        lifecycle.reset_demo()
+        init_reply = "Investigating swipe gate anomaly."
+        client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-reply-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "reply_text": init_reply}
+        })
+        r4 = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
+        })
+        assert r4.status_code == 200
+        q4 = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+        assert q4["status"] == "Resolved"
+        assert q4.get("hr_reply") == init_reply
+
+        # Pathway 5: reply then resolve with new text -> stored reply equals new text
+        lifecycle.reset_demo()
+        client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-reply-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "reply_text": "Initial reply"}
+        })
+        final_note = "Resolved with payroll credit in October."
+        r5 = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True, "reply_text": final_note}
+        })
+        assert r5.status_code == 200
+        q5 = lifecycle.get_query("QUERY-E05-SEPTEMBER")
+        assert q5["status"] == "Resolved"
+        assert q5.get("hr_reply") == final_note
+    finally:
+        lifecycle.reset_demo()
+
+
+def test_static_guard_no_invented_reply_literals():
+    """V1 STATIC GUARD:
+    No string literal is assigned to any reply/resolution field anywhere in app/backend or app/frontend (except tests).
+    Forbidden phrases like 'verified against punch records' or 'biometric logs' must never appear in application code.
+    """
+    import os
+    import re
+
+    forbidden_phrases = [
+        "verified against punch records",
+        "punch records",
+        "verified against biometric logs",
+        "auto-resolved prior to closure",
+    ]
+
+    scanned_extensions = (".py", ".ts", ".tsx", ".js")
+    violations = []
+
+    scan_dirs = ["app/backend", "app/frontend/src"]
+    for base_dir in scan_dirs:
+        for root, dirs, files in os.walk(base_dir):
+            # Exclude tests and build artifacts
+            if any(part in root.replace("\\", "/").split("/") for part in ["tests", "__pycache__", ".venv", "dist", "build"]):
+                continue
+            for f in files:
+                if f.endswith(scanned_extensions):
+                    path = os.path.join(root, f)
+                    with open(path, "r", encoding="utf-8", errors="ignore") as fp:
+                        for line_num, line in enumerate(fp, 1):
+                            line_lower = line.lower()
+                            # Ignore comments
+                            stripped = line.strip()
+                            if stripped.startswith(("#", "//", "/*", "*")):
+                                continue
+                            for phrase in forbidden_phrases:
+                                if phrase in line_lower:
+                                    violations.append(f"{path}:{line_num}: contains forbidden phrase '{phrase}' -> {stripped}")
+
+    assert not violations, f"Found {len(violations)} forbidden invented reply occurrences:\n" + "\n".join(violations)
+
+
+def test_role_actions_exclusivity():
+    """V2 TEST:
+    HR response never contains employee-only actions (Dispute resolution, Acknowledge and close).
+    Employee response never contains HR-only actions (Take into review, Resolve query, Reply to query).
+    """
+    from fastapi.testclient import TestClient
+    from app.backend.main import app
+    from app.backend.lifecycle import lifecycle
+
+    client = TestClient(app)
+    lifecycle.reset_demo()
+    try:
+        # HR resolves query
+        hr_res = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "confirm-resolve-query",
+            "context": {"query_id": "QUERY-E05-SEPTEMBER", "confirmed": True}
+        })
+        assert hr_res.status_code == 200
+        hr_data = hr_res.json()
+        assert hr_data["messages"][0]["code"] == "C73"
+
+        # Assert HR view has NO employee-only actions
+        emp_only_actions = ["Dispute resolution", "Acknowledge and close", "dispute-query", "close-query"]
+        for card in hr_data.get("cards", []):
+            card_actions = card.get("data", {}).get("actions", [])
+            for ea in emp_only_actions:
+                assert ea not in card_actions
+        for chip in hr_data.get("chips", []):
+            assert chip.get("action") not in emp_only_actions
+            assert chip.get("label") not in emp_only_actions
+
+        # Employee checks query
+        emp_res = client.post("/api/chat", json={
+            "user_id": "USER-E05",
+            "message": "Do I have a reply on my query?"
+        })
+        assert emp_res.status_code == 200
+        emp_data = emp_res.json()
+        assert emp_data["messages"][0]["code"] == "C72"
+
+        # Assert Employee view has NO HR-only actions
+        hr_only_actions = ["Take into review", "Resolve query", "Mark query resolved", "resolve-query", "reply-query", "take-into-review"]
+        for card in emp_data.get("cards", []):
+            card_actions = card.get("data", {}).get("actions", [])
+            for ha in hr_only_actions:
+                assert ha not in card_actions
+        for chip in emp_data.get("chips", []):
+            assert chip.get("action") not in hr_only_actions
+            assert chip.get("label") not in hr_only_actions
     finally:
         lifecycle.reset_demo()

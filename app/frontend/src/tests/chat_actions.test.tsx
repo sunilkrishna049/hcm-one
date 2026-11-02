@@ -1648,6 +1648,111 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
       unmount();
     });
+
+    it('24. V3 Resolve confirmation inside card: renders Confirm resolve and Cancel buttons, optional note input, and calls onConfirmResolve', () => {
+      const mockConfirm = vi.fn();
+      const mockCancel = vi.fn();
+
+      const confirmCard = {
+        id: 'card-confirm-resolve-QUERY-E05',
+        type: 'query_status',
+        title: 'Resolve query confirmation',
+        data: {
+          query_id: 'QUERY-E05-SEPTEMBER',
+          employee_label: 'Neha Gupta · E05',
+          status: 'In review',
+          description: 'Please review September LOP deduction.',
+          notice: 'Action requires confirmation.',
+          is_resolve_confirmation: true,
+        },
+      };
+
+      const { rerender } = render(
+        <CardRenderer
+          card={confirmCard}
+          onConfirmResolve={mockConfirm}
+          onCancelQueryDraft={mockCancel}
+        />
+      );
+
+      // Verify card content
+      expect(screen.getByText('Resolve query confirmation')).toBeInTheDocument();
+      expect(screen.getByText('Action requires confirmation.')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Resolution note \(optional\)/i)).toBeInTheDocument();
+
+      const confirmBtn = screen.getByRole('button', { name: /Confirm resolve/i });
+      const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
+      expect(confirmBtn).toBeInTheDocument();
+      expect(cancelBtn).toBeInTheDocument();
+
+      // Type note and click Confirm resolve
+      const textarea = screen.getByPlaceholderText(/Type optional resolution note/i);
+      fireEvent.change(textarea, { target: { value: 'Manual swipe correction approved.' } });
+      fireEvent.click(confirmBtn);
+
+      expect(mockConfirm).toHaveBeenCalledWith('QUERY-E05-SEPTEMBER', 'Manual swipe correction approved.');
+
+      // Test Cancel button with fresh render
+      const { unmount: unmountCancel } = render(
+        <CardRenderer
+          card={{ ...confirmCard, id: 'card-confirm-resolve-QUERY-E05-cancel-test' }}
+          onConfirmResolve={mockConfirm}
+          onCancelQueryDraft={mockCancel}
+        />
+      );
+      const cancelBtn2 = screen.getAllByRole('button', { name: /Cancel/i }).pop()!;
+      fireEvent.click(cancelBtn2);
+      expect(screen.getByText('Resolution cancelled.')).toBeInTheDocument();
+      unmountCancel();
+    });
+
+    it('25. V2 Role exclusivity in QueryStatusCard: HR view never renders Dispute/Acknowledge; Employee view renders Dispute/Acknowledge and C72 when unreplied', () => {
+      const mockDispute = vi.fn();
+      const mockClose = vi.fn();
+
+      const resolvedCard = {
+        id: 'card-status-resolved',
+        type: 'query_status',
+        title: 'Query resolved',
+        data: {
+          query_id: 'QUERY-E05-SEPTEMBER',
+          status: 'Resolved',
+          description: 'Please check my attendance.',
+          resolved_by: 'Anita Desai',
+          resolved_at: '2026-11-02T12:00:00Z',
+          reply_text: null,
+          role: 'HR Admin',
+        },
+      };
+
+      // 1. HR view: Dispute and Acknowledge buttons are NEVER present
+      const { rerender } = render(
+        <CardRenderer
+          role="HR Admin"
+          card={resolvedCard}
+          onDisputeQuery={mockDispute}
+          onCloseQuery={mockClose}
+        />
+      );
+
+      expect(screen.queryByText('Dispute resolution')).toBeNull();
+      expect(screen.queryByText('Acknowledge and close')).toBeNull();
+      expect(screen.getByText('No reply was recorded before this query was resolved.')).toBeInTheDocument();
+      expect(screen.getByText(/Resolved by Anita Desai on 2 Nov 2026/i)).toBeInTheDocument();
+
+      // 2. Employee view: Dispute and Acknowledge buttons ARE present
+      rerender(
+        <CardRenderer
+          role="Employee"
+          card={{ ...resolvedCard, data: { ...resolvedCard.data, role: 'Employee' } }}
+          onDisputeQuery={mockDispute}
+          onCloseQuery={mockClose}
+        />
+      );
+
+      expect(screen.getByText('Dispute resolution')).toBeInTheDocument();
+      expect(screen.getByText('Acknowledge and close')).toBeInTheDocument();
+    });
   });
 
 });

@@ -754,6 +754,13 @@ class ChatRouter:
                 return self._handle_confirm_reply_query(user, role, surface, context)
             elif act in ("confirm-resolve-query", "confirm-resolve"):
                 return self._handle_resolve_query(user, role, surface, {**context, "confirmed": True})
+            elif act in ("cancel-resolve", "cancel-resolve-query"):
+                return {
+                    "messages": [{"code": "C00", "text": "Resolution cancelled."}],
+                    "cards": [],
+                    "chips": _get_user_fallback_chips(user),
+                    "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
+                }
             elif act in ("take-into-review", "take for review", "take into review", "hr-take-into-review"):
                 return self._handle_take_into_review(user, role, surface, context)
             elif act in ("reply-query", "reply", "hr-reply"):
@@ -3578,6 +3585,9 @@ class ChatRouter:
         if st == "Closed" and not hr_reply:
             msg_code = "C67"
             msg_text = get_message("C67")
+        elif st == "Resolved" and not hr_reply:
+            msg_code = "C72"
+            msg_text = get_message("C72")
         elif not hr_reply:
             msg_code = "C40"
             msg_text = get_message("C40", month=q_month_name, status=st)
@@ -3593,6 +3603,15 @@ class ChatRouter:
                 if h.get("status") == "Closed":
                     closed_by_val = h.get("actor_name") or h.get("actor")
                     closed_at_val = closed_at_val or h.get("time")
+                    break
+
+        resolved_by_val = latest.get("resolved_by")
+        resolved_at_val = latest.get("resolved_at")
+        if not resolved_by_val and latest.get("history"):
+            for h in reversed(latest["history"]):
+                if h.get("status") == "Resolved":
+                    resolved_by_val = h.get("actor_name") or h.get("actor")
+                    resolved_at_val = resolved_at_val or h.get("time")
                     break
 
         return {
@@ -3613,7 +3632,9 @@ class ChatRouter:
                         "reply_text": latest.get("reply_text") or latest.get("hr_reply"),
                         "resolution": latest.get("resolution") or latest.get("hr_reply"),
                         "closed_by": closed_by_val,
-                        "closed_at": closed_at_val
+                        "closed_at": closed_at_val,
+                        "resolved_by": resolved_by_val,
+                        "resolved_at": resolved_at_val
                     }
                 }
             ],
@@ -3827,22 +3848,22 @@ class ChatRouter:
                             "name_code": f"{emp_name} · {q_orig.get('employee_id')}",
                             "status": q_orig.get("status"),
                             "description": q_orig.get("description"),
-                            "notice": "Action requires confirmation."
+                            "notice": "Action requires confirmation.",
+                            "is_resolve_confirmation": True
                         }
                     }
                 ],
-                "chips": [
-                    {"label": "Confirm resolve", "action": "confirm-resolve-query", "payload": {"query_id": q_id, "confirmed": True}}
-                ],
+                "chips": [],
                 "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
             }
 
-        reply = context.get("reply_text") or (q_orig.get("hr_reply") if q_orig else None) or "Attendance reviewed and verified against punch records."
-        res = lifecycle.resolve_query(q_id, actor=user, reply_text=reply)
+        raw_reply = context.get("reply_text") or context.get("resolution_note") or ""
+        typed_reply = raw_reply.strip() if isinstance(raw_reply, str) and raw_reply.strip() else None
+        res = lifecycle.resolve_query(q_id, actor=user, reply_text=typed_reply)
         q = res["query"]
         return {
             "messages": [
-                {"code": "C23", "text": get_message("C23")}
+                {"code": "C73", "text": get_message("C73", Name=emp_name)}
             ],
             "cards": [
                 {
@@ -3854,13 +3875,17 @@ class ChatRouter:
                         "employee_label": f"{emp_name} · {q.get('employee_id')}",
                         "name_code": f"{emp_name} · {q.get('employee_id')}",
                         "status": "Resolved",
+                        "role": "HR Admin",
+                        "category": q.get("category"),
                         "description": q.get("description"),
                         "reply_text": q.get("hr_reply"),
-                        "resolution": q.get("hr_reply")
+                        "resolution": q.get("hr_reply"),
+                        "resolved_by": q.get("resolved_by"),
+                        "resolved_at": q.get("resolved_at")
                     }
                 }
             ],
-            "chips": [],
+            "chips": _get_user_fallback_chips(user),
             "state": {"intent": "hr_query_review", "role": role, "surface": surface, "panel": None}
         }
 

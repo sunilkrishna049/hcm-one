@@ -695,16 +695,22 @@ class LifecycleStore:
         query = next((q for q in queries if q["query_id"] == query_id), None)
         if not query:
             raise HTTPException(status_code=404, detail="Query not found")
-        if reply_text:
-            query["hr_reply"] = reply_text
-        if not query.get("hr_reply"):
-            raise HTTPException(status_code=400, detail="Cannot record resolution without an HR reply.")
+        if reply_text and isinstance(reply_text, str) and reply_text.strip():
+            query["hr_reply"] = reply_text.strip()
         query["status"] = "Resolved"
         query["resolved_at"] = _now_iso()
-        query.setdefault("history", []).append({"status": "Resolved", "time": _now_iso(), "actor": actor["user_id"]})
+        actor_name = actor.get("name") or ("Anita Desai" if actor.get("user_id") == "HR01" else (actor.get("user_id") or "Anita Desai"))
+        query["resolved_by"] = actor_name
+        query.setdefault("history", []).append({
+            "status": "Resolved",
+            "time": _now_iso(),
+            "actor": actor["user_id"],
+            "reply": query.get("hr_reply")
+        })
         _write_json(QUERIES_FILE, queries)
-        event = self.record_event("resolve", actor, {"query_id": query_id, "status": "Resolved"})
-        return {"query": query, "status": "Resolved", "event": event, "message": get_message("C23")}
+        event = self.record_event("resolve", actor, {"query_id": query_id, "status": "Resolved", "reply": query.get("hr_reply")})
+        emp_name = EMPLOYEE_NAMES_MAP.get(query.get("employee_id"), "Employee")
+        return {"query": query, "status": "Resolved", "event": event, "message": get_message("C73", Name=emp_name)}
 
     def dispute_query(self, query_id: str, actor: dict, reason: Optional[str] = None) -> dict:
         queries = _read_json(QUERIES_FILE, [])

@@ -26,7 +26,8 @@ interface AssistantTurnProps {
   onResolveQuery?: (queryId: string) => void;
   onDisputeQuery?: (queryId: string) => void;
   onCloseQuery?: (queryId: string) => void;
-  onActionClick?: (action: string) => void;
+  onConfirmResolve?: (queryId: string, replyText?: string) => void;
+  onActionClick?: (action: string, payload?: any) => void;
   onSelectEmployee?: (employeeId: string, task?: string, name?: string) => void;
 }
 
@@ -47,6 +48,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   onResolveQuery,
   onDisputeQuery,
   onCloseQuery,
+  onConfirmResolve,
   onActionClick,
   onSelectEmployee,
 }) => {
@@ -108,6 +110,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
               onResolveQuery={onResolveQuery}
               onDisputeQuery={onDisputeQuery}
               onCloseQuery={onCloseQuery}
+              onConfirmResolve={onConfirmResolve}
               onActionClick={onActionClick}
               onSelectEmployee={onSelectEmployee}
             />
