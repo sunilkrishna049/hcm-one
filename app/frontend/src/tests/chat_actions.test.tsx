@@ -10,10 +10,30 @@ import { api } from '../services/api';
 import fixtures from './chat_scenario_fixtures.json';
 import { createWelcomeTurn } from '../utils/welcomeTurn';
 
+const MOCK_PICKER_EMPLOYEES = [
+  { employee_id: 'E01', name: 'Priya Sharma', department: 'Engineering', status_tags: ['Hike pending'] },
+  { employee_id: 'E02', name: 'Arjun Rao', department: 'Operations', status_tags: ['Hike pending'] },
+  { employee_id: 'E03', name: 'Kavya Iyer', department: 'Engineering', status_tags: ['Needs input'] },
+  { employee_id: 'E04', name: 'Rohan Mehta', department: 'Engineering', status_tags: [] },
+  { employee_id: 'E05', name: 'Neha Gupta', department: 'Operations', status_tags: ['Open query'] },
+  { employee_id: 'E06', name: 'Siddharth Jain', department: 'Engineering', status_tags: [] },
+  { employee_id: 'E07', name: 'Sneha Kulkarni', department: 'Engineering', status_tags: [] },
+  { employee_id: 'E08', name: 'Vikram Singh', department: 'Engineering', status_tags: ['Leaving November'] },
+  { employee_id: 'E09', name: 'Meera Nair', department: 'Engineering', status_tags: ['Needs input'] },
+  { employee_id: 'E10', name: 'Rahul Verma', department: 'Finance', status_tags: ['Leaving October'] },
+  { employee_id: 'E11', name: 'Lakshmi Reddy', department: 'Finance', status_tags: ['Leaving October'] },
+  { employee_id: 'E12', name: 'Imran Khan', department: 'Engineering', status_tags: ['Needs input', 'Leaving October'] },
+  { employee_id: 'E13', name: 'Ankit Jain', department: 'Sales', status_tags: [] },
+  { employee_id: 'E14', name: 'Fatima Sheikh', department: 'Sales', status_tags: [] },
+  { employee_id: 'E15', name: 'Deepak Pillai', department: 'Sales', status_tags: [] },
+  { employee_id: 'E16', name: 'Pooja Das', department: 'Operations', status_tags: [] },
+];
+
 vi.mock('../services/api', () => ({
   api: {
     chat: vi.fn(),
     resetDemo: vi.fn().mockResolvedValue({ status: 'ok' }),
+    getEmployees: vi.fn().mockImplementation(() => Promise.resolve(MOCK_PICKER_EMPLOYEES)),
   },
   setCurrentUserId: vi.fn(),
 }));
@@ -21,6 +41,7 @@ vi.mock('../services/api', () => ({
 describe('Chat Action Click Tests (React Testing Library)', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    (api.getEmployees as any) = vi.fn().mockImplementation(() => Promise.resolve(MOCK_PICKER_EMPLOYEES));
   });
 
   it('1. Clicking "Approve proposal for payroll" dispatches approve action and renders approved state', async () => {
@@ -470,6 +491,7 @@ describe('Chat Action Click Tests (React Testing Library)', () => {
 describe('New Chat Start Experience Tests (DEC-040)', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    (api.getEmployees as any) = vi.fn().mockImplementation(() => Promise.resolve(MOCK_PICKER_EMPLOYEES));
   });
 
   it('7. Empty welcome state on open: shows C31 greeting with user first name followed by C01, no auto-load', () => {
@@ -1498,7 +1520,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       expect(api.chat).not.toHaveBeenCalled();
 
       // Card title & prompt
-      const pickerCard = screen.getByTestId('employee-picker-card');
+      const pickerCard = await screen.findByTestId('employee-picker-card');
       expect(pickerCard).toHaveTextContent('Select employee');
       expect(pickerCard).toHaveTextContent('Pick an employee to see what you can do for them:');
 
@@ -1540,7 +1562,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
     it('B1b. Employee picker search filters employees by name, ID, or department', async () => {
       const { unmount } = render(<ChatHR currentUser="HR01" />);
-      const searchInput = screen.getByTestId('employee-picker-search');
+      const searchInput = await screen.findByTestId('employee-picker-search');
 
       // Filter by department: Sales
       fireEvent.change(searchInput, { target: { value: 'Sales' } });
@@ -1562,9 +1584,12 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     });
 
     it('B1c. HR02 home employee picker renders only Sales employees (E13, E14, E15)', async () => {
+      (api.getEmployees as any).mockResolvedValueOnce(
+        MOCK_PICKER_EMPLOYEES.filter((emp) => ['E13', 'E14', 'E15'].includes(emp.employee_id))
+      );
       const { unmount } = render(<ChatHR currentUser="HR02" />);
 
-      const employeeItems = screen.getAllByTestId(/^employee-item-E\d+/);
+      const employeeItems = await screen.findAllByTestId(/^employee-item-E\d+/);
       expect(employeeItems).toHaveLength(3);
       expect(screen.getByTestId('employee-item-E13')).toBeInTheDocument();
       expect(screen.getByTestId('employee-item-E14')).toBeInTheDocument();
@@ -1597,7 +1622,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       const { unmount } = render(<ChatHR currentUser="HR01" />);
 
       // Tap Neha Gupta on home picker
-      const nehaButton = screen.getByTestId('employee-item-E05');
+      const nehaButton = await screen.findByTestId('employee-item-E05');
       fireEvent.click(nehaButton);
 
       // Visible user turn bubble must be rendered

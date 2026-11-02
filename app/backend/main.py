@@ -13,7 +13,7 @@ from .auth import USERS, check_employee_access, check_query_access, get_current_
 from .config import MOCK_DIR, RUNTIME_DIR, FRONTEND_ORIGIN
 from .rate_limiter import check_chat_rate_limit
 from .engine_bridge import bridge
-from .lifecycle import lifecycle
+from .lifecycle import lifecycle, evaluate_proposal_readiness
 from .chat_router import chat_router
 from .ai.crew import ai_crew
 from .permissions import enforce_reply_permissions
@@ -296,9 +296,86 @@ def list_users():
     return list(USERS.values())
 
 
+def get_live_employee_picker_list(user: dict) -> List[dict]:
+    role = user.get("role", "Employee")
+    allowed_ids = set(user.get("allowed_employee_ids") or [])
+    if role != "HR Admin":
+        return []
+    proposals = lifecycle.get_all_proposals()
+    queries = lifecycle.get_queries()
+    exits_file = MOCK_DIR / "exits.json"
+    exits = json.loads(exits_file.read_text(encoding="utf-8")) if exits_file.exists() else []
+    month_names = {
+        "01": "January", "02": "February", "03": "March", "04": "April",
+        "05": "May", "06": "June", "07": "July", "08": "August",
+        "09": "September", "10": "October", "11": "November", "12": "December"
+    }
+    results = []
+    for emp_rec in EMPLOYEES_MAP.values():
+        eid = emp_rec["employee_id"]
+        if eid not in allowed_ids:
+            continue
+        tags = []
+        hike_props = [
+            p for pid, p in proposals.items()
+            if p.get("scenario_num") in (1, 2) and (
+                p.get("scope", {}).get("employee_id") == eid
+                or (eid == "E01" and pid == "PROP-SCENARIO-1")
+                or (eid == "E02" and pid == "PROP-SCENARIO-2")
+            )
+        ]
+        for hp in hike_props:
+            st = hp.get("status", "")
+            if not st.startswith("Approved") and st != "Rejected":
+                ready, _, _ = evaluate_proposal_readiness(hp.get("proposal_id", ""), hp)
+                if ready and "Hike pending" not in tags:
+                    tags.append("Hike pending")
+
+        p3 = proposals.get("PROP-SCENARIO-3")
+        if p3 and not p3.get("status", "").startswith("Approved") and p3.get("status") != "Rejected":
+            ready3, _, _ = evaluate_proposal_readiness("PROP-SCENARIO-3", p3)
+            if not ready3 and eid == "E03" and "Needs input" not in tags:
+                tags.append("Needs input")
+
+        p4 = proposals.get("PROP-SCENARIO-4-ANNUAL") or proposals.get("PROP-SCENARIO-4")
+        if p4 and not p4.get("status", "").startswith("Approved") and p4.get("status") != "Rejected":
+            ready4, _, _ = evaluate_proposal_readiness("PROP-SCENARIO-4-ANNUAL", p4)
+            if not ready4 and eid == "E09" and "Needs input" not in tags:
+                tags.append("Needs input")
+
+        p8 = proposals.get("PROP-SCENARIO-8")
+        if p8 and not p8.get("status", "").startswith("Approved") and p8.get("status") != "Rejected":
+            ready8, _, _ = evaluate_proposal_readiness("PROP-SCENARIO-8", p8)
+            if not ready8 and eid == "E12" and "Needs input" not in tags:
+                tags.append("Needs input")
+
+        for q in queries:
+            if q.get("employee_id") == eid and q.get("status") not in ("Closed", "Resolved"):
+                if "Open query" not in tags:
+                    tags.append("Open query")
+
+        for ex in exits:
+            if ex.get("employee_id") == eid:
+                lwd = ex.get("last_working_day")
+                if lwd and "-" in lwd:
+                    parts = lwd.split("-")
+                    m_str = month_names.get(parts[1], parts[1])
+                    tag = f"Leaving {m_str}"
+                    if tag not in tags:
+                        tags.append(tag)
+
+        results.append({
+            "employee_id": eid,
+            "name": emp_rec.get("name", eid),
+            "department": emp_rec.get("department", ""),
+            "status_tags": tags
+        })
+    return results
+
+
 @app.get("/api/employees")
-def list_employees():
-    return list(EMPLOYEES_MAP.values())
+def list_employees(user: dict = Depends(get_current_user)):
+    return get_live_employee_picker_list(user)
 
 
 @app.get("/api/employees/{employee_id}")

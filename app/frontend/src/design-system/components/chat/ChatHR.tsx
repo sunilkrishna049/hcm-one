@@ -74,12 +74,43 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     scrollToBottom();
   }, [turns]);
 
-  // When user switches login, reset to empty welcome state for that user
+  // When user switches login, reset to empty welcome state and fetch live permitted employees
   useEffect(() => {
+    let isMounted = true;
     setTurns([createWelcomeTurn(currentUser)]);
     setActiveChips(HR_STARTER_CHIPS);
     setIsPanelOpen(false);
     setPanelData(null);
+
+    const empCall = typeof api.getEmployees === 'function' ? api.getEmployees() : Promise.resolve([]);
+    Promise.resolve(empCall)
+      .then((employees) => {
+        if (!isMounted || !Array.isArray(employees)) return;
+        setTurns((prevTurns) => {
+          const firstTurn = prevTurns[0];
+          if (firstTurn && firstTurn.id.startsWith('asst-welcome-')) {
+            const pickerCard = {
+              id: 'card-employee-picker-welcome',
+              type: 'employee-picker',
+              title: 'Select employee',
+              data: {
+                prompt: 'Pick an employee to see what you can do for them:',
+                has_search: true,
+                employees: employees,
+              },
+            };
+            return [{ ...firstTurn, cards: [pickerCard] }, ...prevTurns.slice(1)];
+          }
+          return prevTurns;
+        });
+      })
+      .catch((err) => {
+        console.warn('Could not fetch employees for home picker:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [currentUser]);
 
   const handleNewChat = () => {
@@ -87,6 +118,29 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     setPanelData(null);
     setTurns([createWelcomeTurn(currentUser)]);
     setActiveChips(HR_STARTER_CHIPS);
+    const empCall = typeof api.getEmployees === 'function' ? api.getEmployees() : Promise.resolve([]);
+    Promise.resolve(empCall)
+      .then((employees) => {
+        if (!Array.isArray(employees)) return;
+        setTurns((prevTurns) => {
+          const firstTurn = prevTurns[0];
+          if (firstTurn && firstTurn.id.startsWith('asst-welcome-')) {
+            const pickerCard = {
+              id: 'card-employee-picker-welcome',
+              type: 'employee-picker',
+              title: 'Select employee',
+              data: {
+                prompt: 'Pick an employee to see what you can do for them:',
+                has_search: true,
+                employees: employees,
+              },
+            };
+            return [{ ...firstTurn, cards: [pickerCard] }, ...prevTurns.slice(1)];
+          }
+          return prevTurns;
+        });
+      })
+      .catch(() => {});
     if (onNewChat) {
       onNewChat();
     }

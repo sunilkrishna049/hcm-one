@@ -67,7 +67,7 @@ def test_f1_approvals_list_counts_and_row_labels():
     for item in ready_items:
         lbl = item["label"]
         assert " · " in lbl, f"Row label '{lbl}' missing ' · ' separator"
-        assert any(k in lbl for k in ("Salary revision", "Full and final settlement", "Annual performance bonus", "Sales incentive")), f"Unknown kind in '{lbl}'"
+        assert any(k.lower() in lbl.lower() for k in ("Salary revision", "Full and final settlement", "Annual performance bonus", "Sales incentive", "Quarterly sales incentive")), f"Unknown kind in '{lbl}'"
 
     for item in needs_input_items:
         lbl = item["label"]

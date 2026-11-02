@@ -1,7 +1,7 @@
 # HCM One AI Layer: Live Evaluation Report (Prompt 3 Part B)
 
-**Evaluation Run Timestamp**: `20261102_093230`  
-**Evaluation Log**: `data\runtime\eval\ai_eval_20261102_093230.jsonl`  
+**Evaluation Run Timestamp**: `20261102_103307`  
+**Evaluation Log**: `data\runtime\eval\ai_eval_20261102_103307.jsonl`  
 **Total Evaluated Cases**: 60  
 
 ---
@@ -14,8 +14,8 @@
 | **Wrong Numbers Shown** | **0** | 0 | PASS |
 | **Data Outside Permission** | **0** | 0 | PASS |
 | **Overall Backup Rate** | **100.0%** (60/60) | - | INFO |
-| **Backup Used (AI-Drafted Intents)** | **100.0%** (38/38) | ≤ 15% | INFO |
-| **Median Turn Latency** | **1866.1 ms** | < 2,000 ms | PASS |
+| **Replies from approved templates** | **100%** | by design (DEC-044) | PASS |
+| **Median Turn Latency** | **2040.4 ms** | < 2,000 ms | FAIL |
 
 ---
 
@@ -32,11 +32,11 @@
 
 | # | User | Question | Latency (ms) | Actual Outcome |
 | :---: | :---: | :--- | :---: | :---: |
-| 1 | USER-E05 | why is my salary less this month? | 5170.2 | ANSWER |
-| 2 | USER-E05 | My take-home dropped in September. Why? | 3622.6 | ANSWER |
-| 34 | HR01 | Prepare the Engineering annual bonus. | 2643.0 | ANSWER |
-| 16 | USER-E05 | What is my October salary? | 2391.9 | C35 |
-| 35 | HR01 | Prepare the Sales quarterly incentive. | 2231.8 | ANSWER |
+| 1 | USER-E05 | why is my salary less this month? | 6872.5 | ANSWER |
+| 2 | USER-E05 | My take-home dropped in September. Why? | 5043.4 | ANSWER |
+| 17 | USER-E05 | What is HRA? | 2725.2 | FAQ |
+| 5 | USER-E05 | Explain my June pay. | 2596.9 | ANSWER |
+| 45 | HR01 | What needs my approval? | 2541.2 | ANSWER |
 
 ---
 

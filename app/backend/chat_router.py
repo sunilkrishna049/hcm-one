@@ -834,12 +834,22 @@ class ChatRouter:
             target_str = m_options.group(1).strip()
             return self._handle_show_employee_options(user, role, surface, target_str=target_str)
 
-        if re.search(r"^(approve proposal|approve for payroll|approve\b)", lower_msg):
-            return self._handle_approve_proposal(user, role, surface, context)
+        if re.search(r"^(approve proposal|approve for payroll|approve\b|reject proposal|reject\b)", lower_msg):
+            return {
+                "messages": [{"code": "C71", "text": get_message("C71", role=role)}],
+                "cards": [],
+                "chips": [{"label": "What needs my approval?"}],
+                "state": {
+                    "intent": "approve_error",
+                    "role": role,
+                    "surface": surface,
+                    "scenario_num": None,
+                    "panel": None,
+                    "certainty": None
+                }
+            }
         if re.search(r"^(edit with reason|edit proposal)", lower_msg):
             return self._handle_edit_proposal(user, role, surface, context)
-        if re.search(r"^(reject proposal|reject\b)", lower_msg):
-            return self._handle_reject_proposal(user, role, surface, context)
         if re.search(r"\bdraft.*query\b", lower_msg):
             return self._handle_draft_query(user, role, surface, context)
         if re.search(r"\b(send.*query|confirm and send)\b", lower_msg):
@@ -1453,7 +1463,7 @@ class ChatRouter:
 
     def _build_bonus_clarifying_question(self, role: str, surface: str) -> dict:
         sales_prop = lifecycle.get_proposal("PROP-SCENARIO-4-SALES")
-        sales_label = (sales_prop.get("scope_label") if sales_prop else None) or "Sales incentive (Q2 2026-27) · Hyderabad Sales"
+        sales_label = (sales_prop.get("scope_label") if sales_prop else None) or "Quarterly sales incentive · Q2 (Jul–Sep 2026)"
         annual_prop = lifecycle.get_proposal("PROP-SCENARIO-4-ANNUAL")
         annual_label = (annual_prop.get("scope_label") if annual_prop else None) or "Annual performance bonus · Engineering · FY 2025-26"
 
@@ -1512,7 +1522,8 @@ class ChatRouter:
             display_period = req.get("period", "Q2 2026-27")
             card_title = "Sales incentive summary"
             prop_id = "PROP-SCENARIO-4-SALES"
-            prop_scope_label = f"Sales incentive ({display_period}) · Hyderabad Sales"
+            sales_prop = lifecycle.get_proposal(prop_id)
+            prop_scope_label = (sales_prop.get("scope_label") if sales_prop else None) or "Quarterly sales incentive · Q2 (Jul–Sep 2026)"
             is_ready_s4, s4_disabled_reason, _ = evaluate_proposal_readiness(prop_id)
             s4_blocking_reason = s4_disabled_reason
             s4_disabled = not is_ready_s4
@@ -3151,7 +3162,7 @@ class ChatRouter:
             "version": new_version,
             "reason": reason,
             "edit_reason": reason,
-            "notice": get_message("C05")
+            "notice": "Approving records this version and the selected scope as ready for payroll."
         }
 
         # Check proposal type and attach recalculated engine numbers
@@ -3164,7 +3175,7 @@ class ChatRouter:
             req = next((item for item in r["bonus_requests"] if item.get("bonus_type") == "quarterly_sales_incentive"), r["bonus_requests"][0])
             agg = req.get("aggregates", {})
             edit_data.update({
-                "proposal_type": "Sales incentive (Q2 2026-27)",
+                "proposal_type": "Quarterly sales incentive · Q2 (Jul–Sep 2026)",
                 "eligible_count": agg.get("eligible_count", {}).get("value"),
                 "ineligible_count": agg.get("not_eligible_count", {}).get("value"),
                 "needs_input_count": agg.get("needs_input_count", {}).get("value"),
@@ -3179,7 +3190,7 @@ class ChatRouter:
                     "E15": "Deepak Pillai"
                 }
             })
-            prop_scope_label = "Sales incentive (Q2 2026-27) · Hyderabad Sales"
+            prop_scope_label = (existing_prop.get("scope_label") if existing_prop else None) or "Quarterly sales incentive · Q2 (Jul–Sep 2026)"
         elif "ANNUAL" in prop_id or prop_id in ("PROP-SCENARIO-4", "PROP-SCENARIO-4-ANNUAL"):
             sc = bridge.get_scenario(4)
             r = sc["result"]
@@ -4552,8 +4563,11 @@ class ChatRouter:
             chips.append({"label": f"Show {emp_name}'s settlement"})
 
         # If the employee is in a bonus run that needs input (Engineering annual bonus needs input):
-        if emp_dept == "Engineering" and resolved_eid in ("E01", "E03", "E04", "E08", "E09", "E10", "E11", "E12"):
-            chips.append({"label": f"Show the {emp_dept} bonus"})
+        p_annual = lifecycle.get_all_proposals().get("PROP-SCENARIO-4-ANNUAL", {})
+        is_annual_ready, _, _ = evaluate_proposal_readiness("PROP-SCENARIO-4-ANNUAL", p_annual)
+        if not is_annual_ready and not p_annual.get("status", "").startswith("Approved") and p_annual.get("status") != "Rejected":
+            if resolved_eid in ("E01", "E03", "E04", "E07", "E08", "E09"):
+                chips.append({"label": "Show the Engineering bonus"})
 
         return {
             "messages": [

@@ -1,3 +1,5 @@
+from app.backend.ai.crew import ai_crew
+from app.backend.tests.test_ai_crew_mocked import MockLLM
 """Tests for all chat actions and lifecycle flows through /api/chat.
 Validates:
 1. Proposal governance: approve, edit with reason, reject, and version staleness guards.
@@ -569,7 +571,7 @@ def test_approval_integrity_for_all_proposals():
     complete_proposals = [
         ("PROP-SCENARIO-1", 1, "Priya Sharma · Apr–Sep 2026"),
         ("PROP-SCENARIO-2", 2, "Arjun Rao · September 2026"),
-        ("PROP-SCENARIO-4-SALES", 4, "Sales incentive (Q2 2026-27) · Hyderabad Sales"),
+        ("PROP-SCENARIO-4-SALES", 4, "Quarterly sales incentive · Q2 (Jul–Sep 2026)"),
         ("PROP-SCENARIO-6", 6, "Rahul Verma · Settlement"),
         ("PROP-SCENARIO-7", 7, "Lakshmi Reddy · Settlement"),
     ]
@@ -1614,3 +1616,176 @@ def test_did_you_mean_chips_resolve_to_real_answers():
     conf_res = client.post("/api/chat", json={"user_id": "USER-E05", "message": "What is PF?"})
     assert conf_res.status_code == 200
     assert conf_res.json()["messages"][0]["code"] == "FAQ"
+
+
+def test_b3_hr_picker_options_and_chips_all_work():
+    """R3: With AI mocked ON, for EVERY employee in HR01's picker, send 'Show options for {Name}'
+    and click EVERY chip returned. None may return generic C50 or C33, no response may contain
+    data outside HR01's permission. Test HR02 gets C10 for non-Sales.
+    """
+    lifecycle.reset_demo()
+    mock_llm = MockLLM()
+    ai_crew._custom_llm = mock_llm
+    orig_drafting = backend_config.AI_DRAFTING_ENABLED
+    orig_mode = backend_config.AI_MODE
+    backend_config.AI_MODE = True
+    backend_config.AI_DRAFTING_ENABLED = True
+
+    try:
+        # Get HR01's live employee picker list
+        res_emps = client.get("/api/employees", headers={"X-User-Id": "HR01"})
+        assert res_emps.status_code == 200
+        employees = res_emps.json()
+        assert len(employees) == 16, f"Expected 16 employees for HR01, got {len(employees)}"
+
+        for emp in employees:
+            ename = emp["name"]
+            eid = emp["employee_id"]
+
+            # Send "Show options for {Name}"
+            res_opt = client.post("/api/chat", json={
+                "user_id": "HR01",
+                "message": f"Show options for {ename}"
+            })
+            assert res_opt.status_code == 200
+            opt_data = res_opt.json()
+            codes = [m.get("code") for m in opt_data.get("messages", [])]
+            assert "C70" in codes, f"Expected C70 for 'Show options for {ename}', got {codes}"
+
+            chips = opt_data.get("chips", [])
+            assert len(chips) >= 2, f"Expected at least 2 chips for {ename}, got {chips}"
+
+            # Click EVERY chip returned
+            for chip in chips:
+                chip_label = chip["label"]
+                chip_action = chip.get("action")
+                chip_payload = chip.get("payload") or {}
+
+                req_body = {"user_id": "HR01", "message": chip_label}
+                if chip_action:
+                    req_body["action"] = chip_action
+                    req_body["context"] = chip_payload
+
+                res_chip = client.post("/api/chat", json=req_body)
+                assert res_chip.status_code == 200
+                chip_data = res_chip.json()
+                chip_codes = [m.get("code") for m in chip_data.get("messages", [])]
+
+                # None may return generic C50 or C33
+                assert "C50" not in chip_codes, f"Chip '{chip_label}' for {ename} returned generic C50: {chip_data}"
+                assert "C33" not in chip_codes, f"Chip '{chip_label}' for {ename} returned generic C33: {chip_data}"
+                assert "C10" not in chip_codes, f"Chip '{chip_label}' returned C10 for HR01: {chip_data}"
+
+        # Test HR02 gets C10 for non-Sales employee
+        res_hr02_non_sales = client.post("/api/chat", json={
+            "user_id": "HR02",
+            "message": "Show options for Priya Sharma"
+        })
+        assert res_hr02_non_sales.status_code == 200
+        hr02_codes = [m.get("code") for m in res_hr02_non_sales.json().get("messages", [])]
+        assert "C10" in hr02_codes, f"Expected C10 for HR02 requesting Priya Sharma, got {hr02_codes}"
+
+    finally:
+        ai_crew._custom_llm = None
+        backend_config.AI_DRAFTING_ENABLED = orig_drafting
+        backend_config.AI_MODE = orig_mode
+        lifecycle.reset_demo()
+
+
+def test_r1_live_employee_picker_tags_and_filtering():
+    """R1: Tests that after Reset Demo, E01 has 'Hike pending';
+    after approving PROP-SCENARIO-1, E01 no longer has 'Hike pending';
+    after closing Neha's query, E05 no longer has 'Open query';
+    HR02 sees only E13-E15.
+    """
+    lifecycle.reset_demo()
+
+    try:
+        # Initial check
+        res_hr01 = client.get("/api/employees", headers={"X-User-Id": "HR01"})
+        assert res_hr01.status_code == 200
+        hr01_emps = res_hr01.json()
+        assert len(hr01_emps) == 16
+
+        e01 = next(e for e in hr01_emps if e["employee_id"] == "E01")
+        assert "Hike pending" in e01["status_tags"], f"E01 missing 'Hike pending': {e01['status_tags']}"
+
+        e05 = next(e for e in hr01_emps if e["employee_id"] == "E05")
+        assert "Open query" in e05["status_tags"], f"E05 missing 'Open query': {e05['status_tags']}"
+
+        # HR02 sees only E13-E15
+        res_hr02 = client.get("/api/employees", headers={"X-User-Id": "HR02"})
+        assert res_hr02.status_code == 200
+        hr02_emps = res_hr02.json()
+        assert len(hr02_emps) == 3
+        hr02_eids = [e["employee_id"] for e in hr02_emps]
+        assert hr02_eids == ["E13", "E14", "E15"]
+
+        # Approve PROP-SCENARIO-1
+        p1 = lifecycle.get_proposal("PROP-SCENARIO-1")
+        client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "approve-proposal",
+            "context": {"proposal_id": "PROP-SCENARIO-1", "version": p1["current_version"]}
+        })
+
+        # Check E01 no longer has 'Hike pending'
+        res_hr01_after_appr = client.get("/api/employees", headers={"X-User-Id": "HR01"})
+        e01_after = next(e for e in res_hr01_after_appr.json() if e["employee_id"] == "E01")
+        assert "Hike pending" not in e01_after["status_tags"], f"E01 still has 'Hike pending': {e01_after['status_tags']}"
+
+        # Close Neha's query
+        lifecycle.close_query("QUERY-E05-SEPTEMBER", {"user_id": "HR01", "role": "HR Admin"})
+
+        # Check E05 no longer has 'Open query'
+        res_hr01_after_close = client.get("/api/employees", headers={"X-User-Id": "HR01"})
+        e05_after = next(e for e in res_hr01_after_close.json() if e["employee_id"] == "E05")
+        assert "Open query" not in e05_after["status_tags"], f"E05 still has 'Open query': {e05_after['status_tags']}"
+
+    finally:
+        lifecycle.reset_demo()
+
+
+def test_r5_chat_typed_approval_returns_c71():
+    """R5: When HR types approval/rejection command in chat, reply with approved line C71
+    followed by a 'What needs my approval?' chip. Keep C09 only for malformed action calls.
+    """
+    lifecycle.reset_demo()
+    try:
+        # Chat typed approval
+        res_appr = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "message": "Approve the Engineering bonus."
+        })
+        assert res_appr.status_code == 200
+        data_appr = res_appr.json()
+        codes_appr = [m.get("code") for m in data_appr.get("messages", [])]
+        assert "C71" in codes_appr
+        assert data_appr["messages"][0]["text"] == "I can't approve or reject from a chat message. Open the proposal and use its buttons."
+        assert any(c["label"] == "What needs my approval?" for c in data_appr.get("chips", []))
+        assert data_appr["state"]["intent"] == "approve_error"
+
+        # Chat typed rejection
+        res_rej = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "message": "Reject the proposal"
+        })
+        assert res_rej.status_code == 200
+        data_rej = res_rej.json()
+        codes_rej = [m.get("code") for m in data_rej.get("messages", [])]
+        assert "C71" in codes_rej
+        assert any(c["label"] == "What needs my approval?" for c in data_rej.get("chips", []))
+
+        # Malformed action call (action provided, but missing proposal_id)
+        res_malformed = client.post("/api/chat", json={
+            "user_id": "HR01",
+            "action": "approve-proposal",
+            "context": {}
+        })
+        assert res_malformed.status_code == 200
+        data_malformed = res_malformed.json()
+        codes_malformed = [m.get("code") for m in data_malformed.get("messages", [])]
+        assert "C09" in codes_malformed
+        assert "Proposal ID is required" in data_malformed["messages"][0]["text"]
+    finally:
+        lifecycle.reset_demo()
