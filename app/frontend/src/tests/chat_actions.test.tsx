@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
 import React from 'react';
 import { ChatHR } from '../design-system/components/chat/ChatHR';
 import { ChatEMP } from '../design-system/components/chat/ChatEMP';
@@ -1928,6 +1928,367 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
       expect(screen.getByText('Dispute resolution')).toBeInTheDocument();
       expect(screen.getByText('Acknowledge and close')).toBeInTheDocument();
+    });
+  });
+
+  describe('Round 11b: Restored Test Coverage and First-Message Retry Tests (T1–T4)', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+    it('T1. Dropdown tags: with the field empty and with a search for "e", every visible option shows exactly its live tags from the mocked GET /api/employees', async () => {
+      (api.getEmployees as any) = vi.fn().mockResolvedValue(MOCK_PICKER_EMPLOYEES);
+
+      render(<ChatHR currentUser="HR01" />);
+      await screen.findByTestId('needs-attention-badge');
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+
+      // 1. With the field empty: only needs-attention group is shown
+      await waitFor(() => {
+        expect(screen.getByTestId('employee-combobox-dropdown')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('status-tag-E03-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E05-open-query')).toHaveTextContent('Open query');
+      expect(screen.getByTestId('status-tag-E09-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E12-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E12-leaving-october')).toHaveTextContent('Leaving October');
+
+      // 2. Search for "e": top 8 visible options (E01 to E08)
+      const input = screen.getByTestId('employee-combobox-input');
+      fireEvent.change(input, { target: { value: 'e' } });
+
+      expect(screen.getByTestId('status-tag-E01-hike-pending')).toHaveTextContent('Hike pending');
+      expect(screen.getByTestId('status-tag-E02-hike-pending')).toHaveTextContent('Hike pending');
+      expect(screen.getByTestId('status-tag-E03-needs-input')).toHaveTextContent('Needs input');
+      expect(within(screen.getByTestId('employee-option-E04')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(screen.getByTestId('status-tag-E05-open-query')).toHaveTextContent('Open query');
+      expect(within(screen.getByTestId('employee-option-E06')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(within(screen.getByTestId('employee-option-E07')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(screen.getByTestId('status-tag-E08-leaving-november')).toHaveTextContent('Leaving November');
+
+      // 3. Search for "E1" to verify remaining visible employees (E10 to E16)
+      fireEvent.change(input, { target: { value: 'E1' } });
+
+      expect(screen.getByTestId('status-tag-E10-leaving-october')).toHaveTextContent('Leaving October');
+      expect(screen.getByTestId('status-tag-E11-leaving-october')).toHaveTextContent('Leaving October');
+      expect(screen.getByTestId('status-tag-E12-needs-input')).toHaveTextContent('Needs input');
+      expect(screen.getByTestId('status-tag-E12-leaving-october')).toHaveTextContent('Leaving October');
+      expect(within(screen.getByTestId('employee-option-E13')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(within(screen.getByTestId('employee-option-E14')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(within(screen.getByTestId('employee-option-E15')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+      expect(within(screen.getByTestId('employee-option-E16')).queryAllByTestId(/^status-tag-/)).toHaveLength(0);
+    });
+
+    it('T2. No AI call: clicking welcome button, bottom chip, typing in search field, and pressing Esc never calls api.chat; picking employee calls it once', async () => {
+      (api.chat as any) = vi.fn().mockResolvedValue({
+        messages: [{ code: 'C70', text: "Here's what you can do for Priya Sharma:" }],
+        cards: [],
+        chips: [],
+      });
+
+      render(<ChatHR currentUser="HR01" />);
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Click welcome button
+      const welcomeBtn = screen.getByTestId('select-employee-welcome-btn');
+      fireEvent.click(welcomeBtn);
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Type in search field
+      const input = screen.getByTestId('employee-combobox-input');
+      fireEvent.change(input, { target: { value: 'Priya' } });
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Press Esc
+      fireEvent.keyDown(input, { key: 'Escape' });
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Click bottom chip "Select an employee"
+      const chipsArea = screen.getByTestId('suggestion-chips');
+      const bottomChip = within(chipsArea).getByRole('button', { name: 'Select an employee' });
+      fireEvent.click(bottomChip);
+      expect(api.chat).not.toHaveBeenCalled();
+
+      // Pick an employee
+      const inputs = screen.getAllByTestId('employee-combobox-input');
+      const activeInput = inputs[inputs.length - 1];
+      fireEvent.focus(activeInput);
+      fireEvent.change(activeInput, { target: { value: 'Priya Sharma' } });
+      const option = await screen.findByTestId('employee-option-E01');
+      fireEvent.click(option);
+
+      // Only picking calls api.chat, and only once, with "Show options for {Name}"
+      expect(api.chat).toHaveBeenCalledTimes(1);
+      expect(api.chat).toHaveBeenCalledWith({
+        userId: 'HR01',
+        message: 'Show options for Priya Sharma',
+      });
+    });
+
+    it('T3. Chips for every employee: loop over all 16 HR01 employees, pick each one, and assert exact C70 chip labels', async () => {
+      function getExpectedChips(emp: { employee_id: string; name: string }) {
+        const chips: Array<{ label: string }> = [
+          { label: `Show ${emp.name}'s September payslip` },
+          { label: `Compare ${emp.name}'s August and September pay` },
+        ];
+        if (['E01', 'E02', 'E03'].includes(emp.employee_id)) {
+          chips.push({ label: `Open salary revision · ${emp.name}` });
+        }
+        if (emp.employee_id === 'E05') {
+          chips.push({ label: `Show ${emp.name}'s query` });
+        }
+        if (['E10', 'E11', 'E12'].includes(emp.employee_id)) {
+          chips.push({ label: `Show ${emp.name}'s settlement` });
+        }
+        if (['E01', 'E03', 'E04', 'E07', 'E08', 'E09'].includes(emp.employee_id)) {
+          chips.push({ label: 'Show the Engineering bonus' });
+        }
+        return chips;
+      }
+
+      (api.chat as any) = vi.fn().mockImplementation((req: any) => {
+        const msg: string = typeof req === 'string' ? req : req.message;
+        const prefix = 'Show options for ';
+        if (msg && msg.startsWith(prefix)) {
+          const name = msg.slice(prefix.length).trim();
+          const emp = MOCK_PICKER_EMPLOYEES.find((e) => e.name === name);
+          if (emp) {
+            return Promise.resolve({
+              messages: [{ code: 'C70', text: `Here's what you can do for ${name}:` }],
+              cards: [],
+              chips: getExpectedChips(emp),
+              state: { employee_id: emp.employee_id, intent: 'employee_options' },
+            });
+          }
+        }
+        return Promise.resolve({ messages: [], cards: [], chips: [] });
+      });
+
+      for (const emp of MOCK_PICKER_EMPLOYEES) {
+        const { unmount } = render(<ChatHR currentUser="HR01" />);
+        fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+        const input = await screen.findByTestId('employee-combobox-input');
+        fireEvent.change(input, { target: { value: emp.employee_id } });
+        const option = await screen.findByTestId(`employee-option-${emp.employee_id}`);
+        fireEvent.click(option);
+
+        // Assert C70 greeting
+        await screen.findByText(`Here's what you can do for ${emp.name}:`);
+
+        // Assert expected chips
+        const expected = getExpectedChips(emp);
+        for (const c of expected) {
+          expect(screen.getByText(c.label)).toBeInTheDocument();
+        }
+
+        // Verify bonus chip presence/absence
+        if (['E01', 'E03', 'E04', 'E07', 'E08', 'E09'].includes(emp.employee_id)) {
+          expect(screen.getByText('Show the Engineering bonus')).toBeInTheDocument();
+        } else {
+          expect(screen.queryByText('Show the Engineering bonus')).toBeNull();
+        }
+
+        // Verify settlement chip presence/absence
+        if (['E10', 'E11', 'E12'].includes(emp.employee_id)) {
+          expect(screen.getByText(`Show ${emp.name}'s settlement`)).toBeInTheDocument();
+        } else {
+          expect(screen.queryByText(`Show ${emp.name}'s settlement`)).toBeNull();
+        }
+
+        unmount();
+      }
+    });
+
+    it('T4a-HR. HR view: Chat reply >3s shows waking notice under typing indicator, and disappears when reply arrives', async () => {
+      vi.useFakeTimers();
+      let resolveChat: (val: any) => void;
+      (api.chat as any) = vi.fn().mockImplementation(() => new Promise((res) => { resolveChat = res; }));
+
+      const { unmount } = render(<ChatHR currentUser="HR01" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Hello' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      expect(screen.getByTestId('chat-thinking')).toBeInTheDocument();
+      expect(screen.queryByTestId('chat-waking-notice')).toBeNull();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+
+      expect(screen.getByTestId('chat-waking-notice')).toBeInTheDocument();
+      expect(screen.getByText('Waking up the demo server. This can take up to a minute.')).toBeInTheDocument();
+
+      await act(async () => {
+        resolveChat!({ messages: [{ code: 'C31', text: 'Reply arrived' }], cards: [], chips: [] });
+      });
+
+      expect(screen.queryByTestId('chat-thinking')).toBeNull();
+      expect(screen.queryByTestId('chat-waking-notice')).toBeNull();
+      expect(screen.getByText('Reply arrived')).toBeInTheDocument();
+
+      vi.useRealTimers();
+      unmount();
+    });
+
+    it('T4a-EMP. Employee view: Chat reply >3s shows waking notice under typing indicator, and disappears when reply arrives', async () => {
+      vi.useFakeTimers();
+      let resolveChat: (val: any) => void;
+      (api.chat as any) = vi.fn().mockImplementation(() => new Promise((res) => { resolveChat = res; }));
+
+      const { unmount } = render(<ChatEMP currentUser="USER-E05" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Why was there LOP?' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      expect(screen.getByTestId('chat-thinking')).toBeInTheDocument();
+      expect(screen.queryByTestId('chat-waking-notice')).toBeNull();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+
+      expect(screen.getByTestId('chat-waking-notice')).toBeInTheDocument();
+      expect(screen.getByText('Waking up the demo server. This can take up to a minute.')).toBeInTheDocument();
+
+      await act(async () => {
+        resolveChat!({ messages: [{ code: 'C31', text: 'Reply arrived' }], cards: [], chips: [] });
+      });
+
+      expect(screen.queryByTestId('chat-thinking')).toBeNull();
+      expect(screen.queryByTestId('chat-waking-notice')).toBeNull();
+      expect(screen.getByText('Reply arrived')).toBeInTheDocument();
+
+      vi.useRealTimers();
+      unmount();
+    });
+
+    it('T4b_d-HR. HR view: Network failure (no response) is retried up to 6 times ~10s apart; error with "Try again" shows after last retry; clicking sends once more', async () => {
+      vi.useFakeTimers();
+      const netErr = new TypeError('Failed to fetch');
+      (api.chat as any) = vi.fn().mockRejectedValue(netErr);
+
+      const { unmount } = render(<ChatHR currentUser="HR01" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Hello server' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      // 1 initial call
+      expect(api.chat).toHaveBeenCalledTimes(1);
+
+      // Advance timers for 6 retries (~10s each)
+      for (let i = 1; i <= 6; i++) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(10000);
+        });
+        expect(api.chat).toHaveBeenCalledTimes(i + 1);
+      }
+
+      // After 6th retry fails, error and Try again button show
+      expect(screen.getByText("Couldn't reach the demo server.")).toBeInTheDocument();
+      const retryBtn = screen.getByTestId('chat-retry-btn');
+      expect(retryBtn).toHaveTextContent('Try again');
+
+      // Clicking Try again sends message exactly once more
+      (api.chat as any) = vi.fn().mockResolvedValue({
+        messages: [{ code: 'C31', text: 'Connected now' }],
+        cards: [],
+        chips: [],
+      });
+
+      await act(async () => {
+        fireEvent.click(retryBtn);
+      });
+
+      expect(api.chat).toHaveBeenCalledTimes(1);
+      expect(api.chat).toHaveBeenCalledWith({
+        userId: 'HR01',
+        message: 'Hello server',
+      });
+
+      vi.useRealTimers();
+      unmount();
+    });
+
+    it('T4b_d-EMP. Employee view: Network failure (no response) is retried up to 6 times ~10s apart; error with "Try again" shows after last retry; clicking sends once more', async () => {
+      vi.useFakeTimers();
+      const netErr = new TypeError('Failed to fetch');
+      (api.chat as any) = vi.fn().mockRejectedValue(netErr);
+
+      const { unmount } = render(<ChatEMP currentUser="USER-E05" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Explain my TDS' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      expect(api.chat).toHaveBeenCalledTimes(1);
+
+      for (let i = 1; i <= 6; i++) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(10000);
+        });
+        expect(api.chat).toHaveBeenCalledTimes(i + 1);
+      }
+
+      expect(screen.getByText("Couldn't reach the demo server.")).toBeInTheDocument();
+      const retryBtn = screen.getByTestId('chat-retry-btn');
+      expect(retryBtn).toHaveTextContent('Try again');
+
+      (api.chat as any) = vi.fn().mockResolvedValue({
+        messages: [{ code: 'C31', text: 'Connected now' }],
+        cards: [],
+        chips: [],
+      });
+
+      await act(async () => {
+        fireEvent.click(retryBtn);
+      });
+
+      expect(api.chat).toHaveBeenCalledTimes(1);
+      expect(api.chat).toHaveBeenCalledWith({
+        userId: 'USER-E05',
+        message: 'Explain my TDS',
+      });
+
+      vi.useRealTimers();
+      unmount();
+    });
+
+    it('T4c-HR. HR view: If server returned any response (including error or timeout after request sent), message is NOT sent again automatically (api.chat called exactly once)', async () => {
+      const serverErr = Object.assign(new Error('Internal Server Error 500'), {
+        status: 500,
+        response: { error: 'Internal Server Error' },
+      });
+      (api.chat as any) = vi.fn().mockRejectedValue(serverErr);
+
+      render(<ChatHR currentUser="HR01" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Check hike' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      await waitFor(() => {
+        expect(api.chat).toHaveBeenCalledTimes(1);
+      });
+
+      expect(api.chat).toHaveBeenCalledTimes(1);
+    });
+
+    it('T4c-EMP. Employee view: If server returned any response (including error or timeout after request sent), message is NOT sent again automatically (api.chat called exactly once)', async () => {
+      const serverErr = Object.assign(new Error('Internal Server Error 500'), {
+        status: 500,
+        response: { error: 'Internal Server Error' },
+      });
+      (api.chat as any) = vi.fn().mockRejectedValue(serverErr);
+
+      render(<ChatEMP currentUser="USER-E05" />);
+      const composer = screen.getByTestId('composer-textarea');
+      fireEvent.change(composer, { target: { value: 'Check pay' } });
+      fireEvent.click(screen.getByTestId('composer-send-btn'));
+
+      await waitFor(() => {
+        expect(api.chat).toHaveBeenCalledTimes(1);
+      });
+
+      expect(api.chat).toHaveBeenCalledTimes(1);
     });
   });
 

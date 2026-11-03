@@ -13,6 +13,12 @@ import {
   EMP_STARTER_CHIPS,
   createWelcomeTurn,
 } from '../../../utils/welcomeTurn';
+import {
+  sendChatWithRetry,
+  isNetworkFailureNoResponse,
+  buildColdStartErrorTurn,
+  useChatWakingNotice,
+} from '../../../utils/chatRetry';
 
 export type { ChatMessageTurn };
 export { EMP_STARTER_CHIPS, createWelcomeTurn };
@@ -61,6 +67,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
   const [sheetData, setSheetData] = useState<SheetEMPData | null>(null);
   const [activeChips, setActiveChips] = useState<ChipItem[]>(EMP_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
+  const showChatWakingNotice = useChatWakingNotice(isLoading);
   const [clearSignal, setClearSignal] = useState(0);
   const feedEndRef = useRef<HTMLDivElement>(null);
 
@@ -108,7 +115,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await api.chat({
+      const res = await sendChatWithRetry({
         userId: currentUser,
         message: text.trim(),
       });
@@ -136,8 +143,12 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       }
     } catch (err) {
       console.error('Failed to send message:', err);
-      const errTurn = buildErrorTurn(undefined, err);
-      setTurns((prev) => [...prev, errTurn]);
+      if (isNetworkFailureNoResponse(err)) {
+        setTurns((prev) => [...prev, buildColdStartErrorTurn({ type: 'message', text: text.trim() })]);
+      } else {
+        const errTurn = buildErrorTurn(undefined, err);
+        setTurns((prev) => [...prev, errTurn]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +161,7 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await api.chat({
+      const res = await sendChatWithRetry({
         userId: currentUser,
         action: actionName,
         context: actionPayload || {},
@@ -179,8 +190,15 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
       }
     } catch (err) {
       console.error(`Action ${actionName} failed:`, err);
-      const errTurn = buildErrorTurn(actionName, err);
-      setTurns((prev) => [...prev, errTurn]);
+      if (isNetworkFailureNoResponse(err)) {
+        setTurns((prev) => [
+          ...prev,
+          buildColdStartErrorTurn({ type: 'action', actionName, actionPayload }),
+        ]);
+      } else {
+        const errTurn = buildErrorTurn(actionName, err);
+        setTurns((prev) => [...prev, errTurn]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -256,17 +274,38 @@ export const ChatEMP: React.FC<ChatEMPProps> = ({
                   onCancelQueryDraft={() => handleAction('cancel-draft')}
                   onDisputeQuery={(qid) => handleAction('dispute-query', { query_id: qid, reason: 'Employee disputed resolution.' })}
                   onCloseQuery={(qid) => handleAction('close-query', { query_id: qid })}
-                  onActionClick={(act) => handleAction(act)}
+                  onActionClick={(act, payload) => {
+                    if (act === 'retry-last-action') {
+                      if (payload?.type === 'message') {
+                        handleSendMessage(payload.text);
+                      } else if (payload?.type === 'action') {
+                        handleAction(payload.actionName, payload.actionPayload);
+                      }
+                      return;
+                    }
+                    handleAction(act, payload);
+                  }}
                   onSelectEmployee={(empId, task, name) => handleAction('select-employee', { employee_id: empId, task, name })}
                 />
               );
             })}
             {isLoading && (
               <div className="hcm-chat-thinking" data-testid="chat-thinking" aria-live="polite">
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-text">Thinking…</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-text">Thinking…</span>
+                </div>
+                {showChatWakingNotice && (
+                  <div
+                    className="hcm-chat-waking-notice"
+                    data-testid="chat-waking-notice"
+                    style={{ marginTop: '6px', fontSize: '12px', color: 'var(--color-text-muted)' }}
+                  >
+                    Waking up the demo server. This can take up to a minute.
+                  </div>
+                )}
               </div>
             )}
             <div ref={feedEndRef} />

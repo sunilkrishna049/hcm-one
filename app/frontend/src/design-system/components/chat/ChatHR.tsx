@@ -14,6 +14,12 @@ import {
   HR_STARTER_CHIPS,
   createWelcomeTurn,
 } from '../../../utils/welcomeTurn';
+import {
+  sendChatWithRetry,
+  isNetworkFailureNoResponse,
+  buildColdStartErrorTurn,
+  useChatWakingNotice,
+} from '../../../utils/chatRetry';
 
 export type { ChatMessageTurn, EmployeePickerEntry };
 export { HR_STARTER_CHIPS, createWelcomeTurn };
@@ -62,7 +68,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   const [panelData, setPanelData] = useState<PanelHRData | null>(null);
   const [activeChips, setActiveChips] = useState<ChipItem[]>(HR_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
-  const [showChatWakingNotice, setShowChatWakingNotice] = useState(false);
+  const showChatWakingNotice = useChatWakingNotice(isLoading);
   const [clearSignal, setClearSignal] = useState(0);
 
   // Employee picker data & cold start state
@@ -82,17 +88,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     scrollToBottom();
   }, [turns]);
 
-  // 3-second timer for chat message thinking waking server notice (B2)
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        setShowChatWakingNotice(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowChatWakingNotice(false);
-    }
-  }, [isLoading]);
+
 
   // Calculate badge count from live API data:
   // Needs attention = live tags include "Needs input" or "Open query"
@@ -286,24 +282,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     }
   };
 
-  // Chat message retry helper for cold start (B2)
-  const sendChatWithRetry = async (payload: any, retryCount = 0): Promise<any> => {
-    try {
-      return await api.chat(payload);
-    } catch (err: any) {
-      const isColdStart =
-        err?.message?.includes('demo server') ||
-        err?.message?.includes('asleep') ||
-        err?.message?.includes('Cold start') ||
-        err?.isColdStart;
-      if (isColdStart && retryCount < 6) {
-        const delay = (window as any).__TEST_FAST_RETRY__ ? 10 : 10000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return sendChatWithRetry(payload, retryCount + 1);
-      }
-      throw err;
-    }
-  };
+
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -349,29 +328,8 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       }
     } catch (err: any) {
       console.error('Failed to send message:', err);
-      const isColdStart =
-        err?.message?.includes('demo server') ||
-        err?.message?.includes('asleep') ||
-        err?.message?.includes('Cold start') ||
-        err?.isColdStart;
-      if (isColdStart) {
-        const errTurn: ChatMessageTurn = {
-          id: `asst-coldstart-err-${Date.now()}`,
-          type: 'assistant',
-          messages: [{ code: 'ERR_COLD_START', text: "Couldn't reach the demo server." }],
-          cards: [
-            {
-              id: `card-retry-${Date.now()}`,
-              type: 'retry_action',
-              data: {
-                retryPayload: { type: 'message', text: text.trim() },
-              },
-            },
-          ],
-          chips: [],
-          time: formatLocalTime(new Date()),
-        };
-        setTurns((prev) => [...prev, errTurn]);
+      if (isNetworkFailureNoResponse(err)) {
+        setTurns((prev) => [...prev, buildColdStartErrorTurn({ type: 'message', text: text.trim() })]);
       } else {
         const errTurn = buildErrorTurn(undefined, err);
         setTurns((prev) => [...prev, errTurn]);
@@ -458,29 +416,11 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       }
     } catch (err: any) {
       console.error(`Action ${actionName} failed:`, err);
-      const isColdStart =
-        err?.message?.includes('demo server') ||
-        err?.message?.includes('asleep') ||
-        err?.message?.includes('Cold start') ||
-        err?.isColdStart;
-      if (isColdStart) {
-        const errTurn: ChatMessageTurn = {
-          id: `asst-coldstart-err-${Date.now()}`,
-          type: 'assistant',
-          messages: [{ code: 'ERR_COLD_START', text: "Couldn't reach the demo server." }],
-          cards: [
-            {
-              id: `card-retry-${Date.now()}`,
-              type: 'retry_action',
-              data: {
-                retryPayload: { type: 'action', actionName, actionPayload },
-              },
-            },
-          ],
-          chips: [],
-          time: formatLocalTime(new Date()),
-        };
-        setTurns((prev) => [...prev, errTurn]);
+      if (isNetworkFailureNoResponse(err)) {
+        setTurns((prev) => [
+          ...prev,
+          buildColdStartErrorTurn({ type: 'action', actionName, actionPayload }),
+        ]);
       } else {
         const errTurn = buildErrorTurn(actionName, err);
         setTurns((prev) => [...prev, errTurn]);
