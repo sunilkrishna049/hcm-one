@@ -1,6 +1,6 @@
-# AI Payroll Assistant
+# HCM One
 
-An intelligent, dual-role (Employee & HR) payroll assistant built with a deterministic statutory payroll calculation engine, FastAPI backend with CrewAI/OpenAI integration, and a modern React (Vite + TypeScript + Tailwind) frontend.
+HCM One is an agentic AI payroll assistant for Indian payroll, with an HR view and an Employee view. A deterministic payroll engine does every calculation, a FastAPI backend uses CrewAI and OpenAI only to understand the question, and a React (Vite + TypeScript + Tailwind) frontend shows approved replies and cards.
 
 ---
 
@@ -22,7 +22,7 @@ All employees, salaries, tax details and records in this project are fictional a
 
 HCM One operates under **Option A ("The AI understands; approved templates speak")**:
 - **Intent Understanding & Entity Extraction**: The AI (CrewAI + OpenAI) classifies user questions and extracts entities (employee names, months, bonus types).
-- **Sentence Drafting**: AI free-form sentence generation is disabled (`AI_DRAFTING_ENABLED = False`). All user-facing messages are rendered strictly using approved statutory message templates (`ai_messages.py` codes C01–C64).
+- **Sentence Drafting**: AI free-form sentence generation is disabled (`AI_DRAFTING_ENABLED = False`). All user-facing messages are rendered strictly using approved message templates (`ai_messages.py`).
 - **Calculation & Data Integrity**: All numbers, deductions, arrears, and eligibility counts come deterministically from the payroll engine and pass mechanical runtime guards.
 
 ---
@@ -104,10 +104,9 @@ Step-by-step instructions for the project owner to deploy the application to pro
 2. **Web App Interface**:
    Open your Vercel production URL: `https://<your-vercel-frontend-url>`
 3. **Smoke Test**:
-   - Verify the top demo bar shows the active employee (e.g., Neha Sharma `E05`) and the month selector.
-   - Ask a question in chat: *"Why is my September salary lower than August?"*
-   - Verify the AI response generates correctly with verified payroll numbers and breakdown cards.
-   - Switch role to HR (`Anita Desai HR01`), ask: *"What needs my approval?"* and verify proposal cards load.
+   - In HR view, click "Select an employee", search for "Neha" and pick Neha Gupta. Her options appear as chips.
+   - Ask: "What needs my approval?" and check that proposal cards load.
+   - Switch to Employee view and ask: "Why is my September salary lower than August?" Check that the reply uses an approved template and the numbers come from the payroll engine.
 4. **Protections Active**:
    - Public IP rate limiting protects the `/api/chat` endpoint at 20 requests/minute/IP.
    - Daily live AI call cap automatically protects the OpenAI budget at 300 calls/day, with graceful fallback to deterministic statutory message templates if reached.
@@ -118,13 +117,12 @@ Step-by-step instructions for the project owner to deploy the application to pro
 
 ### 1. Engine & Backend
 ```bash
-# Backend virtual environment
-cd app/backend
-python -m venv .venv
-source .venv/bin/activate  # Or .venv\Scripts\activate on Windows
-pip install -r requirements.txt
+# Backend virtual environment (from repository root)
+python -m venv app/backend/.venv
+source app/backend/.venv/bin/activate  # Or app\backend\.venv\Scripts\activate on Windows
+pip install -r app/backend/requirements.txt
 
-# Start backend server
+# Start backend server (run from repository root)
 uvicorn app.backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -136,8 +134,8 @@ npm run dev
 ```
 
 ### 3. Test Suites
-- Engine tests: `pytest engine/tests`
-- Backend tests: `pytest app/backend/tests`
+- Engine tests: `python -m pytest engine/tests`
+- Backend tests: `python -m pytest app/backend/tests`
 - Frontend tests: `cd app/frontend && npm test -- --run`
 - Frontend production build: `cd app/frontend && npm run build`
 
