@@ -437,6 +437,17 @@
 
 
 - ID: DEC-044
+- Date: 2026-10-31
+- Decision: AI only classifies intent; replies are approved templates (AI sentence drafting disabled for all intents).
+- Options considered: (a) Option B: Guarded natural replies with slot-based drafting, (b) Option A: The AI understands; approved templates speak.
+- Reason: Project owner decision. In the live test on 30 Oct 2026, two AI-drafted sentences passed every safety check but were unclear: the vague bonus summary and "Your salary decreased by ₹15,420". Safety checks catch wrong numbers and leaks, not unclear wording.
+- Evidence or source: Project owner instruction, 2026-10-31; [README.md](../README.md); [config.py](../app/backend/config.py); [conversation-design.md](../output/06-ai-interaction/conversation-design.md); [crew.py](../app/backend/ai/crew.py).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner
+
+
+- ID: DEC-045
 - Date: 2026-11-03
 - Decision: HR welcome shortened, intro safety line moved to the bottom note, chat-style employee picker replaces the full list.
 - Options considered: (a) Keep full 16-record employee picker card and C01 intro message in HR welcome turn, (b) Chat-style flow: HR welcome shortened to greeting and Select an employee button; intro safety line moved to bottom composer note; clicking button adds two turns (user Select an employee and assistant C69 turn with searchable combobox dropdown) which collapses to read-only pill upon selection.

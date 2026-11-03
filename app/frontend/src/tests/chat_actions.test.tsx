@@ -494,7 +494,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     (api.getEmployees as any) = vi.fn().mockImplementation(() => Promise.resolve(MOCK_PICKER_EMPLOYEES));
   });
 
-  it('7. Empty welcome state on open: shows C31 greeting with user first name for HR (no C01, shows Select employee button), and C31+C01 for employee', () => {
+  it('7. Empty welcome state on open: shows C31 greeting with user first name without C01 intro (HR shows Select employee button, Employee shows C31 only)', () => {
     // 7a. HR Admin open
     const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
 
@@ -513,15 +513,15 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
     unmount();
 
-    // 7b. Employee open (USER-E05 Neha Gupta) shows C31 and C01
+    // 7b. Employee open (USER-E05 Neha Gupta) shows C31 and does not show C01
     render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
 
     expect(screen.getByText('Hi Neha. What would you like to do today?')).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.queryByText(
         "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm."
       )
-    ).toBeInTheDocument();
+    ).toBeNull();
     expect(api.chat).not.toHaveBeenCalled();
   });
 

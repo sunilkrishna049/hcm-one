@@ -36,7 +36,6 @@ export const EMP_STARTER_CHIPS: ChipItem[] = [
 
 export function createWelcomeTurn(userId: string): ChatMessageTurn {
   const firstName = getUserFirstName(userId);
-  const isHR = USER_NAME_MAP[userId]?.role?.includes('HR') || userId.startsWith('HR');
 
   const messages: Array<{ code: string; text: string }> = [
     {
@@ -44,13 +43,6 @@ export function createWelcomeTurn(userId: string): ChatMessageTurn {
       text: `Hi ${firstName}. What would you like to do today?`,
     },
   ];
-
-  if (!isHR) {
-    messages.push({
-      code: 'C01',
-      text: "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm.",
-    });
-  }
 
   return {
     id: `asst-welcome-${Date.now()}`,
