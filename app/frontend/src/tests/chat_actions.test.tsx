@@ -494,24 +494,26 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
     (api.getEmployees as any) = vi.fn().mockImplementation(() => Promise.resolve(MOCK_PICKER_EMPLOYEES));
   });
 
-  it('7. Empty welcome state on open: shows C31 greeting with user first name followed by C01, no auto-load', () => {
+  it('7. Empty welcome state on open: shows C31 greeting with user first name for HR (no C01, shows Select employee button), and C31+C01 for employee', () => {
     // 7a. HR Admin open
     const { unmount } = render(<ChatHR currentUser="HR01" currentScenario={1} />);
 
-    // Shows C31 with first name "Anita"
+    // Shows C31 with first name "Anita" and the Select an employee button
     expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
-    // Followed by C01
+    expect(screen.getByTestId('select-employee-welcome-btn')).toBeInTheDocument();
+
+    // HR view does NOT show C01 intro message
     expect(
-      screen.getByText(
+      screen.queryByText(
         "I am HCM One's AI payroll assistant. I explain payroll records and payroll calculation results. I can help prepare a proposal or a query for you to review. I cannot approve a change, apply it or pay it. I send a query only after you confirm."
       )
-    ).toBeInTheDocument();
-    // No api call on mount
+    ).toBeNull();
+    // No api chat call on mount
     expect(api.chat).not.toHaveBeenCalled();
 
     unmount();
 
-    // 7b. Employee open (USER-E05 Neha Gupta)
+    // 7b. Employee open (USER-E05 Neha Gupta) shows C31 and C01
     render(<ChatEMP currentUser="USER-E05" currentScenario={9} />);
 
     expect(screen.getByText('Hi Neha. What would you like to do today?')).toBeInTheDocument();
@@ -808,7 +810,8 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
       // Amount ₹2,13,929 is displayed
       expect(screen.getByText('₹2,13,929')).toBeInTheDocument();
       // Counts match engine lists
-      expect(screen.getByText('4')).toBeInTheDocument(); // eligible count
+    const summaryCard = screen.getByTestId('card-card-bonus-s4');
+      expect(within(summaryCard).getByText('4')).toBeInTheDocument();
       // Eligible employees list shown with E03 tax incomplete note
       expect(screen.getByText('(tax incomplete)')).toBeInTheDocument();
     });
@@ -889,7 +892,7 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
 
     // Wait for employee picker card to render
     await waitFor(() => {
-      expect(screen.getAllByTestId('employee-picker-card').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByTestId('employee-picker-card').length).toBeGreaterThanOrEqual(1);
     });
 
     const pickerCards = screen.getAllByTestId('employee-picker-card');
@@ -1512,102 +1515,169 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
   });
 
 
-  describe('Part B: HR Home Employee Picker Tests (B1 & B2)', () => {
-    it('B1. HR01 home employee picker renders on welcome turn with 16 employees, search, departments, status tags, and scrollable container', async () => {
-      const { unmount } = render(<ChatHR currentUser="HR01" />);
-
-      // Must not call api.chat on initial mount
-      expect(api.chat).not.toHaveBeenCalled();
-
-      // Card title & prompt
-      const pickerCard = await screen.findByTestId('employee-picker-card');
-      expect(pickerCard).toHaveTextContent('Select employee');
-      expect(pickerCard).toHaveTextContent('Pick an employee to see what you can do for them:');
-
-      // Search box exists
-      const searchInput = screen.getByTestId('employee-picker-search');
-      expect(searchInput).toBeInTheDocument();
-
-      // List container has mobile scroll constraints (max-height <= 340px, overflow-y: auto)
-      const listContainer = screen.getByTestId('employee-picker-list');
-      expect(listContainer).toHaveStyle({ maxHeight: '340px', overflowY: 'auto' });
-
-      // Exactly 16 employees listed
-      const employeeItems = screen.getAllByTestId(/^employee-item-E\d+/);
-      expect(employeeItems).toHaveLength(16);
-
-      // Verify specific recorded status tags
-      expect(screen.getByTestId('status-tag-E01-hike-pending')).toHaveTextContent('Hike pending');
-      expect(screen.getByTestId('status-tag-E02-hike-pending')).toHaveTextContent('Hike pending');
-      expect(screen.getByTestId('status-tag-E03-needs-input')).toHaveTextContent('Needs input');
-      expect(screen.getByTestId('status-tag-E05-open-query')).toHaveTextContent('Open query');
-      expect(screen.getByTestId('status-tag-E08-leaving-november')).toHaveTextContent('Leaving November');
-      expect(screen.getByTestId('status-tag-E09-needs-input')).toHaveTextContent('Needs input');
-      expect(screen.getByTestId('status-tag-E10-leaving-october')).toHaveTextContent('Leaving October');
-      expect(screen.getByTestId('status-tag-E11-leaving-october')).toHaveTextContent('Leaving October');
-      expect(screen.getByTestId('status-tag-E12-needs-input')).toHaveTextContent('Needs input');
-      expect(screen.getByTestId('status-tag-E12-leaving-october')).toHaveTextContent('Leaving October');
-
-      // Untagged employees have no status tags
-      expect(screen.queryByTestId('status-tag-E04-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E06-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E07-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E13-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E14-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E15-hike-pending')).toBeNull();
-      expect(screen.queryByTestId('status-tag-E16-hike-pending')).toBeNull();
-
-      unmount();
+  describe('Round 11: Chat-Style Employee Picker and Cold-Start Tests (C1–C11)', () => {
+    it('1. The welcome shows the greeting and the button only. No intro message and no full list', () => {
+      render(<ChatHR currentUser="HR01" />);
+      expect(screen.getByText('Hi Anita. What would you like to do today?')).toBeInTheDocument();
+      expect(screen.getByTestId('select-employee-welcome-btn')).toBeInTheDocument();
+      expect(screen.queryByText(/I am HCM One's AI payroll assistant/i)).toBeNull();
+      expect(screen.queryByTestId('employee-picker-card')).toBeNull();
+      expect(screen.queryByText(/16 records/i)).toBeNull();
     });
 
-    it('B1b. Employee picker search filters employees by name, ID, or department', async () => {
-      const { unmount } = render(<ChatHR currentUser="HR01" />);
-      const searchInput = await screen.findByTestId('employee-picker-search');
+    it('2. The badge count comes from the API tags (4 for HR01 with the mock data, none for HR02)', async () => {
+      // 2a. HR01: 4 employees need attention (E03 Needs input, E05 Open query, E09 Needs input, E12 Needs input)
+      const { unmount: unmountHR01 } = render(<ChatHR currentUser="HR01" />);
+      const badge = await screen.findByTestId('needs-attention-badge');
+      expect(badge).toHaveTextContent('4');
+      expect(badge).toHaveAttribute('aria-label', '4 need attention');
+      unmountHR01();
 
-      // Filter by department: Sales
-      fireEvent.change(searchInput, { target: { value: 'Sales' } });
-      expect(screen.getByTestId('employee-item-E13')).toBeInTheDocument();
-      expect(screen.getByTestId('employee-item-E14')).toBeInTheDocument();
-      expect(screen.getByTestId('employee-item-E15')).toBeInTheDocument();
-      expect(screen.queryByTestId('employee-item-E01')).toBeNull();
-
-      // Filter by ID: E05
-      fireEvent.change(searchInput, { target: { value: 'E05' } });
-      expect(screen.getByTestId('employee-item-E05')).toBeInTheDocument();
-      expect(screen.queryByTestId('employee-item-E13')).toBeNull();
-
-      // Filter non-matching
-      fireEvent.change(searchInput, { target: { value: 'NonExistent' } });
-      expect(screen.getByText('No matching employees found')).toBeInTheDocument();
-
-      unmount();
-    });
-
-    it('B1c. HR02 home employee picker renders only Sales employees (E13, E14, E15)', async () => {
+      // 2b. HR02: Sales employees only (E13, E14, E15) with no Needs input or Open query -> no badge
       (api.getEmployees as any).mockResolvedValueOnce(
         MOCK_PICKER_EMPLOYEES.filter((emp) => ['E13', 'E14', 'E15'].includes(emp.employee_id))
       );
-      const { unmount } = render(<ChatHR currentUser="HR02" />);
-
-      const employeeItems = await screen.findAllByTestId(/^employee-item-E\d+/);
-      expect(employeeItems).toHaveLength(3);
-      expect(screen.getByTestId('employee-item-E13')).toBeInTheDocument();
-      expect(screen.getByTestId('employee-item-E14')).toBeInTheDocument();
-      expect(screen.getByTestId('employee-item-E15')).toBeInTheDocument();
-
-      expect(screen.queryByTestId('employee-item-E01')).toBeNull();
-      expect(screen.queryByTestId('employee-item-E05')).toBeNull();
-
-      unmount();
+      const { unmount: unmountHR02 } = render(<ChatHR currentUser="HR02" />);
+      await waitFor(() => {
+        expect(screen.getByTestId('select-employee-welcome-btn')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('needs-attention-badge')).toBeNull();
+      unmountHR02();
     });
 
-    it('B1d. Employee view (USER-E05) has empty cards on welcome turn', () => {
-      const turn = createWelcomeTurn('USER-E05');
-      expect(turn.cards).toEqual([]);
-      expect(turn.messages?.[0].code).toBe('C31');
+    it('3. Clicking the button adds the "Select an employee" user turn and the C69 turn, with the dropdown focused', async () => {
+      render(<ChatHR currentUser="HR01" />);
+      const btn = screen.getByTestId('select-employee-welcome-btn');
+      fireEvent.click(btn);
+
+      // User bubble added
+      await waitFor(() => {
+        expect(screen.getByTestId('user-turn')).toHaveTextContent('Select an employee');
+      });
+
+      // Assistant turn with C69
+      expect(screen.getByText('Pick an employee to see what you can do for them:')).toBeInTheDocument();
+
+      // Dropdown focused
+      const input = screen.getByTestId('employee-combobox-input');
+      expect(input).toBeInTheDocument();
+      expect(document.activeElement).toBe(input);
     });
 
-    it('B2. Tapping employee on home picker sends "Show options for {Name}" as visible user turn and returns C70 with employee-tailored chips', async () => {
+    it('4. Clicking the button twice while a dropdown is unused does not add duplicate turns', async () => {
+      render(<ChatHR currentUser="HR01" />);
+      const btn = screen.getByTestId('select-employee-welcome-btn');
+
+      // Click once
+      fireEvent.click(btn);
+      await waitFor(() => {
+        expect(screen.getAllByText('Pick an employee to see what you can do for them:')).toHaveLength(1);
+      });
+      expect(screen.getAllByTestId('user-turn')).toHaveLength(1);
+
+      // Click second time while unused
+      fireEvent.click(btn);
+      expect(screen.getAllByText('Pick an employee to see what you can do for them:')).toHaveLength(1);
+      expect(screen.getAllByTestId('user-turn')).toHaveLength(1);
+      expect(document.activeElement).toBe(screen.getByTestId('employee-combobox-input'));
+    });
+
+    it('5. The empty field shows only the needs-attention group', async () => {
+      render(<ChatHR currentUser="HR01" />);
+      await screen.findByTestId('needs-attention-badge');
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('employee-combobox-dropdown')).toBeInTheDocument();
+      });
+
+      // Heading: NEEDS ATTENTION
+      expect(screen.getByText('NEEDS ATTENTION')).toBeInTheDocument();
+
+      // Only the 4 needs-attention employees are shown
+      expect(screen.getByTestId('employee-option-E03')).toBeInTheDocument(); // Kavya Iyer
+      expect(screen.getByTestId('employee-option-E05')).toBeInTheDocument(); // Neha Gupta
+      expect(screen.getByTestId('employee-option-E09')).toBeInTheDocument(); // Meera Nair
+      expect(screen.getByTestId('employee-option-E12')).toBeInTheDocument(); // Imran Khan
+
+      // Other employees not in needs-attention are not shown
+      expect(screen.queryByTestId('employee-option-E01')).toBeNull();
+      expect(screen.queryByTestId('employee-option-E04')).toBeNull();
+      expect(screen.queryByTestId('employee-option-E13')).toBeNull();
+
+      // Footer
+      expect(
+        screen.getByText('Type to search all 16 employees by name, code or department.')
+      ).toBeInTheDocument();
+    });
+
+    it('6. Search by name, by code ("E05") and by department ("Sales") works. Results are capped at 8 with the footer. The no-results message shows', async () => {
+      render(<ChatHR currentUser="HR01" />);
+      await screen.findByTestId('needs-attention-badge');
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+      const input = screen.getByTestId('employee-combobox-input');
+
+      // Search by name
+      fireEvent.change(input, { target: { value: 'Priya' } });
+      expect(screen.getByTestId('employee-option-E01')).toBeInTheDocument();
+      expect(screen.queryByTestId('employee-option-E02')).toBeNull();
+
+      // Search by code: E05
+      fireEvent.change(input, { target: { value: 'E05' } });
+      expect(screen.getByTestId('employee-option-E05')).toBeInTheDocument();
+      expect(screen.queryByTestId('employee-option-E01')).toBeNull();
+
+      // Search by department: Sales
+      fireEvent.change(input, { target: { value: 'Sales' } });
+      expect(screen.getByTestId('employee-option-E13')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-option-E14')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-option-E15')).toBeInTheDocument();
+      expect(screen.queryByTestId('employee-option-E01')).toBeNull();
+
+      // Capped at 8 with footer: Search 'a'
+      fireEvent.change(input, { target: { value: 'a' } });
+      const options = screen.getAllByRole('option');
+      expect(options.length).toBeLessThanOrEqual(8);
+      expect(screen.getByText(/Showing 8 of \d+\. Keep typing to narrow it down\./i)).toBeInTheDocument();
+
+      // No results message
+      fireEvent.change(input, { target: { value: 'NonExistent' } });
+      expect(screen.getByText('No employee matches "NonExistent".')).toBeInTheDocument();
+      expect(
+        screen.getByText('Try a first name, an employee code like E05, or a department.')
+      ).toBeInTheDocument();
+    });
+
+    it('7. The keyboard works: Down, Enter picks, Esc closes', async () => {
+      (api.chat as any).mockResolvedValueOnce({
+        messages: [{ code: 'C70', text: "Here's what you can do for Kavya Iyer:" }],
+        cards: [],
+        chips: [],
+      });
+
+      render(<ChatHR currentUser="HR01" />);
+      await screen.findByTestId('needs-attention-badge');
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+      const input = screen.getByTestId('employee-combobox-input');
+
+      // Esc closes
+      expect(screen.getByTestId('employee-combobox-dropdown')).toBeInTheDocument();
+      fireEvent.keyDown(input, { key: 'Escape' });
+      expect(screen.queryByTestId('employee-combobox-dropdown')).toBeNull();
+
+      // Down opens again and moves highlight
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(screen.getByTestId('employee-combobox-dropdown')).toBeInTheDocument();
+
+      // Enter picks the first highlighted employee (Kavya Iyer E03 from needs-attention)
+      fireEvent.keyDown(input, { key: 'Enter' });
+      await waitFor(() => {
+        expect(screen.getByTestId('selected-employee-pill')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('selected-employee-pill')).toHaveTextContent('Kavya Iyer · E03');
+    });
+
+    it('8. Picking an employee collapses the dropdown to the pill, then "Show options for {Name}" and C70 appear with the same chips as before, for every employee', async () => {
       (api.chat as any).mockResolvedValueOnce({
         messages: [{ code: 'C70', text: "Here's what you can do for Neha Gupta:" }],
         cards: [],
@@ -1619,36 +1689,145 @@ describe('New Chat Start Experience Tests (DEC-040)', () => {
         state: { employee_id: 'E05', intent: 'employee_options' },
       });
 
-      const { unmount } = render(<ChatHR currentUser="HR01" />);
+      render(<ChatHR currentUser="HR01" />);
+      await screen.findByTestId('needs-attention-badge');
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
 
-      // Tap Neha Gupta on home picker
-      const nehaButton = await screen.findByTestId('employee-item-E05');
-      fireEvent.click(nehaButton);
+      // Pick Neha Gupta (E05)
+      const nehaOption = await screen.findByTestId('employee-option-E05');
+      fireEvent.click(nehaOption);
 
-      // Visible user turn bubble must be rendered
+      // Collapses to pill
       await waitFor(() => {
-        expect(screen.getByText('Show options for Neha Gupta')).toBeInTheDocument();
+        const pill = screen.getByTestId('selected-employee-pill');
+        expect(pill).toBeInTheDocument();
+        expect(pill).toHaveTextContent('Neha Gupta · E05');
       });
 
-      // API must be called with message
+      // User turn "Show options for Neha Gupta" rendered
+      expect(screen.getByText('Show options for Neha Gupta')).toBeInTheDocument();
+
+      // api.chat called
       expect(api.chat).toHaveBeenCalledWith({
         userId: 'HR01',
         message: 'Show options for Neha Gupta',
       });
 
-      // Assistant C70 message must be visible
+      // C70 and chips appear
       await waitFor(() => {
         expect(screen.getByText("Here's what you can do for Neha Gupta:")).toBeInTheDocument();
       });
-
-      // Employee-scoped chips rendered
       expect(screen.getByText("Show Neha Gupta's September payslip")).toBeInTheDocument();
       expect(screen.getByText("Compare Neha Gupta's August and September pay")).toBeInTheDocument();
       expect(screen.getByText("Show Neha Gupta's query")).toBeInTheDocument();
-
-      unmount();
     });
 
+    it('9. HR02 sees only E13 to E15', async () => {
+      (api.getEmployees as any).mockResolvedValue(
+        MOCK_PICKER_EMPLOYEES.filter((emp) => ['E13', 'E14', 'E15'].includes(emp.employee_id))
+      );
+
+      render(<ChatHR currentUser="HR02" />);
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+
+      // Wait for data to arrive and group to render
+      await screen.findByText('ALL EMPLOYEES');
+      expect(screen.getByTestId('employee-combobox-dropdown')).toBeInTheDocument();
+
+      // Only E13, E14, E15 present
+      expect(screen.getByTestId('employee-option-E13')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-option-E14')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-option-E15')).toBeInTheDocument();
+
+      expect(screen.queryByTestId('employee-option-E01')).toBeNull();
+      expect(screen.queryByTestId('employee-option-E05')).toBeNull();
+
+      // Searching for non-permitted employee yields no results
+      const input = screen.getByTestId('employee-combobox-input');
+      fireEvent.change(input, { target: { value: 'Priya' } });
+      expect(screen.getByText('No employee matches "Priya".')).toBeInTheDocument();
+    });
+
+    it('10. Cold start: the skeleton shows, the waking line appears after 3 s, retries happen, it recovers when the API comes back, and the error with "Try again" shows after the last retry fails', async () => {
+      (window as any).__TEST_FAST_RETRY__ = true;
+
+      // 10a. Loading and recovery test
+      let resolveFirstCall: (data: any) => void;
+      const delayedFirstPromise = new Promise((resolve) => {
+        resolveFirstCall = resolve;
+      });
+      (api.getEmployees as any) = vi.fn().mockImplementation(() => delayedFirstPromise);
+
+      const { unmount: unmountLoading } = render(<ChatHR currentUser="HR01" />);
+
+      // Open picker immediately while still loading
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+
+      // 4 Skeleton rows visible
+      expect(screen.getByTestId('employee-skeleton-row-0')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-skeleton-row-3')).toBeInTheDocument();
+
+      // Resolve delayed promise with real data
+      resolveFirstCall!(MOCK_PICKER_EMPLOYEES);
+
+      // Recovers when API comes back: skeleton replaced by real list
+      await waitFor(() => {
+        expect(screen.queryByTestId('employee-skeleton-row-0')).toBeNull();
+        expect(screen.getByTestId('employee-option-E03')).toBeInTheDocument();
+      });
+
+      // Badge on button updates without page reload
+      expect(screen.getByTestId('needs-attention-badge')).toHaveTextContent('4');
+      unmountLoading();
+
+      // 10b. Failure after retries shows error with "Try again"
+      (api.getEmployees as any) = vi.fn().mockRejectedValue(new Error('Cold start failure'));
+      const { unmount: unmountError } = render(<ChatHR currentUser="HR01" />);
+      fireEvent.click(screen.getByTestId('select-employee-welcome-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByText("Couldn't reach the demo server.")).toBeInTheDocument();
+        expect(screen.getByTestId('employee-retry-btn')).toBeInTheDocument();
+      });
+
+      // Clicking "Try again" restarts retries
+      (api.getEmployees as any) = vi.fn().mockResolvedValue(MOCK_PICKER_EMPLOYEES);
+      fireEvent.click(screen.getByTestId('employee-retry-btn'));
+
+      await waitFor(() => {
+        expect(screen.queryByText("Couldn't reach the demo server.")).toBeNull();
+        expect(screen.getByTestId('employee-option-E03')).toBeInTheDocument();
+      });
+
+      delete (window as any).__TEST_FAST_RETRY__;
+      unmountError();
+    });
+
+    it('11. The bottom chip "Select an employee" runs the same flow, and the other bottom chips are unchanged', async () => {
+      render(<ChatHR currentUser="HR01" />);
+
+      // Verify bottom chips contain "Select an employee" followed by unchanged starter chips
+      const chipsArea = screen.getByTestId('suggestion-chips');
+      const bottomChip = within(chipsArea).getByRole('button', { name: 'Select an employee' });
+      expect(bottomChip).toBeInTheDocument();
+      expect(
+        within(chipsArea).getByRole('button', { name: "Prepare Priya Sharma's pending back-dated hike" })
+      ).toBeInTheDocument();
+      expect(within(chipsArea).getByRole('button', { name: 'Prepare a bonus proposal' })).toBeInTheDocument();
+      expect(within(chipsArea).getByRole('button', { name: 'Review payroll queries' })).toBeInTheDocument();
+
+      // Clicking bottom chip runs the flow
+      fireEvent.click(bottomChip);
+
+      // Adds user turn and C69 turn with combobox
+      await waitFor(() => {
+        expect(screen.getByText('Pick an employee to see what you can do for them:')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('employee-combobox-input')).toBeInTheDocument();
+    });
+  });
+
+  describe('Round 9: Resolve Confirmation and Role Exclusivity Tests', () => {
     it('24. V3 Resolve confirmation inside card: renders Confirm resolve and Cancel buttons, optional note input, and calls onConfirmResolve', () => {
       const mockConfirm = vi.fn();
       const mockCancel = vi.fn();

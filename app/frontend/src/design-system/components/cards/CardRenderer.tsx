@@ -13,6 +13,7 @@ import { RefusalCard } from './RefusalCard';
 import { FaqAnswerCard } from './FaqAnswerCard';
 import { ShowCalculationControl } from './ShowCalculationControl';
 import { EmployeePickerCard } from './EmployeePickerCard';
+import { EmployeeDropdownPicker } from './EmployeeDropdownPicker';
 
 interface CardRendererProps {
   role?: string;
@@ -103,8 +104,6 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           onDisputeQuery={onDisputeQuery}
           onCloseQuery={onCloseQuery}
           onConfirmResolve={onConfirmResolve}
-          onCancel={onCancelQueryDraft}
-          onActionClick={onActionClick}
         />
       );
 
@@ -120,6 +119,51 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           card={card}
           onShowCalculation={onShowCalculation || (() => {})}
         />
+      );
+
+    case 'employee_dropdown_picker':
+      return (
+        <EmployeeDropdownPicker
+          employees={card.data?.employees || []}
+          status={card.data?.status || 'ready'}
+          isWaking={card.data?.isWaking}
+          onRetry={card.data?.onRetry}
+          onSelectEmployee={(emp) => {
+            if (card.data?.onSelect) {
+              card.data.onSelect(emp);
+            } else {
+              onSelectEmployee?.(emp.employee_id, 'options', emp.name);
+            }
+          }}
+          selectedEmployee={card.data?.selectedEmployee}
+          autoFocus={card.data?.autoFocus ?? true}
+        />
+      );
+
+    case 'retry_action':
+      return (
+        <div style={{ marginTop: '8px' }}>
+          <button
+            type="button"
+            data-testid="chat-retry-btn"
+            onClick={() => onActionClick?.('retry-last-action', card.data?.retryPayload)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '9999px',
+              backgroundColor: '#1150BF',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Try again
+          </button>
+        </div>
       );
 
     case 'employee_picker':

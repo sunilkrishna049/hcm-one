@@ -10,11 +10,12 @@ import { getUserDisplayName } from '../../../utils/userDisplay';
 import { formatLocalTime } from '../../../utils/format';
 import {
   type ChatMessageTurn,
+  type EmployeePickerEntry,
   HR_STARTER_CHIPS,
   createWelcomeTurn,
 } from '../../../utils/welcomeTurn';
 
-export type { ChatMessageTurn };
+export type { ChatMessageTurn, EmployeePickerEntry };
 export { HR_STARTER_CHIPS, createWelcomeTurn };
 
 interface ChatHRProps {
@@ -61,8 +62,15 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   const [panelData, setPanelData] = useState<PanelHRData | null>(null);
   const [activeChips, setActiveChips] = useState<ChipItem[]>(HR_STARTER_CHIPS);
   const [isLoading, setIsLoading] = useState(false);
+  const [showChatWakingNotice, setShowChatWakingNotice] = useState(false);
   const [clearSignal, setClearSignal] = useState(0);
+
+  // Employee picker data & cold start state
+  const [employees, setEmployees] = useState<EmployeePickerEntry[]>([]);
+  const [employeesStatus, setEmployeesStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+
   const feedEndRef = useRef<HTMLDivElement>(null);
+  const retryTimeoutRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     if (typeof feedEndRef.current?.scrollIntoView === 'function') {
@@ -74,75 +82,226 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     scrollToBottom();
   }, [turns]);
 
-  // When user switches login, reset to empty welcome state and fetch live permitted employees
+  // 3-second timer for chat message thinking waking server notice (B2)
   useEffect(() => {
-    let isMounted = true;
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setShowChatWakingNotice(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowChatWakingNotice(false);
+    }
+  }, [isLoading]);
+
+  // Calculate badge count from live API data:
+  // Needs attention = live tags include "Needs input" or "Open query"
+  const needsAttentionCount = employees.filter((emp) =>
+    (emp.status_tags || []).some((t) => t.includes('Needs input') || t.includes('Open query'))
+  ).length;
+
+  // Cold start employee fetch with up to 6 retries ~10s apart (B1)
+  const fetchEmployeesWithRetry = (retryCount = 0) => {
+    setEmployeesStatus('loading');
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
+
+    const empCall = typeof api.getEmployees === 'function' ? api.getEmployees() : Promise.resolve([]);
+    Promise.resolve(empCall)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEmployees(data);
+          setEmployeesStatus('ready');
+        } else {
+          throw new Error('Invalid employees data');
+        }
+      })
+      .catch((err) => {
+        console.warn(`[ColdStart] GET /api/employees attempt ${retryCount + 1} failed:`, err);
+        if (retryCount < 6) {
+          const delay = (window as any).__TEST_FAST_RETRY__ ? 10 : 10000;
+          retryTimeoutRef.current = setTimeout(() => {
+            fetchEmployeesWithRetry(retryCount + 1);
+          }, delay);
+        } else {
+          setEmployeesStatus('error');
+        }
+      });
+  };
+
+  useEffect(() => {
     setTurns([createWelcomeTurn(currentUser)]);
     setActiveChips(HR_STARTER_CHIPS);
     setIsPanelOpen(false);
     setPanelData(null);
-
-    const empCall = typeof api.getEmployees === 'function' ? api.getEmployees() : Promise.resolve([]);
-    Promise.resolve(empCall)
-      .then((employees) => {
-        if (!isMounted || !Array.isArray(employees)) return;
-        setTurns((prevTurns) => {
-          const firstTurn = prevTurns[0];
-          if (firstTurn && firstTurn.id.startsWith('asst-welcome-')) {
-            const pickerCard = {
-              id: 'card-employee-picker-welcome',
-              type: 'employee-picker',
-              title: 'Select employee',
-              data: {
-                prompt: 'Pick an employee to see what you can do for them:',
-                has_search: true,
-                employees: employees,
-              },
-            };
-            return [{ ...firstTurn, cards: [pickerCard] }, ...prevTurns.slice(1)];
-          }
-          return prevTurns;
-        });
-      })
-      .catch((err) => {
-        console.warn('Could not fetch employees for home picker:', err);
-      });
+    setEmployees([]);
+    fetchEmployeesWithRetry(0);
 
     return () => {
-      isMounted = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, [currentUser]);
+
+  // Keep any open unselected picker in `turns` in sync with employees / employeesStatus
+  useEffect(() => {
+    setTurns((prevTurns) => {
+      let modified = false;
+      const updated = prevTurns.map((t) => {
+        if (!t.cards) return t;
+        const hasUnused = t.cards.some(
+          (c) => c.type === 'employee_dropdown_picker' && !c.data?.selectedEmployee
+        );
+        if (!hasUnused) return t;
+        modified = true;
+        return {
+          ...t,
+          cards: t.cards.map((c) =>
+            c.type === 'employee_dropdown_picker' && !c.data?.selectedEmployee
+              ? {
+                  ...c,
+                  data: {
+                    ...c.data,
+                    employees,
+                    status: employeesStatus,
+                    onRetry: () => fetchEmployeesWithRetry(0),
+                  },
+                }
+              : c
+          ),
+        };
+      });
+      return modified ? updated : prevTurns;
+    });
+  }, [employees, employeesStatus]);
+
+  // Open / Focus Searchable Employee Picker (A3)
+  const handleOpenEmployeePicker = () => {
+    // If a dropdown from an earlier click is still open and unused, focus it instead of duplicating
+    const unusedPickerCard = turns
+      .flatMap((t) => t.cards || [])
+      .find((c) => c.type === 'employee_dropdown_picker' && !c.data?.selectedEmployee);
+
+    if (unusedPickerCard) {
+      const inputEl = document.getElementById('employee-picker-search-input');
+      if (inputEl) {
+        inputEl.focus();
+      }
+      return;
+    }
+
+    const pickerCardId = `card-picker-${Date.now()}`;
+    const userTurn: ChatMessageTurn = {
+      id: `user-select-emp-${Date.now()}`,
+      type: 'user',
+      text: 'Select an employee',
+      time: formatLocalTime(new Date()),
+    };
+
+    const assistantTurn: ChatMessageTurn = {
+      id: `asst-picker-${Date.now()}`,
+      type: 'assistant',
+      messages: [{ code: 'C69', text: 'Pick an employee to see what you can do for them:' }],
+      cards: [
+        {
+          id: pickerCardId,
+          type: 'employee_dropdown_picker',
+          data: {
+            employees,
+            status: employeesStatus,
+            onRetry: () => fetchEmployeesWithRetry(0),
+            onSelect: (emp: EmployeePickerEntry) => handlePickEmployee(pickerCardId, emp),
+            selectedEmployee: null,
+            autoFocus: true,
+          },
+        },
+      ],
+      chips: [],
+      time: formatLocalTime(new Date()),
+    };
+
+    setTurns((prev) => [...prev, userTurn, assistantTurn]);
+  };
+
+  // Picking an employee collapses dropdown into pill, then runs "Show options for {Name}" (A5)
+  const handlePickEmployee = (pickerCardId: string, emp: EmployeePickerEntry) => {
+    setTurns((prevTurns) =>
+      prevTurns.map((t) => {
+        if (!t.cards) return t;
+        const matchingCard = t.cards.find(
+          (c) => c.type === 'employee_dropdown_picker' && (!pickerCardId || c.id === pickerCardId)
+        );
+        if (!matchingCard) return t;
+
+        return {
+          ...t,
+          cards: t.cards.map((c) =>
+            c.type === 'employee_dropdown_picker' && (!pickerCardId || c.id === pickerCardId)
+              ? {
+                  ...c,
+                  data: {
+                    ...c.data,
+                    selectedEmployee: emp,
+                  },
+                }
+              : c
+          ),
+        };
+      })
+    );
+
+    // Run existing flow: user turn "Show options for {Name}", then C70 assistant reply
+    handleSendMessage(`Show options for ${emp.name}`);
+  };
+
+  // Global keydown "/" to trigger employee picker if no text box is focused (A3)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/') {
+        const activeTag = document.activeElement?.tagName?.toLowerCase();
+        const isEditable =
+          activeTag === 'input' ||
+          activeTag === 'textarea' ||
+          (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          handleOpenEmployeePicker();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [turns, employees, employeesStatus]);
 
   const handleNewChat = () => {
     setIsPanelOpen(false);
     setPanelData(null);
     setTurns([createWelcomeTurn(currentUser)]);
     setActiveChips(HR_STARTER_CHIPS);
-    const empCall = typeof api.getEmployees === 'function' ? api.getEmployees() : Promise.resolve([]);
-    Promise.resolve(empCall)
-      .then((employees) => {
-        if (!Array.isArray(employees)) return;
-        setTurns((prevTurns) => {
-          const firstTurn = prevTurns[0];
-          if (firstTurn && firstTurn.id.startsWith('asst-welcome-')) {
-            const pickerCard = {
-              id: 'card-employee-picker-welcome',
-              type: 'employee-picker',
-              title: 'Select employee',
-              data: {
-                prompt: 'Pick an employee to see what you can do for them:',
-                has_search: true,
-                employees: employees,
-              },
-            };
-            return [{ ...firstTurn, cards: [pickerCard] }, ...prevTurns.slice(1)];
-          }
-          return prevTurns;
-        });
-      })
-      .catch(() => {});
+    fetchEmployeesWithRetry(0);
     if (onNewChat) {
       onNewChat();
+    }
+  };
+
+  // Chat message retry helper for cold start (B2)
+  const sendChatWithRetry = async (payload: any, retryCount = 0): Promise<any> => {
+    try {
+      return await api.chat(payload);
+    } catch (err: any) {
+      const isColdStart =
+        err?.message?.includes('demo server') ||
+        err?.message?.includes('asleep') ||
+        err?.message?.includes('Cold start') ||
+        err?.isColdStart;
+      if (isColdStart && retryCount < 6) {
+        const delay = (window as any).__TEST_FAST_RETRY__ ? 10 : 10000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return sendChatWithRetry(payload, retryCount + 1);
+      }
+      throw err;
     }
   };
 
@@ -162,7 +321,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await api.chat({
+      const res = await sendChatWithRetry({
         userId: currentUser,
         message: text.trim(),
       });
@@ -188,10 +347,35 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       if (res.state?.panel) {
         setPanelData(res.state.panel);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
-      const errTurn = buildErrorTurn(undefined, err);
-      setTurns((prev) => [...prev, errTurn]);
+      const isColdStart =
+        err?.message?.includes('demo server') ||
+        err?.message?.includes('asleep') ||
+        err?.message?.includes('Cold start') ||
+        err?.isColdStart;
+      if (isColdStart) {
+        const errTurn: ChatMessageTurn = {
+          id: `asst-coldstart-err-${Date.now()}`,
+          type: 'assistant',
+          messages: [{ code: 'ERR_COLD_START', text: "Couldn't reach the demo server." }],
+          cards: [
+            {
+              id: `card-retry-${Date.now()}`,
+              type: 'retry_action',
+              data: {
+                retryPayload: { type: 'message', text: text.trim() },
+              },
+            },
+          ],
+          chips: [],
+          time: formatLocalTime(new Date()),
+        };
+        setTurns((prev) => [...prev, errTurn]);
+      } else {
+        const errTurn = buildErrorTurn(undefined, err);
+        setTurns((prev) => [...prev, errTurn]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +388,7 @@ export const ChatHR: React.FC<ChatHRProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await api.chat({
+      const res = await sendChatWithRetry({
         userId: currentUser,
         action: actionName,
         context: actionPayload || {},
@@ -272,10 +456,35 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       if (res.state?.panel) {
         setPanelData(res.state.panel);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Action ${actionName} failed:`, err);
-      const errTurn = buildErrorTurn(actionName, err);
-      setTurns((prev) => [...prev, errTurn]);
+      const isColdStart =
+        err?.message?.includes('demo server') ||
+        err?.message?.includes('asleep') ||
+        err?.message?.includes('Cold start') ||
+        err?.isColdStart;
+      if (isColdStart) {
+        const errTurn: ChatMessageTurn = {
+          id: `asst-coldstart-err-${Date.now()}`,
+          type: 'assistant',
+          messages: [{ code: 'ERR_COLD_START', text: "Couldn't reach the demo server." }],
+          cards: [
+            {
+              id: `card-retry-${Date.now()}`,
+              type: 'retry_action',
+              data: {
+                retryPayload: { type: 'action', actionName, actionPayload },
+              },
+            },
+          ],
+          chips: [],
+          time: formatLocalTime(new Date()),
+        };
+        setTurns((prev) => [...prev, errTurn]);
+      } else {
+        const errTurn = buildErrorTurn(actionName, err);
+        setTurns((prev) => [...prev, errTurn]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -284,6 +493,10 @@ export const ChatHR: React.FC<ChatHRProps> = ({
   const handleChipSelect = (chip: ChipItem) => {
     setClearSignal((s) => s + 1);
     if (onClearPrefill) onClearPrefill();
+    if (chip.label === 'Select an employee') {
+      handleOpenEmployeePicker();
+      return;
+    }
     if (chip.action === 'show-calculation' || chip.label === 'Show calculation' || chip.label === 'Show calculation proof') {
       setIsPanelOpen(true);
       return;
@@ -294,7 +507,6 @@ export const ChatHR: React.FC<ChatHRProps> = ({
       handleSendMessage(chip.label);
     }
   };
-
 
   return (
     <div className="hcm-chat-hr-layout" data-testid="chat-hr">
@@ -336,6 +548,9 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   />
                 );
               }
+
+              const isWelcomeTurn = turn.id.startsWith('asst-welcome-');
+
               return (
                 <AssistantTurn
                   key={turn.id}
@@ -343,6 +558,14 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                   cards={turn.cards || []}
                   state={turn.state}
                   time={turn.time}
+                  selectEmployeeButton={
+                    isWelcomeTurn
+                      ? {
+                          onClick: handleOpenEmployeePicker,
+                          badgeCount: employeesStatus === 'ready' ? needsAttentionCount : 0,
+                        }
+                      : undefined
+                  }
                   onShowCalculation={() => setIsPanelOpen(true)}
                   onApprove={(payload) => handleAction('approve', payload)}
                   onEdit={(payload) => handleAction('edit', { reason: 'Adjusted by HR', ...payload })}
@@ -355,13 +578,27 @@ export const ChatHR: React.FC<ChatHRProps> = ({
                       handleAction('send-query', { description: desc });
                     }
                   }}
-                  onCancelQueryDraft={() => {
-                    // Cancel sends nothing per Item 6
-                  }}
+                  onCancelQueryDraft={() => {}}
                   onTakeIntoReview={(qid) => handleAction('take-into-review', { query_id: qid })}
                   onResolveQuery={(qid) => handleAction('resolve-query', { query_id: qid })}
-                  onConfirmResolve={(qid, replyText) => handleAction('confirm-resolve-query', { query_id: qid, confirmed: true, reply_text: replyText || null })}
-                  onActionClick={(act, payload) => handleAction(act, payload)}
+                  onConfirmResolve={(qid, replyText) =>
+                    handleAction('confirm-resolve-query', {
+                      query_id: qid,
+                      confirmed: true,
+                      reply_text: replyText || null,
+                    })
+                  }
+                  onActionClick={(act, payload) => {
+                    if (act === 'retry-last-action') {
+                      if (payload?.type === 'message') {
+                        handleSendMessage(payload.text);
+                      } else if (payload?.type === 'action') {
+                        handleAction(payload.actionName, payload.actionPayload);
+                      }
+                      return;
+                    }
+                    handleAction(act, payload);
+                  }}
                   onSelectEmployee={(empId, task, name) => {
                     if (task === 'options' || !task) {
                       handleSendMessage(`Show options for ${name || empId}`);
@@ -374,10 +611,21 @@ export const ChatHR: React.FC<ChatHRProps> = ({
             })}
             {isLoading && (
               <div className="hcm-chat-thinking" data-testid="chat-thinking" aria-live="polite">
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-dot" />
-                <span className="hcm-thinking-text">Thinking…</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-dot" />
+                  <span className="hcm-thinking-text">Thinking…</span>
+                </div>
+                {showChatWakingNotice && (
+                  <div
+                    className="hcm-chat-waking-notice"
+                    data-testid="chat-waking-notice"
+                    style={{ marginTop: '6px', fontSize: '12px', color: 'var(--color-text-muted)' }}
+                  >
+                    Waking up the demo server. This can take up to a minute.
+                  </div>
+                )}
               </div>
             )}
             <div ref={feedEndRef} />

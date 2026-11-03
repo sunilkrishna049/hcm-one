@@ -435,3 +435,13 @@
 - Status: Approved
 - Approved by: Project owner
 
+
+- ID: DEC-044
+- Date: 2026-11-03
+- Decision: HR welcome shortened, intro safety line moved to the bottom note, chat-style employee picker replaces the full list.
+- Options considered: (a) Keep full 16-record employee picker card and C01 intro message in HR welcome turn, (b) Chat-style flow: HR welcome shortened to greeting and Select an employee button; intro safety line moved to bottom composer note; clicking button adds two turns (user Select an employee and assistant C69 turn with searchable combobox dropdown) which collapses to read-only pill upon selection.
+- Reason: Project owner decision (Round 11). Printing the full employee list in the HR welcome message will not scale to hundreds of employees. A chat-style flow with a compact button and searchable combobox dropdown provides scalable employee selection while preserving RBAC and keyboard navigation. The intro safety line moves to the global bottom composer note (Demo with fictional data. HCM One never approves, applies or pays anything on its own.).
+- Evidence or source: Project owner instructions, Round 11 (2026-11-03); [welcomeTurn.ts](../app/frontend/src/utils/welcomeTurn.ts); [ChatHR.tsx](../app/frontend/src/design-system/components/chat/ChatHR.tsx); [EmployeeDropdownPicker.tsx](../app/frontend/src/design-system/components/cards/EmployeeDropdownPicker.tsx); [Footer.tsx](../app/frontend/src/design-system/components/Footer.tsx).
+- Proposed by: Project owner
+- Status: Approved
+- Approved by: Project owner

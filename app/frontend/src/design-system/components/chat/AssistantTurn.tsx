@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, UserSearch } from 'lucide-react';
 import { CardRenderer } from '../cards/CardRenderer';
 import { CertaintyLabel } from '../CertaintyLabel';
 import { formatLocalTime } from '../../../utils/format';
@@ -9,12 +9,18 @@ interface AssistantMessage {
   text: string;
 }
 
+export interface SelectEmployeeButtonConfig {
+  onClick: () => void;
+  badgeCount?: number;
+}
+
 interface AssistantTurnProps {
   messages: AssistantMessage[];
   cards?: any[];
   state?: any;
   certainty?: string;
   time?: string;
+  selectEmployeeButton?: SelectEmployeeButtonConfig;
   onShowCalculation?: () => void;
   onApprove?: (payload?: any) => void;
   onEdit?: (payload?: any) => void;
@@ -37,6 +43,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   state,
   certainty,
   time,
+  selectEmployeeButton,
   onShowCalculation,
   onApprove,
   onEdit,
@@ -86,6 +93,63 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
           {leadMessages.map((m, idx) => (
             <div key={idx} className="hcm-assistant-bubble">
               <p className="hcm-assistant-bubble-text">{m.text}</p>
+              {selectEmployeeButton && idx === leadMessages.length - 1 && (
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    data-testid="select-employee-welcome-btn"
+                    aria-label="Select an employee"
+                    onClick={selectEmployeeButton.onClick}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      height: '36px',
+                      minHeight: '36px',
+                      padding: '0 16px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#1150BF',
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1459D1')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1150BF')}
+                    onFocus={(e) => (e.currentTarget.style.outline = '2px solid #5B8EE6')}
+                    onBlur={(e) => (e.currentTarget.style.outline = 'none')}
+                  >
+                    <UserSearch size={16} />
+                    <span>Select an employee</span>
+                    {typeof selectEmployeeButton.badgeCount === 'number' && selectEmployeeButton.badgeCount > 0 && (
+                      <span
+                        data-testid="needs-attention-badge"
+                        aria-label={`${selectEmployeeButton.badgeCount} need attention`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '20px',
+                          height: '20px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#E3A008',
+                          color: '#111827',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '0 5px',
+                          lineHeight: 1,
+                          marginLeft: '2px',
+                        }}
+                      >
+                        {selectEmployeeButton.badgeCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
