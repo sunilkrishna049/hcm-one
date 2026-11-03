@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../../../services/api';
+
 import { UserBubble } from './UserBubble';
 import { AssistantTurn } from './AssistantTurn';
 import { SuggestionChips, type ChipItem } from './SuggestionChips';

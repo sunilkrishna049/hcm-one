@@ -1,5 +1,5 @@
 import type { ChipItem } from '../design-system/components/chat/SuggestionChips';
-import { getUserFirstName, USER_NAME_MAP } from './userDisplay';
+import { getUserFirstName } from './userDisplay';
 import { formatLocalTime } from './format';
 
 export interface ChatMessageTurn {
