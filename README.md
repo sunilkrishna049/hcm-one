@@ -4,12 +4,33 @@ An intelligent, dual-role (Employee & HR) payroll assistant built with a determi
 
 ---
 
+## Live demo
+
+Live demo: https://hcm-one-nine.vercel.app
+Switch between HR view and Employee view at the top. Use Reset Demo to start over.
+The backend runs on a free server that sleeps when unused. The first request after a quiet period can take up to a minute; the app shows "Waking up the demo server" while it starts.
+
+---
+
+## Demo data
+
+All employees, salaries, tax details and records in this project are fictional and created for the demo. No real person or company data is used. This is not a tool for real payroll.
+
+---
+
 ## AI Architecture: DEC-044 (Option A)
 
 HCM One operates under **Option A ("The AI understands; approved templates speak")**:
 - **Intent Understanding & Entity Extraction**: The AI (CrewAI + OpenAI) classifies user questions and extracts entities (employee names, months, bonus types).
 - **Sentence Drafting**: AI free-form sentence generation is disabled (`AI_DRAFTING_ENABLED = False`). All user-facing messages are rendered strictly using approved statutory message templates (`ai_messages.py` codes C01–C64).
 - **Calculation & Data Integrity**: All numbers, deductions, arrears, and eligibility counts come deterministically from the payroll engine and pass mechanical runtime guards.
+
+---
+
+## Design documentation
+
+- [output/](output/) (design deliverables: brief, research, personas, journey maps, screen specs, evaluation)
+- [project-memory/design-decisions.md](project-memory/design-decisions.md) (decision log)
 
 ---
 
@@ -63,15 +84,15 @@ Step-by-step instructions for the project owner to deploy the application to pro
 4. Add Environment Variable (**Environment Variables** section):
    - Key: `VITE_API_BASE_URL`
    - Value: Your Render backend URL from Step 2 (e.g., `https://ai-payroll-backend.onrender.com` — without a trailing slash).
-5. Click **Deploy**. Vercel will build and assign a production URL (e.g., `https://ai-payroll-frontend.vercel.app`).
+5. Click **Deploy**. Vercel will build and assign a production URL (e.g., `https://hcm-one-nine.vercel.app`).
 
 ---
 
 ### Step 4: Link Frontend and Backend (CORS Configuration)
-1. Copy your Vercel deployment URL from Step 3 (e.g., `https://ai-payroll-frontend.vercel.app`).
+1. Copy your Vercel deployment URL from Step 3 (e.g., `https://hcm-one-nine.vercel.app`).
 2. Go back to your Render backend dashboard > **Environment**.
 3. Update `FRONTEND_ORIGIN`:
-   - Value: `https://ai-payroll-frontend.vercel.app` (your actual Vercel domain, without a trailing slash).
+   - Value: `https://hcm-one-nine.vercel.app` (your actual Vercel domain, without a trailing slash).
 4. Save changes. Render will automatically redeploy the backend with the new allowed CORS origin.
 
 ---
@@ -120,3 +141,8 @@ npm run dev
 - Frontend tests: `cd app/frontend && npm test -- --run`
 - Frontend production build: `cd app/frontend && npm run build`
 
+---
+
+## Credits
+
+Designed and built by Sunil Krishna (UX designer) with AI coding agents, as a portfolio project for the UXMint AI for Designers course.
